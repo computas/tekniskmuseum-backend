@@ -1,2 +1,3 @@
 ./training-tool/data/*
 ./training-tool/images/*
+*__pycache__*

@@ -4,7 +4,9 @@
 _Guide on how to run the api in developer mode comes here!_
 
 ### **Tests**
-_Guide on how to run the tests comes here!_
+_When running the tests, ensure that you are located in the same directory as this README._
+#### Run the tests with the following command:
+* pytest --ignore=training-tool
 
 ### **Required Installation**
 
