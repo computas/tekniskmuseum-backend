@@ -3,77 +3,83 @@ from azure.cognitiveservices.vision.customvision.training import (
 )
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageFileCreateEntry,
+    ImageUrlCreateEntry,
 )
 from msrest.authentication import ApiKeyCredentials
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+import os
+import time
+from config import (
+    ENDPOINT,
+    training_key,
+    prediction_key,
+    prediction_resource_id,
+    project_id,
+    connect_str,
+)
 
-ENDPOINT = "<your API endpoint>"
 
-# Replace with a valid key
-training_key = "<your training key>"
-prediction_key = "<your prediction key>"
-prediction_resource_id = "<your prediction resource id>"
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
-publish_iteration_name = "classifyModel"
+
+publish_iteration_name = "drawings"
 
 credentials = ApiKeyCredentials(in_headers={"Training-key": training_key})
 trainer = CustomVisionTrainingClient(ENDPOINT, credentials)
 
-# Create a new project
-print("Creating project...")
-project = trainer.create_project("My New Project")
 
-# Make two tags in the new project
-hemlock_tag = trainer.create_tag(project.id, "airplane")
-cherry_tag = trainer.create_tag(project.id, "ambulance")
-
-
-connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 # print(connect_str)
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
+base_image_url = "https://originaldataset.blob.core.windows.net/"
 
-base_image_url = (
-    "<path to repo directory>/cognitive-services-python-sdk-samples/samples/vision/"
-)
+
+print(list(blob_service_client.list_containers()))
+ambulance_container = blob_service_client.get_container_client("ambulance")
+bench_container = blob_service_client.get_container_client("bench")
+
+# Create a new project
+print("Creating project...")
+project = trainer.create_project("drawings")
+
+# Make two tags in the new project
+bench_tag = trainer.create_tag(project.id, "bench")
+ambulance_tag = trainer.create_tag(project.id, "ambulance")
+
 
 print("Adding images...")
+url_list = []
 
-image_list = []
-
-for image_num in range(1, 11):
-    file_name = "hemlock_{}.jpg".format(image_num)
-    with open(base_image_url + "images/Hemlock/" + file_name, "rb") as image_contents:
-        image_list.append(
-            ImageFileCreateEntry(
-                name=file_name, contents=image_contents.read(), tag_ids=[hemlock_tag.id]
-            )
-        )
-
-for image_num in range(1, 11):
-    file_name = "japanese_cherry_{}.jpg".format(image_num)
-    with open(
-        base_image_url + "images/Japanese Cherry/" + file_name, "rb"
-    ) as image_contents:
-        image_list.append(
-            ImageFileCreateEntry(
-                name=file_name, contents=image_contents.read(), tag_ids=[cherry_tag.id]
-            )
-        )
-ImageUrl
+for blob in ambulance_container.list_blobs():
+    blob_name = blob.name
+    blob_url = f"{base_image_url}ambulance/{blob_name}"
+    url_list.append(ImageUrlCreateEntry(url=blob_url, tag_ids=[ambulance_tag.id]))
 
 
-trainer.create_images_from_urls()
-upload_result = trainer.create_images_from_files(project.id, images=image_list)
-if not upload_result.is_batch_successful:
-    print("Image batch upload failed.")
-    for image in upload_result.images:
-        print("Image status: ", image.status)
-    exit(-1)
+for blob in bench_container.list_blobs():
+    blob_name = blob.name
+    blob_url = f"{base_image_url}bench/{blob_name}"
+    url_list.append(ImageUrlCreateEntry(url=blob_url, tag_ids=[bench_tag.id]))
 
 
-import time
+for url_chunk in chunks(url_list, 64):
+    upload_result = trainer.create_images_from_urls(project.id, images=url_chunk)
+    if not upload_result.is_batch_successful:
+        print("Image batch upload failed.")
+        for image in upload_result.images:
+            if image.status != "OKDUPLICATE":
+                print(image.source_url)
+                print(image)
+                print("Image status: ", image.status)
+
+        nfailed = len([i for i in upload_result.images if i.status != "OK"])
+
 
 print("Training...")
+
 iteration = trainer.train_project(project.id)
 while iteration.status != "Completed":
     iteration = trainer.get_iteration(project.id, iteration.id)
@@ -97,16 +103,17 @@ prediction_credentials = ApiKeyCredentials(
 )
 predictor = CustomVisionPredictionClient(ENDPOINT, prediction_credentials)
 
-with open(base_image_url + "images/Test/test_image.jpg", "rb") as image_contents:
-    results = predictor.classify_image(
-        project.id, publish_iteration_name, image_contents.read()
-    )
+test_image_url = (
+    "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
+)
 
-    # Display the results.
-    for prediction in results.predictions:
-        print(
-            "\t"
-            + prediction.tag_name
-            + ": {0:.2f}%".format(prediction.probability * 100)
-        )
+results = predictor.classify_image_url(
+    project.id, publish_iteration_name, test_image_url
+)
+
+# Display the results.
+for prediction in results.predictions:
+    print(
+        "\t" + prediction.tag_name + ": {0:.2f}%".format(prediction.probability * 100)
+    )
 

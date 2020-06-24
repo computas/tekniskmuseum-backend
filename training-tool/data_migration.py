@@ -4,7 +4,7 @@ import json
 import os
 import argparse
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-
+from config import connect_str
 
 parser = argparse.ArgumentParser(
     description="convert .ndjson into .png and upload to azure blobstore"
@@ -105,8 +105,7 @@ def get_images_from_class(className, N=100):
                 line = json.loads(next(f))
             except StopIteration:
                 break
-            if line["recognized"]:
-                lines.append(line)
+            lines.append(line)
     return lines
 
 
@@ -114,7 +113,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cnames = args.classNames
 
-    connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     # print(connect_str)
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
