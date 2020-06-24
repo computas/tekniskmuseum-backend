@@ -1,12 +1,9 @@
 '''
 Tools for interacting with Azure blob storage.
 '''
-import json
 import uuid
+import secrets
 from azure.storage.blob import BlobClient
-
-with open('./config.json') as configFile:
-    keys = json.load(configFile)
 
 
 def saveImage(image, label):
@@ -15,9 +12,14 @@ def saveImage(image, label):
     Image is renamed to assure unique name.
     '''
     filename = label + uuid.uuid4().hex + '.png'
-    blob = BlobClient.from_connection_string(
-        conn_str=keys['CONNECTION_STRING'],
-        container_name=label,
-        blob_name=filename,
-        )
-    blob.upload_blob(image)
+    connectionString = secrets.get('BLOB_CONNECTION_STRING')
+    try:
+        blob = BlobClient.from_connection_string(
+            conn_str=connectionString,
+            container_name=label,
+            blob_name=filename,
+            )
+        blob.upload_blob(image)
+    except Exception as e:
+        print(e)
+    return
