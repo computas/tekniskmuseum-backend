@@ -9,7 +9,27 @@ on:
       - master
 
 jobs:
+  run-linter:
+  name: Run linter
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Check out git repo
+      uses: actions/checkout@master
+
+    - name: Set up Python version
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+
+    - name: Install dependencies
+      run: pip install flake8
+
+    - name: Run linter
+      run: flake8
+
   build-and-deploy:
+    name: Deploy to Azure
     runs-on: ubuntu-latest
 
     steps:
