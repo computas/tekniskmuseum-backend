@@ -10,6 +10,12 @@ app = Flask(__name__)
 labels = ['cat', 'clock', 'car']
 timeLimit = 20
 
+
+@app.route("/")
+def hello():
+    return "Hello, World!"
+
+
 @app.route('/startGame')
 def startGame():
     '''
@@ -18,19 +24,25 @@ def startGame():
     Startime is recordede to calculate elapsed time when the game ends.
     '''
     startTime = time.time()
-    token = uuid.uuid4()
+    token = uuid.uuid4().hex
     label = random.choice(labels)
     # Insert game detals into DB
-    sql = 'INSERT into games VALUES (%s,%s, %s)'
-    queryParam = (token, label, startTime)
-    return queryParams
-    
+    # sql = 'INSERT into games VALUES (%s,%s, %s)'
+    # queryParams = (token, label, startTime)
+    data = {
+        'token': token,
+        'label': label,
+        'startTime': startTime,
+        }
+    return data
+
+
 @app.route('/submitAnswer', methods=['POST'])
 def submitsolution():
     '''
     Endpoint for user to submit drawing. Drawing is classified with Custom
-    Vision.The player wins if the classification is correct and the time used is less than the
-    time limit.
+    Vision.The player wins if the classification is correct and the time
+    used is less than the time limit.
     '''
     if 'file' not in request.files:
         return "No image submitted", 400
@@ -40,21 +52,22 @@ def submitsolution():
     classification = classify(image)
     saveImage(image)
     # get game details from DB
-    token = request.values['token']
-    sql = 'SELECT * FROM game WHERE token=%s'
-    queryParam = token
+    # sql = 'SELECT * FROM game WHERE token=%s'
+    # token = request.values['token']
+    # queryParam = token
     # mock data
     startTime = time.time()
     label = random.choice(labels)
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
-    hasWon = timeUsed < timeLimit and classification == lable
+    hasWon = timeUsed < timeLimit and classification == label
     data = {
         'classificaton': classification,
         'hasWon': hasWon,
         }
     return jsonify(data), 200
+
 
 def classify(image):
     '''
@@ -65,6 +78,7 @@ def classify(image):
     confidence = random.rand()
     return label, confidence
 
+
 def saveImage(image, label):
     '''
     Save image to azure blob storage. Images are later used to retrain Custom
@@ -73,6 +87,7 @@ def saveImage(image, label):
     # TODO: implement blob storage upload here
     return
 
+
 def allowedFile(image):
     '''
     Check if image satisfies the constraints of Custom Vision.
@@ -80,10 +95,6 @@ def allowedFile(image):
     # TODO: needs implementation
     return True
 
+
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-@app.route("/")
-def hello():
-    return "Hello, SmartNinja!"
