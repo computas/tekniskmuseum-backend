@@ -1,6 +1,7 @@
 import uuid
 import random
 import time
+import storage
 from flask import Flask
 from flask import request
 from flask import jsonify
@@ -41,7 +42,7 @@ def startGame():
 
 
 @app.route('/submitAnswer', methods=['POST'])
-def submitsolution():
+def submitAnswer():
     '''
     Endpoint for user to submit drawing. Drawing is classified with Custom
     Vision.The player wins if the classification is correct and the time
@@ -52,8 +53,7 @@ def submitsolution():
     image = request.files['file']
     if not allowedFile(image):
         return 'Image does not satsfy constraints', 415
-    classification = classify(image)
-    saveImage(image)
+    classification, certainty = classify(image)
     # get game details from DB
     # sql = 'SELECT * FROM game WHERE token=%s'
     # token = request.values['token']
@@ -65,8 +65,11 @@ def submitsolution():
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
     hasWon = timeUsed < timeLimit and classification == label
+    storage.saveImage(image, label)
     data = {
         'classificaton': classification,
+        'certainty': certainty,
+        'correctLabel': label,
         'hasWon': hasWon,
         'timeUsed': timeUsed,
         }
@@ -79,17 +82,8 @@ def classify(image):
     '''
     # TODO: implement custom vision here
     label = random.choice(labels)
-    confidence = random.rand()
+    confidence = random.random()
     return label, confidence
-
-
-def saveImage(image, label):
-    '''
-    Save image to azure blob storage. Images are later used to retrain Custom
-    Vision classifier.
-    '''
-    # TODO: implement blob storage upload here
-    return
 
 
 def allowedFile(image):
