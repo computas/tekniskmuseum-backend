@@ -1,6 +1,6 @@
 import os, tempfile, sys
 import pytest
-sys.path.insert(1, '../flask')
+sys.path.insert(1, './flask')
 
 import api
 
