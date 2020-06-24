@@ -34,7 +34,7 @@ def startGame():
         'label': label,
         'startTime': startTime,
         }
-    return data
+    return jsonify(data), 200
 
 
 @app.route('/submitAnswer', methods=['POST'])
@@ -65,6 +65,7 @@ def submitsolution():
     data = {
         'classificaton': classification,
         'hasWon': hasWon,
+        'timeUsed': timeUsed,
         }
     return jsonify(data), 200
 
