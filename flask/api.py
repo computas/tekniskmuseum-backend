@@ -7,7 +7,10 @@ from flask import jsonify
 
 # Global variables
 app = Flask(__name__)
-labels = ['cat', 'clock', 'car']
+labels = [
+    'ambulance', 'bench', 'circle', 'drawings', 'square', 'star',
+    'sun', 'triangle',
+    ]
 timeLimit = 20
 
 
@@ -47,8 +50,8 @@ def submitsolution():
     if 'file' not in request.files:
         return "No image submitted", 400
     image = request.files['file']
-    if not allowedFile(image.filename):
-        return 'Only png images supported', 415
+    if not allowedFile(image):
+        return 'Image does not satsfy constraints', 415
     classification = classify(image)
     saveImage(image)
     # get game details from DB
