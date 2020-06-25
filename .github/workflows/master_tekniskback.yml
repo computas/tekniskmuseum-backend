@@ -28,6 +28,23 @@ jobs:
     - name: Run linter
       run: flake8
 
+  run-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+ 
+    steps:
+    - name: Check out git repo
+      uses: actions/checkout@master
+
+    - name: Set up Python version
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+
+    - name: Run tests
+      run: pytest --ignore=machine_learning_utilities
+      
+
   build-and-deploy:
     name: Deploy to Azure
     runs-on: ubuntu-latest
