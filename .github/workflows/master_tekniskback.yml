@@ -51,4 +51,5 @@ jobs:
       with:
         app-name: 'tekniskback'
         slot-name: 'production'
+        johannes:  'kul'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_a896db61b89543ea8da604e9a364cedd }}
