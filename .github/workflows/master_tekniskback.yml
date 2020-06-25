@@ -48,6 +48,8 @@ jobs:
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v1
+      env:
+        IS_WORKING: True 
       with:
         app-name: 'tekniskback'
         slot-name: 'production'
