@@ -2,6 +2,9 @@ import uuid
 import random
 import time
 import storage
+import sys
+from io import BytesIO
+from PIL import Image
 from flask import Flask
 from flask import request
 from flask import jsonify
@@ -96,8 +99,18 @@ def allowedFile(image):
     """
     Check if image satisfies the constraints of Custom Vision.
     """
-    # TODO: needs implementation
-    return True
+    # Check if the filename is of PNG type
+    png = image.filename.endswith("png")
+    # Ensure the file isn't too large
+    too_large = len(image.read()) > 4000000
+    # Ensure the file has correct resolution
+    image.stream.seek(0)
+    height, width = Image.open(BytesIO(image.stream.read())).size
+    correct_res = (height >= 256) and (width >= 256)
+    if not png or too_large or not correct_res:
+        return False
+    else:
+        return True
 
 
 if __name__ == "__main__":
