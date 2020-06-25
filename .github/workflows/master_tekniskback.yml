@@ -58,7 +58,7 @@ jobs:
       with:
         app-name: 'tekniskback'
         # Application settings using the JSON syntax set as value of secret variable: APP_SETTINGS
-        app-settings-json: '{"IS_WORKING": "True"}'
+        app-settings-json: ${secrets.APP_SETTINGS}
         # Connection Strings using the JSON syntax set as value of secret variable: CONNECTION_STRINGS
         # connection-strings-json: # optional
         # General configuration settings using dictionary syntax - Key Value pairs
