@@ -1,5 +1,7 @@
+import os
 import sys
 import werkzeug
+import tempfile
 import pytest
 
 sys.path.insert(1, "./flask")
