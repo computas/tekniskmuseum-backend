@@ -3,4 +3,9 @@ Flask==1.0.2
 itsdangerous==0.24
 MarkupSafe==1.0
 Werkzeug==0.15.3
+azure-cognitiveservices-vision-customvision==2.0.0
+azure-common==1.1.25
+azure-core==1.6.0
 azure-storage-blob==12.3.2
+cairocffi==1.1.0
+msrest==0.6.16
