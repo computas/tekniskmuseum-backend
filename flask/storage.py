@@ -15,7 +15,9 @@ def saveImage(image, label):
     connectionString = secrets.get("BLOB_CONNECTION_STRING")
     try:
         blob = BlobClient.from_connection_string(
-            conn_str=connectionString, container_name=label, blob_name=filename,
+            conn_str=connectionString,
+            container_name=label,
+            blob_name=filename,
         )
         blob.upload_blob(image)
     except Exception as e:

@@ -24,7 +24,9 @@ class CVClassifier:
         )
 
     def predict(self, url):
-        res = self.predictor.classify_image_url(project_id, self.iteration_name, url)
+        res = self.predictor.classify_image_url(
+            project_id, self.iteration_name, url
+        )
         return res.predictions
 
     def train(self):
@@ -32,9 +34,7 @@ class CVClassifier:
 
 
 def main():
-    test_url = (
-        "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-    )
+    test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
