@@ -29,7 +29,9 @@ def test_allowedFile_small_resolution(client):
         Test if the allowedFile function within the API returns False if an
         image with too small resolution is sent as parameter.
     """
-    pass
+    # Test the allowedFile function with the given filename.
+    # The allowedFile function should return 'false'.
+    allowedFileHelper("allowedFile_test1.png", False)
 
 
 def test_allowedFile_too_large_file(client):
@@ -54,3 +56,26 @@ def test_allowedFile_correct(client):
         image with all constraints satisfied is sent as parameter.
     """
     pass
+
+
+def allowedFileHelper(filename, expected_result):
+    """
+        Helper function for the allowedFile function tests.
+    """
+    # The path is only valid if the program runs from the outmost directory
+    path = os.path.join('test', 'test_data', 'allowedFile_test1.png')
+    with open(path, 'rb') as f:
+        data_stream = f.read()
+        # Create temporary file and reset seek to avoid EOF errors
+        tmp = tempfile.SpooledTemporaryFile()
+        tmp.write(data_stream)
+        tmp.seek(0)
+        # Create file storage object containing the image
+        image = werkzeug.datastructures.FileStorage(
+            stream = tmp, 
+            filename = path,
+        )
+        # Test allowedFile function with the image file
+        result = api.allowedFile(image)
+    
+    assert(result == expected_result)
