@@ -69,7 +69,7 @@ def allowedFileHelper(filename, expected_result):
         Helper function for the allowedFile function tests.
     """
     # The path is only valid if the program runs from the outmost directory
-    path = os.path.join('test', 'test_data', 'allowedFile_test1.png')
+    path = os.path.join('test', 'test_data', filename)
     with open(path, 'rb') as f:
         data_stream = f.read()
         # Create temporary file and reset seek to avoid EOF errors
