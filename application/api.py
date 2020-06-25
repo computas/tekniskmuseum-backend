@@ -100,7 +100,7 @@ def allowedFile(image):
     Check if image satisfies the constraints of Custom Vision.
     """
     # Check if the filename is of PNG type
-    png = image.filename.endswith("png")
+    png = image.filename.endswith(".png") or image.filename.endswith(".PNG")
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
