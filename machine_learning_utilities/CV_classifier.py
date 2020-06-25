@@ -1,25 +1,14 @@
-from azure.cognitiveservices.vision.customvision.training import (
-    CustomVisionTrainingClient,
-)
-from azure.cognitiveservices.vision.customvision.training.models import (
-    ImageFileCreateEntry,
-    ImageUrlCreateEntry,
-)
 from msrest.authentication import ApiKeyCredentials
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
     CustomVisionPredictionClient,
 )
-from msrest.authentication import ApiKeyCredentials
-import os
+
 from config import (
     ENDPOINT,
-    training_key,
     prediction_key,
-    prediction_resource_id,
     project_id,
     connect_str,
-    base_img_url,
 )
 
 

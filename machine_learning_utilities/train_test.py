@@ -2,19 +2,19 @@ from azure.cognitiveservices.vision.customvision.training import (
     CustomVisionTrainingClient,
 )
 from azure.cognitiveservices.vision.customvision.training.models import (
-    ImageFileCreateEntry,
     ImageUrlCreateEntry,
 )
+from azure.cognitiveservices.vision.customvision.prediction import (
+    CustomVisionPredictionClient,
+)
 from msrest.authentication import ApiKeyCredentials
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-import os
+from azure.storage.blob import BlobServiceClient
 import time
 from config import (
     ENDPOINT,
     training_key,
     prediction_key,
     prediction_resource_id,
-    project_id,
     connect_str,
 )
 
@@ -92,10 +92,6 @@ trainer.publish_iteration(
 )
 print("Done!")
 
-from azure.cognitiveservices.vision.customvision.prediction import (
-    CustomVisionPredictionClient,
-)
-from msrest.authentication import ApiKeyCredentials
 
 # Now there is a trained endpoint that can be used to make a prediction
 prediction_credentials = ApiKeyCredentials(
@@ -116,4 +112,3 @@ for prediction in results.predictions:
     print(
         "\t" + prediction.tag_name + ": {0:.2f}%".format(prediction.probability * 100)
     )
-

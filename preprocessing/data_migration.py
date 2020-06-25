@@ -3,8 +3,9 @@ import cairocffi as cairo
 import json
 import os
 import argparse
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 from config import connect_str
+
 
 parser = argparse.ArgumentParser(
     description="convert .ndjson into .png and upload to azure blobstore"
@@ -91,8 +92,8 @@ def upload_to_blob(path, key, className, blob_service_client):
     with open(path, "rb") as localFile:
         try:
             blob_client.upload_blob(localFile)
-        except:
-            print(f"the image {key} already exists")
+        except Exception as e:
+            print(f"the image {key} already exists {e}")
 
 
 def get_images_from_class(className, N=100):
