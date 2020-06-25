@@ -52,7 +52,7 @@ def submitAnswer():
         return "No image submitted", 400
     image = request.files['file']
     if not allowedFile(image):
-        return 'Image does not satsfy constraints', 415
+        return 'Image does not satisfy constraints', 415
     classification, certainty = classify(image)
     # get game details from DB
     # sql = 'SELECT * FROM game WHERE token=%s'
