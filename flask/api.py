@@ -98,6 +98,7 @@ def allowedFile(image):
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
+    image.stream.seek(0)
     height, width = Image.open(BytesIO(image.stream.read())).size
     correct_res = (height >= 256) and (width >= 256)
     if not png or too_large or not correct_res:
