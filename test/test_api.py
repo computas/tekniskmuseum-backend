@@ -3,9 +3,7 @@ import sys
 import werkzeug
 import tempfile
 import pytest
-
-sys.path.insert(1, "./flask")
-import api
+from application import api
 
 
 @pytest.fixture
@@ -80,10 +78,10 @@ def allowedFileHelper(filename, expected_result):
         tmp.seek(0)
         # Create file storage object containing the image
         image = werkzeug.datastructures.FileStorage(
-            stream = tmp, 
-            filename = path,
+            stream=tmp,
+            filename=path
         )
         # Test allowedFile function with the image file
         result = api.allowedFile(image)
-    
+
     assert(result == expected_result)

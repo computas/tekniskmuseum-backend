@@ -1,8 +1,8 @@
 import uuid
 import random
 import time
-import storage
 import sys
+from application import storage
 from io import BytesIO
 from PIL import Image
 from flask import Flask
