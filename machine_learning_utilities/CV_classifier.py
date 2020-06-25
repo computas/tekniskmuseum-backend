@@ -16,12 +16,12 @@ import secrets
 
 
 ENDPOINT = secrets.get("ENDPOINT")
-connect_str = secrets.get("connect_str")
-project_id = secrets.get("project_id")
-prediction_key = secrets.get("prediction_key")
-training_key = secrets.get("training_key")
-base_img_url = secrets.get("base_img_url")
-prediction_resource_id = secrets.get("prediction_resource_id")
+connect_str = secrets.get("CONNECT_STR")
+project_id = secrets.get("PROJECT_ID")
+prediction_key = secrets.get("PREDICTION_KEY")
+training_key = secrets.get("TRAINING_KEY")
+base_img_url = secrets.get("BASE_IMG_URL")
+prediction_resource_id = secrets.get("PREDICTION_RESOURCE_ID")
 
 
 class CVClassifier:
@@ -38,7 +38,7 @@ class CVClassifier:
         self.trainer = CustomVisionTrainingClient(
             ENDPOINT, self.training_credentials
         )
-        self.blob_service_client
+        self.blob_service_client = blob_service_client
         iterations = self.trainer.get_iterations(project_id)
         iterations.sort(key=lambda i: i.created)
         print(iterations)
@@ -48,7 +48,9 @@ class CVClassifier:
         res = self.predictor.classify_image_url(
             project_id, self.iteration_name, img_url
         )
-        return res.predictions
+
+        pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+        return pred_kv
 
     def __chunks(self, lst, n):
         """Yield successive n-sized chunks from lst."""
@@ -157,7 +159,7 @@ def main():
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-    labels = ["ambulance", "bench", "circle", "drawings", "square"]
+    labels = ["ambulance", "bench", "circle", "star", "square"]
     classifier = CVClassifier(blob_service_client)
     classifier.upload_images(labels)
 
@@ -165,7 +167,7 @@ def main():
     classifier.train(labels)
     result = classifier.predict(test_url)
 
-    print([(i.tag_name, i.probability) for i in result])
+    print(result)
 
 
 if __name__ == "__main__":
