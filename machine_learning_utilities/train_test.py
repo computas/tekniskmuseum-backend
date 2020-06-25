@@ -37,7 +37,7 @@ blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 base_image_url = "https://originaldataset.blob.core.windows.net/"
 
 
-print(list(blob_service_client.list_containers()))
+# print(list(blob_service_client.list_containers()))
 ambulance_container = blob_service_client.get_container_client("ambulance")
 bench_container = blob_service_client.get_container_client("bench")
 
@@ -48,6 +48,7 @@ project = trainer.create_project("drawings")
 # Make two tags in the new project
 bench_tag = trainer.create_tag(project.id, "bench")
 ambulance_tag = trainer.create_tag(project.id, "ambulance")
+print(ambulance_tag.id)
 
 
 print("Adding images...")
@@ -95,6 +96,8 @@ trainer.publish_iteration(
     project.id, iteration.id, publish_iteration_name, prediction_resource_id
 )
 print("Done!")
+liste = trainer.get_iterations(project.id)
+print(liste[0].status)
 
 
 # Now there is a trained endpoint that can be used to make a prediction
