@@ -9,9 +9,15 @@ from flask import jsonify
 # Global variables
 app = Flask(__name__)
 labels = [
-    'ambulance', 'bench', 'circle', 'drawings', 'square', 'star',
-    'sun', 'triangle',
-    ]
+    "ambulance",
+    "bench",
+    "circle",
+    "drawings",
+    "square",
+    "star",
+    "sun",
+    "triangle",
+]
 timeLimit = 20
 
 
@@ -20,13 +26,13 @@ def hello():
     return "Hello, World!"
 
 
-@app.route('/startGame')
+@app.route("/startGame")
 def startGame():
-    '''
+    """
     Starts a new game. A unique token is generated to keep track
     of game. A random label is chosen for the player to draw.
     Startime is recordede to calculate elapsed time when the game ends.
-    '''
+    """
     startTime = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
@@ -34,25 +40,25 @@ def startGame():
     # sql = 'INSERT into games VALUES (%s,%s, %s)'
     # queryParams = (token, label, startTime)
     data = {
-        'token': token,
-        'label': label,
-        'startTime': startTime,
-        }
+        "token": token,
+        "label": label,
+        "startTime": startTime,
+    }
     return jsonify(data), 200
 
 
-@app.route('/submitAnswer', methods=['POST'])
+@app.route("/submitAnswer", methods=["POST"])
 def submitAnswer():
-    '''
+    """
     Endpoint for user to submit drawing. Drawing is classified with Custom
     Vision.The player wins if the classification is correct and the time
     used is less than the time limit.
-    '''
-    if 'file' not in request.files:
+    """
+    if "file" not in request.files:
         return "No image submitted", 400
-    image = request.files['file']
+    image = request.files["file"]
     if not allowedFile(image):
-        return 'Image does not satisfy constraints', 415
+        return "Image does not satisfy constraints", 415
     classification, certainty = classify(image)
     # get game details from DB
     # sql = 'SELECT * FROM game WHERE token=%s'
@@ -67,19 +73,19 @@ def submitAnswer():
     hasWon = timeUsed < timeLimit and classification == label
     storage.saveImage(image, label)
     data = {
-        'classificaton': classification,
-        'certainty': certainty,
-        'correctLabel': label,
-        'hasWon': hasWon,
-        'timeUsed': timeUsed,
-        }
+        "classificaton": classification,
+        "certainty": certainty,
+        "correctLabel": label,
+        "hasWon": hasWon,
+        "timeUsed": timeUsed,
+    }
     return jsonify(data), 200
 
 
 def classify(image):
-    '''
+    """
     Classify image with Azure Custom Vision.
-    '''
+    """
     # TODO: implement custom vision here
     label = random.choice(labels)
     confidence = random.random()
@@ -87,12 +93,12 @@ def classify(image):
 
 
 def allowedFile(image):
-    '''
+    """
     Check if image satisfies the constraints of Custom Vision.
-    '''
+    """
     # TODO: needs implementation
     return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

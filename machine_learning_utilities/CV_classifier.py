@@ -6,12 +6,6 @@ from azure.cognitiveservices.vision.customvision.prediction import (
 
 import secrets
 
-# from config import (
-#     ENDPOINT,
-#     prediction_key,
-#     project_id,
-#     connect_str,
-# )
 
 ENDPOINT = secrets.get("ENDPOINT")
 connect_str = secrets.get("connect_str")
