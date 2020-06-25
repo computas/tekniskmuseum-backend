@@ -56,7 +56,9 @@ url_list = []
 for blob in ambulance_container.list_blobs():
     blob_name = blob.name
     blob_url = f"{base_image_url}ambulance/{blob_name}"
-    url_list.append(ImageUrlCreateEntry(url=blob_url, tag_ids=[ambulance_tag.id]))
+    url_list.append(
+        ImageUrlCreateEntry(url=blob_url, tag_ids=[ambulance_tag.id])
+    )
 
 
 for blob in bench_container.list_blobs():
@@ -66,7 +68,9 @@ for blob in bench_container.list_blobs():
 
 
 for url_chunk in chunks(url_list, 64):
-    upload_result = trainer.create_images_from_urls(project.id, images=url_chunk)
+    upload_result = trainer.create_images_from_urls(
+        project.id, images=url_chunk
+    )
     if not upload_result.is_batch_successful:
         print("Image batch upload failed.")
         for image in upload_result.images:
@@ -99,9 +103,7 @@ prediction_credentials = ApiKeyCredentials(
 )
 predictor = CustomVisionPredictionClient(ENDPOINT, prediction_credentials)
 
-test_image_url = (
-    "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-)
+test_image_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
 results = predictor.classify_image_url(
     project.id, publish_iteration_name, test_image_url
@@ -110,5 +112,7 @@ results = predictor.classify_image_url(
 # Display the results.
 for prediction in results.predictions:
     print(
-        "\t" + prediction.tag_name + ": {0:.2f}%".format(prediction.probability * 100)
+        "\t"
+        + prediction.tag_name
+        + ": {0:.2f}%".format(prediction.probability * 100)
     )

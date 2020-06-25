@@ -17,7 +17,9 @@ parser.add_argument(
     nargs="+",
     help="names of the classes that you want to convert",
 )
-parser.add_argument("-n", type=int, default=50, help="how many images of each class")
+parser.add_argument(
+    "-n", type=int, default=50, help="how many images of each class"
+)
 parser.add_argument("-u", type)
 
 
@@ -87,7 +89,9 @@ def vector_to_raster(
 
 def upload_to_blob(path, key, className, blob_service_client):
 
-    blob_client = blob_service_client.get_blob_client(className, blob=f"{key}.png")
+    blob_client = blob_service_client.get_blob_client(
+        className, blob=f"{key}.png"
+    )
 
     with open(path, "rb") as localFile:
         try:
@@ -128,7 +132,9 @@ if __name__ == "__main__":
         if container_name not in [
             c["name"] for c in blob_service_client.list_containers()
         ]:
-            container_client = blob_service_client.create_container(container_name)
+            container_client = blob_service_client.create_container(
+                container_name
+            )
 
         if not os.path.exists(dirp):
             os.makedirs(dirp)

@@ -1,7 +1,5 @@
 [flake8]
-# Recommend matching the black line length (default 88),
-# rather than using the flake8 default of 79:
-max-line-length = 88
-extend-ignore =
-    # See https://github.com/PyCQA/pycodestyle/issues/373
-    E203,
+ignore = E203, E266, E501, W503, F403, F401
+max-line-length = 79
+max-complexity = 18
+select = B,C,E,F,W,T4,B9

@@ -4,16 +4,13 @@ from azure.cognitiveservices.vision.customvision.prediction import (
     CustomVisionPredictionClient,
 )
 
-from config import (
-    ENDPOINT,
-    prediction_key,
-    project_id,
-    connect_str,
-)
+import secrets
 
 
-# print(connect_str)
-blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+ENDPOINT = secrets.get("ENDPOINT")
+connect_str = secrets.get("connect_str")
+project_id = secrets.get("project_id")
+prediction_key = secrets.get("prediction_key")
 
 
 class CVClassifier:
@@ -27,7 +24,9 @@ class CVClassifier:
         )
 
     def predict(self, url):
-        res = self.predictor.classify_image_url(project_id, self.iteration_name, url)
+        res = self.predictor.classify_image_url(
+            project_id, self.iteration_name, url
+        )
         return res.predictions
 
     def train(self):
@@ -35,9 +34,10 @@ class CVClassifier:
 
 
 def main():
-    test_url = (
-        "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-    )
+    test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
+
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+
     classifier = CVClassifier(blob_service_client)
     result = classifier.predict(test_url)
 
