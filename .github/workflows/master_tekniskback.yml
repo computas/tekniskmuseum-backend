@@ -41,6 +41,9 @@ jobs:
       with:
         python-version: '3.7'
 
+    - name: Install dependencies
+      run: pip install pytest
+      
     - name: Run tests
       run: pytest --ignore=machine_learning_utilities
       
@@ -75,7 +78,7 @@ jobs:
       with:
         app-name: 'tekniskback'
         # Application settings using the JSON syntax set as value of secret variable: APP_SETTINGS
-        app-settings-json: ${secrets.APP_SETTINGS}
+        app-settings-json: '${{ secrets.APP_SETTINGS }}'
         # Connection Strings using the JSON syntax set as value of secret variable: CONNECTION_STRINGS
         # connection-strings-json: # optional
         # General configuration settings using dictionary syntax - Key Value pairs
