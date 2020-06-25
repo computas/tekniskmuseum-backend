@@ -39,7 +39,9 @@ def test_allowedFile_too_large_file(client):
         Test if the allowedFile function within the API returns False if an
         image above the maximum size is sent as parameter.
     """
-    pass
+    # Test the allowedFile function with the given filename.
+    # The allowedFile function should return 'false'.
+    allowedFileHelper("allowedFile_test2.png", False)
 
 
 def test_allowedFile_wrong_format(client):
@@ -47,7 +49,9 @@ def test_allowedFile_wrong_format(client):
         Test if the allowedFile function within the API returns False if an
         image of the wrong format is sent as parameter.
     """
-    pass
+    # Test the allowedFile function with the given filename.
+    # The allowedFile function should return 'false'.
+    allowedFileHelper("allowedFile_test3.jpg", False)
 
 
 def test_allowedFile_correct(client):
@@ -55,7 +59,9 @@ def test_allowedFile_correct(client):
         Test if the allowedFile function within the API returns True if an
         image with all constraints satisfied is sent as parameter.
     """
-    pass
+    # Test the allowedFile function with the given filename.
+    # The allowedFile function should return 'true'.
+    allowedFileHelper("allowedFile_test4.png", True)
 
 
 def allowedFileHelper(filename, expected_result):
