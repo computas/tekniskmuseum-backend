@@ -12,16 +12,20 @@ from azure.cognitiveservices.vision.customvision.training.models import (
 import uuid
 import time
 
-import secrets
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import keys
 
 
-ENDPOINT = secrets.get("ENDPOINT")
-connect_str = secrets.get("CONNECT_STR")
-project_id = secrets.get("PROJECT_ID")
-prediction_key = secrets.get("PREDICTION_KEY")
-training_key = secrets.get("TRAINING_KEY")
-base_img_url = secrets.get("BASE_IMG_URL")
-prediction_resource_id = secrets.get("PREDICTION_RESOURCE_ID")
+ENDPOINT = keys.get("ENDPOINT")
+connect_str = keys.get("CONNECT_STR")
+project_id = keys.get("PROJECT_ID")
+prediction_key = keys.get("PREDICTION_KEY")
+training_key = keys.get("TRAINING_KEY")
+base_img_url = keys.get("BASE_IMG_URL")
+prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
 
 
 class CVClassifier:
