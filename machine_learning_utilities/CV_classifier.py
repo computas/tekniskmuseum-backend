@@ -15,8 +15,10 @@ import time
 import sys
 import os
 
+from typing import Dict, List
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import keys
+import keys  # noqa: e402
 
 
 ENDPOINT = keys.get("ENDPOINT")
@@ -29,7 +31,19 @@ prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
 
 
 class CVClassifier:
-    def __init__(self, blob_service_client):
+
+    def __init__(self, blob_service_client: BlobServiceClient) -> None:
+        '''
+        Reads configuration file
+        Initializes connection to Azure Custom Vision predictor and training resources.
+
+        Parameters:
+        blob_service_client: Azure Blob Service interaction client
+
+        Returns:
+        None
+        '''
+
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": prediction_key}
         )
@@ -45,23 +59,46 @@ class CVClassifier:
         self.blob_service_client = blob_service_client
         iterations = self.trainer.get_iterations(project_id)
         iterations.sort(key=lambda i: i.created)
-        print(iterations)
         self.iteration_name = iterations[-1].publish_name
 
-    def predict(self, img_url):
+    def predict(self, img_url: str) -> Dict[str, float]:
+        '''
+        Predicts label(s) of Image read from URL.
+
+        Parameters:
+        img_url: Image URL
+
+        Returns:
+        prediction (dict[str,float]): labels and assosiated probabilities
+        '''
+
         res = self.predictor.classify_image_url(
             project_id, self.iteration_name, img_url
         )
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+
         return pred_kv
 
     def __chunks(self, lst, n):
-        """Yield successive n-sized chunks from lst."""
+        """Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision."""
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
-    def upload_images(self, labels: list):
+    def upload_images(self, labels: List) -> None:
+        """
+        Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
+        If label in input already exists in Custom Vision project, all images are uploaded directly.
+        If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
+
+
+        Parameters:
+        labels (str[]): List of labels
+
+        Returns:
+        None
+        """
+
         url_list = []
         existing_tags = self.trainer.get_tags(project_id)
 
@@ -70,8 +107,7 @@ class CVClassifier:
 
             # check if input has correct type
             if not isinstance(label, str):
-                print("label " + str(label) + " must be a string")
-                return
+                raise Exception("label " + str(label) + " must be a string")
 
             tag = [t for t in existing_tags if t.name == label]
 
@@ -116,43 +152,44 @@ class CVClassifier:
                 print("Image batch upload failed.")
                 for image in upload_result.images:
                     if image.status != "OK":
-                        # TODO what do we want to print here?
-                        print(image.source_url)
-                        # print(image)
                         print("Image status: ", image.status)
 
-                    # nfailed = len([i for i in upload_result.images if i.status != "OK"])
+    def train(self, labels: list) -> None:
+        """
+        Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
+        Generates unique iteration name, publishes model and sets self.iteration_name if successful.
 
-    def train(self, labels: list):
-        email = "mahbx@computas.com"
-        emailNotify = False
+        then publishes the model.
+        C
+        Parameters:
+        labels (str[]): List of labels
 
-        iteration_name = uuid.uuid4()
-        # convert list of labels to list of tags
-        # existing_tags = self.trainer.get_tags(project_id)
-        # training_tags = [t for t in existing_tags if t.name in labels]
+        Returns:
+        None
 
-        iteration = None
+        #TODO return error if model is asked to train with non existent label.
+        #TODO delete iterations to make sure projct never exceeds 11 iterations.
+        """
 
-        if emailNotify:
-            iteration = self.trainer.train_project(
-                project_id,
-                reserved_budget_in_hours=1,
-                notification_email_address=email,
-                selected_tags=labels,
-            )
+        email = None
 
-        else:
-            iteration = self.trainer.train_project(
-                project_id, reserved_budget_in_hours=1,  # selected_tags=labels
-            )
+        print("Training...")
+        iteration = self.trainer.train_project(
+            project_id,
+            reserved_budget_in_hours=1,
+            notification_email_address=email,
+            selected_tags=labels,
+        )
 
+        # Wait for training to complete
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(project_id, iteration.id)
             print("Training status: " + iteration.status)
             time.sleep(1)
 
         # The iteration is now trained. Publish it to the project endpoint
+        iteration_name = uuid.uuid4()
+
         self.trainer.publish_iteration(
             project_id, iteration.id, iteration_name, prediction_resource_id
         )
@@ -160,6 +197,15 @@ class CVClassifier:
 
 
 def main():
+    """
+    Use main if you want to run the complete program with init, train and prediction of and example image.
+    To be able to run main, make sure:
+    -no more than two projects created in Azure Custom Vision
+    -no more than 11 iterations done in one project
+
+    #TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
+    """
+
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
@@ -167,7 +213,6 @@ def main():
     classifier = CVClassifier(blob_service_client)
     classifier.upload_images(labels)
 
-    print("training")
     classifier.train(labels)
     result = classifier.predict(test_url)
 
