@@ -1,16 +1,22 @@
 import uuid
 import random
 import time
-import sys
-from application import storage
+import sys, os
+import storage
 from io import BytesIO
-from PIL import Image
+#from PIL import Image
 from flask import Flask
 from flask import request
 from flask import jsonify
+import models
+from flask_sqlalchemy import SQLAlchemy
 
 # Global variables
 app = Flask(__name__)
+app.config.from_object('config.Config')
+db = SQLAlchemy(app)
+
+
 labels = [
     "ambulance",
     "bench",
@@ -39,14 +45,15 @@ def startGame():
     startTime = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    # Insert game detals into DB
-    # sql = 'INSERT into games VALUES (%s,%s, %s)'
-    # queryParams = (token, label, startTime)
+    # get name from POST request ?
+    name = None
     data = {
         "token": token,
         "label": label,
         "startTime": startTime,
     }
+    # function from models for adding to db
+    models.insertIntoGames(token, name, startTime, label)
     return jsonify(data), 200
 
 
@@ -68,8 +75,10 @@ def submitAnswer():
     # token = request.values['token']
     # queryParam = token
     # mock data
-    startTime = time.time()
-    label = random.choice(labels)
+    token = request.values['token']
+    # get values from function from models 
+    name, startTime, label = models.queryGame(token)
+
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
@@ -82,6 +91,9 @@ def submitAnswer():
         "hasWon": hasWon,
         "timeUsed": timeUsed,
     }
+    score = Score()
+    # add to db with function from models
+    models.insertIntoScores(name, score)
     return jsonify(data), 200
 
 
@@ -118,4 +130,5 @@ def allowedFile(image):
 
 
 if __name__ == "__main__":
+    models.createTables(app)
     app.run(debug=True)
