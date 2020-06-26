@@ -1,8 +1,12 @@
 """
 Tools for interacting with Azure blob storage.
 """
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import uuid
-import secrets
+import keys
 from azure.storage.blob import BlobClient
 
 
