@@ -1,7 +1,8 @@
 import uuid
 import random
 import time
-import sys, os
+import sys
+import os
 import storage
 from io import BytesIO
 from PIL import Image
@@ -87,12 +88,6 @@ def submitAnswer():
     timeUsed = time.time() - startTime
     hasWon = timeUsed < timeLimit and classification == label
     #storage.saveImage(image, label)
-
-    score = 500 #where and how will this be computed?
-    
-    # add to db with function from models
-    models.insertIntoScores(name, score)
-
     data = {
         "classificaton": classification,
         "certainty": certainty,
@@ -100,9 +95,16 @@ def submitAnswer():
         "hasWon": hasWon,
         "timeUsed": timeUsed,
     }
-
-    
+    score = 700
+    # add to db with function from models
+    models.insertIntoScores(name, score)
     return jsonify(data), 200
+
+#@app.route('/clearTable', methods=['POST'])
+def clearTable(table):
+    #table = request.values['table']
+    response = models.clearTable(table)
+    return response
 
 
 def classify(image):
