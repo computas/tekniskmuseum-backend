@@ -4,7 +4,7 @@ import time
 import sys, os
 import storage
 from io import BytesIO
-#from PIL import Image
+from PIL import Image
 from flask import Flask
 from flask import request
 from flask import jsonify
@@ -40,20 +40,26 @@ def startGame():
     """
     Starts a new game. A unique token is generated to keep track
     of game. A random label is chosen for the player to draw.
-    Startime is recordede to calculate elapsed time when the game ends.
+    Startime is recorded to calculate elapsed time when the game ends. 
+    Name can be either None or a name and is not unique. Will be sent from frontend.
     """
     startTime = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    # get name from POST request ?
-    name = None
+    name = None # get name from POST request ?
+
+
+    # function from models for adding to db
+    models.insertIntoGames(token, name, startTime, label)
+
+
+    #data is stored in a json object and returned to frontend
     data = {
         "token": token,
         "label": label,
         "startTime": startTime,
     }
-    # function from models for adding to db
-    models.insertIntoGames(token, name, startTime, label)
+    
     return jsonify(data), 200
 
 
@@ -70,20 +76,23 @@ def submitAnswer():
     if not allowedFile(image):
         return "Image does not satisfy constraints", 415
     classification, certainty = classify(image)
-    # get game details from DB
-    # sql = 'SELECT * FROM game WHERE token=%s'
-    # token = request.values['token']
-    # queryParam = token
-    # mock data
+  
+    # get token from frontend
     token = request.values['token']
-    # get values from function from models 
+    # get values from function in models 
     name, startTime, label = models.queryGame(token)
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
     hasWon = timeUsed < timeLimit and classification == label
-    storage.saveImage(image, label)
+    #storage.saveImage(image, label)
+
+    score = 500 #where and how will this be computed?
+    
+    # add to db with function from models
+    models.insertIntoScores(name, score)
+
     data = {
         "classificaton": classification,
         "certainty": certainty,
@@ -91,9 +100,8 @@ def submitAnswer():
         "hasWon": hasWon,
         "timeUsed": timeUsed,
     }
-    score = Score()
-    # add to db with function from models
-    models.insertIntoScores(name, score)
+
+    
     return jsonify(data), 200
 
 
@@ -130,5 +138,8 @@ def allowedFile(image):
 
 
 if __name__ == "__main__":
+    #creates table if does not exist
     models.createTables(app)
+
+    
     app.run(debug=True)
