@@ -21,15 +21,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import keys  # noqa: e402
 
 
-ENDPOINT = keys.get("ENDPOINT")
-connect_str = keys.get("CONNECT_STR")
-project_id = keys.get("PROJECT_ID")
-prediction_key = keys.get("PREDICTION_KEY")
-training_key = keys.get("TRAINING_KEY")
-base_img_url = keys.get("BASE_IMG_URL")
-prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
-
-
 class CVClassifier:
 
     def __init__(self, blob_service_client: BlobServiceClient) -> None:
@@ -44,20 +35,27 @@ class CVClassifier:
         None
         '''
 
+        self.ENDPOINT = keys.get("ENDPOINT")
+        self.project_id = keys.get("PROJECT_ID")
+        self.prediction_key = keys.get("PREDICTION_KEY")
+        self.training_key = keys.get("TRAINING_KEY")
+        self.base_img_url = keys.get("BASE_IMG_URL")
+        self.prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
+
         self.prediction_credentials = ApiKeyCredentials(
-            in_headers={"Prediction-key": prediction_key}
+            in_headers={"Prediction-key": self.prediction_key}
         )
         self.predictor = CustomVisionPredictionClient(
-            ENDPOINT, self.prediction_credentials
+            self.ENDPOINT, self.prediction_credentials
         )
         self.training_credentials = ApiKeyCredentials(
-            in_headers={"Training-key": training_key}
+            in_headers={"Training-key": self.training_key}
         )
         self.trainer = CustomVisionTrainingClient(
-            ENDPOINT, self.training_credentials
+            self.ENDPOINT, self.training_credentials
         )
         self.blob_service_client = blob_service_client
-        iterations = self.trainer.get_iterations(project_id)
+        iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
 
@@ -73,7 +71,7 @@ class CVClassifier:
         '''
 
         res = self.predictor.classify_image_url(
-            project_id, self.iteration_name, img_url
+            self.project_id, self.iteration_name, img_url
         )
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
@@ -100,7 +98,7 @@ class CVClassifier:
         """
 
         url_list = []
-        existing_tags = self.trainer.get_tags(project_id)
+        existing_tags = self.trainer.get_tags(self.project_id)
 
         # create list of URLs to be uploaded
         for label in labels:
@@ -115,7 +113,7 @@ class CVClassifier:
             if len(tag) == 0:
 
                 try:
-                    tag = self.trainer.create_tag(project_id, label)
+                    tag = self.trainer.create_tag(self.project_id, label)
                     print("Created new label in project: " + label)
                 except Exception as e:
                     print(e)
@@ -138,7 +136,7 @@ class CVClassifier:
 
             for blob in container.list_blobs():
                 blob_name = blob.name
-                blob_url = f"{base_img_url}/{label}/{blob_name}"
+                blob_url = f"{self.base_img_url}/{label}/{blob_name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
@@ -146,7 +144,7 @@ class CVClassifier:
         # upload URLs in chunks of 64
         for url_chunk in self.__chunks(url_list, 64):
             upload_result = self.trainer.create_images_from_urls(
-                project_id, images=url_chunk
+                self.project_id, images=url_chunk
             )
             if not upload_result.is_batch_successful:
                 print("Image batch upload failed.")
@@ -175,15 +173,15 @@ class CVClassifier:
 
         print("Training...")
         iteration = self.trainer.train_project(
-            project_id,
+            self.project_id,
             reserved_budget_in_hours=1,
             notification_email_address=email,
-            selected_tags=labels,
         )
 
         # Wait for training to complete
         while iteration.status != "Completed":
-            iteration = self.trainer.get_iteration(project_id, iteration.id)
+            iteration = self.trainer.get_iteration(
+                self.project_id, iteration.id)
             print("Training status: " + iteration.status)
             time.sleep(1)
 
@@ -191,7 +189,7 @@ class CVClassifier:
         iteration_name = uuid.uuid4()
 
         self.trainer.publish_iteration(
-            project_id, iteration.id, iteration_name, prediction_resource_id
+            self.project_id, iteration.id, iteration_name, self.prediction_resource_id
         )
         self.iteration_name = iteration_name
 
@@ -205,6 +203,8 @@ def main():
 
     #TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
     """
+
+    connect_str = keys.get("CONNECT_STR")
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
