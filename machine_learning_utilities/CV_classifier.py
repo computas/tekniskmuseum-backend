@@ -24,7 +24,7 @@ import keys  # noqa: e402
 class CVClassifier:
 
     def __init__(self, blob_service_client: BlobServiceClient) -> None:
-        '''
+        """
         Reads configuration file
         Initializes connection to Azure Custom Vision predictor and training resources.
 
@@ -33,7 +33,7 @@ class CVClassifier:
 
         Returns:
         None
-        '''
+        """
 
         self.ENDPOINT = keys.get("ENDPOINT")
         self.project_id = keys.get("PROJECT_ID")
@@ -60,7 +60,7 @@ class CVClassifier:
         self.iteration_name = iterations[-1].publish_name
 
     def predict(self, img_url: str) -> Dict[str, float]:
-        '''
+        """
         Predicts label(s) of Image read from URL.
 
         Parameters:
@@ -68,7 +68,7 @@ class CVClassifier:
 
         Returns:
         prediction (dict[str,float]): labels and assosiated probabilities
-        '''
+        """
 
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
