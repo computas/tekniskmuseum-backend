@@ -88,6 +88,7 @@ jobs:
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_a896db61b89543ea8da604e9a364cedd }}
         
+      # Inject keys into poduction environment
     - name: Azure App Service Settings
       uses: Azure/appservice-settings@v1
       with:
