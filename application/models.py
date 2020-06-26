@@ -2,9 +2,11 @@ from api import db
 
 
 class Games(db.Model):
- """ This is the Games model in the database. 
- It is important that the inserted values match the column values.
- Token column value cannot be String when a long hex is given.  """
+    """ 
+       This is the Games model in the database. It is important that the
+       inserted values match the column values. Token column value cannot
+       be String when a long hex is given.
+    """
     token = db.Column(
         db.NVARCHAR(450),
         primary_key=True,
@@ -23,8 +25,10 @@ class Games(db.Model):
 
 
 class Scores(db.Model):
-    """ This is the Scores model in the database.
-    It is important that the inserted values match the column values. """
+    """ 
+        This is the Scores model in the database.
+        It is important that the inserted values match the column values.
+    """
     id = db.Column(
         db.Integer,
         primary_key=True,
@@ -40,20 +44,26 @@ class Scores(db.Model):
 
 
 def createTables(app):
-    """ The tables will be created if they do not already exist """
+    """ 
+        The tables will be created if they do not already exist
+    """
     with app.app_context():
         db.create_all()
 
 
 def insertIntoGames(token, name, starttime, label):
-    """ Insert values into Games database """
+    """
+        Insert values into Games database
+    """
     game = Games(token=token, name=name, starttime=starttime, label=label)
     db.session.add(game)
     db.session.commit()
 
 
 def insertIntoScores(name, score):
-    """ Insert values into Scores database """
+    """
+        Insert values into Scores database
+    """
     score = Scores(name=name, score=score)
     db.session.add(score)
     db.session.commit()
