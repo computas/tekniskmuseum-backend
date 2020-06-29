@@ -2,7 +2,7 @@ from api import db
 
 
 class Games(db.Model):
-    """ 
+    """
        This is the Games model in the database. It is important that the
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
@@ -25,8 +25,8 @@ class Games(db.Model):
 
 
 class Scores(db.Model):
-    """ 
-        This is the Scores model in the database. It is important that the 
+    """
+        This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
     id = db.Column(
@@ -44,7 +44,7 @@ class Scores(db.Model):
 
 
 def createTables(app):
-    """ 
+    """
         The tables will be created if they do not already exist.
     """
     with app.app_context():
@@ -82,24 +82,16 @@ def queryGame(token):
 
 def clearTable(table):
     """
-        Clear the table sent as the argument and return a response 
-        corresponding to the result of the task. 
+        Clear the table sent as the argument and return a response
+        corresponding to the result of the task.
     """
-    if table == 'Games':
-        try:
+    try:
+        if table == 'Games':
             Games.query.delete()
             db.session.commit()
-            return "Table, " + table + ", is cleared."
-        except:
-            db.session.rollback()
-            return "Could not clear table " + table + ".", 500
-    elif table == 'Scores':
-        try:
+        elif table == 'Scores':
             Scores.query.delete()
             db.session.commit()
-            return "Table, " + table + ", is cleared.", 200
-        except:
-            db.session.rollback()
-            return "Could not clear table: " + table + ".", 500
-    else:
-        return "Table does not exist.", 400
+    except AttributeError:
+        db.session.rollback()
+        return "Table does not exist."

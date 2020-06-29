@@ -41,7 +41,7 @@ def startGame():
     """
     Starts a new game. A unique token is generated to keep track
     of game. A random label is chosen for the player to draw.
-    Startime is recorded to calculate elapsed time when the game ends. 
+    Startime is recorded to calculate elapsed time when the game ends.
     Name can be either None or a name and is not unique. Will be sent from frontend.
     """
     startTime = time.time()
