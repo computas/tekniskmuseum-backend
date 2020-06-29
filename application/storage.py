@@ -3,9 +3,12 @@ Tools for interacting with Azure blob storage.
 """
 import os
 import uuid
-import secrets
+import sys
 from azure.storage.blob import BlobClient
-import pdb
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import keys  # E402
 
 
 def saveImage(image, label):
@@ -14,9 +17,9 @@ def saveImage(image, label):
     Image is renamed to assure unique name. Returns public URL to access image
     """
     filename = label + uuid.uuid4().hex + ".png"
-    connectionString = secrets.get("BLOB_CONNECTION_STRING")
-    containerName = 'new-' + label 
-    baseurl = secrets.get('BASE_IMAGE_URL')
+    connectionString = keys.get("BLOB_CONNECTION_STRING")
+    containerName = 'new-' + label
+    baseurl = keys.get('BASE_IMAGE_URL')
     try:
         blob = BlobClient.from_connection_string(
             conn_str=connectionString,
@@ -26,5 +29,4 @@ def saveImage(image, label):
     except Exception as e:
         print(e)
     url = baseurl + '/' + containerName + '/' + filename
-    pdb.set_trace()
     return url

@@ -55,11 +55,10 @@ jobs:
     steps:
     - uses: actions/checkout@master
     
-    # Need to create credentials
-    # - name: 'Azure Login'
-      # uses: azure/login@v1.1
-      # with:
-        # creds: '${{ secrets.AZURE_CREDENTIALS }}' 
+    - name: 'Azure Login'
+      uses: azure/login@v1.1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}' 
 
     - name: Set up Python version
       uses: actions/setup-python@v1
@@ -89,13 +88,13 @@ jobs:
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_a896db61b89543ea8da604e9a364cedd }}
         
-    # Login needed for this to work
-    # - name: Azure App Service Settings
-      # uses: Azure/appservice-settings@v1
-      # with:
-        # app-name: 'tekniskback'
+      # Inject keys into poduction environment
+    - name: Azure App Service Settings
+      uses: Azure/appservice-settings@v1
+      with:
+        app-name: 'tekniskback'
         # Application settings using the JSON syntax set as value of secret variable: APP_SETTINGS
-        # app-settings-json: '${{ secrets.APP_SETTINGS }}'
+        app-settings-json: '${{ secrets.APP_SETTINGS }}'
         # Connection Strings using the JSON syntax set as value of secret variable: CONNECTION_STRINGS
         # connection-strings-json: # optional
         # General configuration settings using dictionary syntax - Key Value pairs
