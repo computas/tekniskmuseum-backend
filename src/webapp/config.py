@@ -10,7 +10,8 @@ import keys
 class Config():
     """
         Config settings for flask and sqlalchemy should be set here.
-    """
+    """ 
     # Database configuration string
-    con_str = keys.get('DB_CONNECTION_STRING')
-    SQLALCHEMY_DATABASE_URI = con_str
+    con_str=keys.get('DB_CONNECTION_STRING')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI=con_str
