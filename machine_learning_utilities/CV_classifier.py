@@ -59,7 +59,7 @@ class CVClassifier:
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
 
-    def predict(self, img_url: str) -> Dict[str, float]:
+    def predict_url(self, img_url: str) -> Dict[str, float]:
         """
         Predicts label(s) of Image read from URL.
 
@@ -72,6 +72,28 @@ class CVClassifier:
 
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
+        )
+
+        pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+
+        return pred_kv
+
+    def predict_png(self, png_img) -> Dict[str, float]:
+        """
+        Predicts label(s) of Image read from URL.
+        ASSUMES:
+        -image of type .png
+        -image size less than 4MB
+        -image resolution at least 256x256 pixels
+
+        Parameters:
+        img_url: .png file
+
+        Returns:
+        prediction (dict[str,float]): labels and assosiated probabilities
+        """
+        res = self.predictor.classify_image(
+            self.project_id, self.iteration_name, png_img
         )
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
@@ -152,6 +174,22 @@ class CVClassifier:
                     if image.status != "OK":
                         print("Image status: ", image.status)
 
+    def delete_iteration(self) -> None:
+        """
+        Deletes the oldest iteration in Custom Vision if there are 11 iterations. 
+        Custom Vision allows maximum 10 iterations in the free version. 
+        """
+
+        iterations = self.trainer.get_iterations(self.project_id)
+
+        if len(iterations) >= 10:
+
+            iterations.sort(key=lambda i: i.created)
+            oldest_iteration = iterations[0].id
+            #print(oldest_iteration, iterations[0])
+            self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
+            self.trainer.delete_iteration(self.project_id, oldest_iteration)
+
     def train(self, labels: list) -> None:
         """
         Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
@@ -165,11 +203,13 @@ class CVClassifier:
         Returns:
         None
 
-        #TODO return error if model is asked to train with non existent label.
-        #TODO delete iterations to make sure projct never exceeds 11 iterations.
+        # TODO return error if model is asked to train with non existent label.
+        # TODO delete iterations to make sure projct never exceeds 11 iterations.
         """
 
         email = None
+
+        self.delete_iteration()
 
         print("Training...")
         iteration = self.trainer.train_project(
@@ -201,7 +241,7 @@ def main():
     -no more than two projects created in Azure Custom Vision
     -no more than 11 iterations done in one project
 
-    #TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
+    # TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
     """
 
     connect_str = keys.get("CONNECT_STR")
@@ -209,14 +249,22 @@ def main():
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
+
     labels = ["ambulance", "bench", "circle", "star", "square"]
     classifier = CVClassifier(blob_service_client)
-    classifier.upload_images(labels)
+    # classifier.upload_images(labels)
 
-    classifier.train(labels)
-    result = classifier.predict(test_url)
+    # classifier.train(labels)
 
-    print(result)
+    with open("machine_learning_utilities/test_data/4504435055132672.png", "rb") as f:
+
+        result = classifier.predict_png(f)
+
+    print(f"png result {result}")
+
+    result = classifier.predict_url(test_url)
+
+    print(f"url result {result}")
 
 
 if __name__ == "__main__":
