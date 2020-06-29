@@ -12,6 +12,7 @@ from azure.cognitiveservices.vision.customvision.training.models import (
 import uuid
 import time
 
+
 import sys
 import os
 
@@ -22,7 +23,6 @@ import keys  # noqa: e402
 
 
 class CVClassifier:
-
     def __init__(self, blob_service_client: BlobServiceClient) -> None:
         """
             Reads configuration file
@@ -55,6 +55,7 @@ class CVClassifier:
             self.ENDPOINT, self.training_credentials
         )
         self.blob_service_client = blob_service_client
+
         iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
@@ -106,7 +107,7 @@ class CVClassifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -189,7 +190,7 @@ class CVClassifier:
 
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
-            #print(oldest_iteration, iterations[0])
+            # print(oldest_iteration, iterations[0])
             self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
             self.trainer.delete_iteration(self.project_id, oldest_iteration)
 
@@ -212,9 +213,6 @@ class CVClassifier:
 
             Potential fixes for this are requesting the latest iteration_name every time you predict, 
             or storing the latest iteration name in a database and fetching this every time you do a prediction
-
-            # TODO return error if model is asked to train with non existent label.
-            # TODO delete iterations to make sure projct never exceeds 11 iterations.
         """
 
         email = None
@@ -231,7 +229,8 @@ class CVClassifier:
         # Wait for training to complete
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
-                self.project_id, iteration.id)
+                self.project_id, iteration.id
+            )
             print("Training status: " + iteration.status)
             time.sleep(1)
 
@@ -239,7 +238,10 @@ class CVClassifier:
         iteration_name = uuid.uuid4()
 
         self.trainer.publish_iteration(
-            self.project_id, iteration.id, iteration_name, self.prediction_resource_id
+            self.project_id,
+            iteration.id,
+            iteration_name,
+            self.prediction_resource_id,
         )
         self.iteration_name = iteration_name
 
@@ -266,11 +268,13 @@ def main():
 
     # classifier.train(labels)
 
-    with open("machine_learning_utilities/test_data/4504435055132672.png", "rb") as f:
+    # with open(
+    #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
+    # ) as f:
+    #    pass
+    # result = classifier.predict_png(f)
 
-        result = classifier.predict_png(f)
-
-    print(f"png result {result}")
+    # print(f"png result {result}")
 
     result = classifier.predict_url(test_url)
 
