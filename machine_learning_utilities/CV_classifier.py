@@ -190,7 +190,7 @@ class CVClassifier:
 
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
-            # print(oldest_iteration, iterations[0])
+
             self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
             self.trainer.delete_iteration(self.project_id, oldest_iteration)
 
@@ -251,9 +251,7 @@ def main():
         Use main if you want to run the complete program with init, train and prediction of and example image.
         To be able to run main, make sure:
         -no more than two projects created in Azure Custom Vision
-        -no more than 11 iterations done in one project
-
-        # TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
+        -no more than 11 iterations done in one projectS
     """
 
     connect_str = keys.get("CONNECT_STR")
