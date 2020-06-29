@@ -203,6 +203,14 @@ class CVClassifier:
         Returns:
         None
 
+
+        # TODO
+        There might arrise an error where the self.iteration_name is not syncronised between processes.
+        If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
+
+        Potential fixes for this are requesting the latest iteration_name every time you predict, 
+        or storing the latest iteration name in a database and fetching this every time you do a prediction
+
         # TODO return error if model is asked to train with non existent label.
         # TODO delete iterations to make sure projct never exceeds 11 iterations.
         """
