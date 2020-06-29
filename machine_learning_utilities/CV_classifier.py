@@ -25,14 +25,14 @@ class CVClassifier:
 
     def __init__(self, blob_service_client: BlobServiceClient) -> None:
         """
-        Reads configuration file
-        Initializes connection to Azure Custom Vision predictor and training resources.
+            Reads configuration file
+            Initializes connection to Azure Custom Vision predictor and training resources.
 
-        Parameters:
-        blob_service_client: Azure Blob Service interaction client
+            Parameters:
+            blob_service_client: Azure Blob Service interaction client
 
-        Returns:
-        None
+            Returns:
+            None
         """
 
         self.ENDPOINT = keys.get("ENDPOINT")
@@ -61,13 +61,13 @@ class CVClassifier:
 
     def predict_url(self, img_url: str) -> Dict[str, float]:
         """
-        Predicts label(s) of Image read from URL.
+            Predicts label(s) of Image read from URL.
 
-        Parameters:
-        img_url: Image URL
+            Parameters:
+            img_url: Image URL
 
-        Returns:
-        prediction (dict[str,float]): labels and assosiated probabilities
+            Returns:
+            prediction (dict[str,float]): labels and assosiated probabilities
         """
 
         res = self.predictor.classify_image_url(
@@ -80,18 +80,19 @@ class CVClassifier:
 
     def predict_png(self, png_img) -> Dict[str, float]:
         """
-        Predicts label(s) of Image read from URL.
-        ASSUMES:
-        -image of type .png
-        -image size less than 4MB
-        -image resolution at least 256x256 pixels
+            Predicts label(s) of Image read from URL.
+            ASSUMES:
+            -image of type .png
+            -image size less than 4MB
+            -image resolution at least 256x256 pixels
 
-        Parameters:
-        img_url: .png file
+            Parameters:
+            img_url: .png file
 
-        Returns:
-        prediction (dict[str,float]): labels and assosiated probabilities
+            Returns:
+            prediction (dict[str,float]): labels and assosiated probabilities
         """
+
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, png_img
         )
@@ -107,16 +108,16 @@ class CVClassifier:
 
     def upload_images(self, labels: List) -> None:
         """
-        Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
-        If label in input already exists in Custom Vision project, all images are uploaded directly.
-        If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
+            Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
+            If label in input already exists in Custom Vision project, all images are uploaded directly.
+            If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
 
 
-        Parameters:
-        labels (str[]): List of labels
+            Parameters:
+            labels (str[]): List of labels
 
-        Returns:
-        None
+            Returns:
+            None
         """
 
         url_list = []
@@ -176,8 +177,8 @@ class CVClassifier:
 
     def delete_iteration(self) -> None:
         """
-        Deletes the oldest iteration in Custom Vision if there are 11 iterations. 
-        Custom Vision allows maximum 10 iterations in the free version. 
+            Deletes the oldest iteration in Custom Vision if there are 11 iterations. 
+            Custom Vision allows maximum 10 iterations in the free version. 
         """
 
         iterations = self.trainer.get_iterations(self.project_id)
@@ -192,27 +193,26 @@ class CVClassifier:
 
     def train(self, labels: list) -> None:
         """
-        Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
-        Generates unique iteration name, publishes model and sets self.iteration_name if successful.
+            Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
+            Generates unique iteration name, publishes model and sets self.iteration_name if successful.
 
-        then publishes the model.
-        C
-        Parameters:
-        labels (str[]): List of labels
+            then publishes the model.
+            C
+            Parameters:
+            labels (str[]): List of labels
 
-        Returns:
-        None
+            Returns:
+            None
 
+            # TODO
+            There might arrise an error where the self.iteration_name is not syncronised between processes.
+            If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
 
-        # TODO
-        There might arrise an error where the self.iteration_name is not syncronised between processes.
-        If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
+            Potential fixes for this are requesting the latest iteration_name every time you predict, 
+            or storing the latest iteration name in a database and fetching this every time you do a prediction
 
-        Potential fixes for this are requesting the latest iteration_name every time you predict, 
-        or storing the latest iteration name in a database and fetching this every time you do a prediction
-
-        # TODO return error if model is asked to train with non existent label.
-        # TODO delete iterations to make sure projct never exceeds 11 iterations.
+            # TODO return error if model is asked to train with non existent label.
+            # TODO delete iterations to make sure projct never exceeds 11 iterations.
         """
 
         email = None
@@ -244,12 +244,12 @@ class CVClassifier:
 
 def main():
     """
-    Use main if you want to run the complete program with init, train and prediction of and example image.
-    To be able to run main, make sure:
-    -no more than two projects created in Azure Custom Vision
-    -no more than 11 iterations done in one project
+        Use main if you want to run the complete program with init, train and prediction of and example image.
+        To be able to run main, make sure:
+        -no more than two projects created in Azure Custom Vision
+        -no more than 11 iterations done in one project
 
-    # TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
+        # TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
     """
 
     connect_str = keys.get("CONNECT_STR")
