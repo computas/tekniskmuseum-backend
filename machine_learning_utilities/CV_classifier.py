@@ -23,7 +23,7 @@ import keys  # noqa: e402
 
 
 class CVClassifier:
-    def __init__(self, blob_service_client: BlobServiceClient) -> None:
+    def __init__(self) -> None:
         """
             Reads configuration file
             Initializes connection to Azure Custom Vision predictor and training resources.
@@ -39,7 +39,7 @@ class CVClassifier:
         self.project_id = keys.get("PROJECT_ID")
         self.prediction_key = keys.get("PREDICTION_KEY")
         self.training_key = keys.get("TRAINING_KEY")
-        self.base_img_url = keys.get("BASE_IMG_URL")
+        self.base_img_url = keys.get("BASE_IMAGE_URL")
         self.prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
 
         self.prediction_credentials = ApiKeyCredentials(
@@ -54,7 +54,8 @@ class CVClassifier:
         self.trainer = CustomVisionTrainingClient(
             self.ENDPOINT, self.training_credentials
         )
-        self.blob_service_client = blob_service_client
+        connect_str = keys.get("BLOB_CONNECTION_STRING")
+        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
         iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
@@ -97,6 +98,7 @@ class CVClassifier:
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, png_img
         )
+        png_img.seek(0)
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
 
@@ -180,8 +182,8 @@ class CVClassifier:
 
     def delete_iteration(self) -> None:
         """
-            Deletes the oldest iteration in Custom Vision if there are 11 iterations. 
-            Custom Vision allows maximum 10 iterations in the free version. 
+            Deletes the oldest iteration in Custom Vision if there are 11 iterations.
+            Custom Vision allows maximum 10 iterations in the free version.
         """
 
         iterations = self.trainer.get_iterations(self.project_id)
@@ -211,7 +213,7 @@ class CVClassifier:
             There might arrise an error where the self.iteration_name is not syncronised between processes.
             If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
 
-            Potential fixes for this are requesting the latest iteration_name every time you predict, 
+            Potential fixes for this are requesting the latest iteration_name every time you predict,
             or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
 
@@ -254,13 +256,12 @@ def main():
         -no more than 11 iterations done in one projectS
     """
 
-    connect_str = keys.get("CONNECT_STR")
+    connect_str = keys.get("BLOB_CONNECTION_STRING")
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
-    labels = ["ambulance", "bench", "circle", "star", "square"]
     classifier = CVClassifier(blob_service_client)
     # classifier.upload_images(labels)
 

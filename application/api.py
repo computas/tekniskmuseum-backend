@@ -5,18 +5,20 @@ import time
 import sys
 import os
 import storage
+import models
+from machine_learning_utilities.CV_classifier import CVClassifier
 from io import BytesIO
 from PIL import Image
 from flask import Flask
 from flask import request
 from flask import jsonify
-import models
 from flask_sqlalchemy import SQLAlchemy
 
 # Global variables
 app = Flask(__name__)
 app.config.from_object('config.Config')
 db = SQLAlchemy(app)
+classifier = CVClassifier()
 
 
 labels = [
@@ -42,7 +44,7 @@ def startGame():
     """
     Starts a new game. A unique token is generated to keep track
     of game. A random label is chosen for the player to draw.
-    Startime is recorded to calculate elapsed time when the game ends. 
+    Startime is recorded to calculate elapsed time when the game ends.
     Name can be either None or a name and is not unique. Will be sent from frontend.
     """
     startTime = time.time()
@@ -70,12 +72,13 @@ def submitAnswer():
     Vision.The player wins if the classification is correct and the time
     used is less than the time limit.
     """
+    stopTime = time.time()
     if "file" not in request.files:
         return "No image submitted", 400
     image = request.files["file"]
     if not allowedFile(image):
         return "Image does not satisfy constraints", 415
-    classification, certainty = classify(image)
+    classification = classifier.predict_png(image)
 
     # get token from frontend
     token = request.values['token']
@@ -84,12 +87,12 @@ def submitAnswer():
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
-    timeUsed = time.time() - startTime
-    hasWon = timeUsed < timeLimit and classification == label
+    timeUsed = stopTime - startTime
+    bestGuess = max(classification, key=classification.get)
+    hasWon = timeUsed < timeLimit and bestGuess == label
     storage.saveImage(image, label)
     data = {
         "classificaton": classification,
-        "certainty": certainty,
         "correctLabel": label,
         "hasWon": hasWon,
         "timeUsed": timeUsed,
