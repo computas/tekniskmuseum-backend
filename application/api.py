@@ -2,15 +2,22 @@ import uuid
 import random
 import time
 import sys
-from application import storage
+import os
+import storage
 from io import BytesIO
 from PIL import Image
 from flask import Flask
 from flask import request
 from flask import jsonify
+import models
+from flask_sqlalchemy import SQLAlchemy
 
 # Global variables
 app = Flask(__name__)
+app.config.from_object('config.Config')
+db = SQLAlchemy(app)
+
+
 labels = [
     "ambulance",
     "bench",
@@ -34,19 +41,24 @@ def startGame():
     """
     Starts a new game. A unique token is generated to keep track
     of game. A random label is chosen for the player to draw.
-    Startime is recordede to calculate elapsed time when the game ends.
+    Startime is recorded to calculate elapsed time when the game ends. 
+    Name can be either None or a name and is not unique. Will be sent from frontend.
     """
     startTime = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    # Insert game detals into DB
-    # sql = 'INSERT into games VALUES (%s,%s, %s)'
-    # queryParams = (token, label, startTime)
+    name = None  # get name from POST request ?
+
+    # function from models for adding to db
+    models.insertIntoGames(token, name, startTime, label)
+
+    # data is stored in a json object and returned to frontend
     data = {
         "token": token,
         "label": label,
         "startTime": startTime,
     }
+
     return jsonify(data), 200
 
 
@@ -63,13 +75,12 @@ def submitAnswer():
     if not allowedFile(image):
         return "Image does not satisfy constraints", 415
     classification, certainty = classify(image)
-    # get game details from DB
-    # sql = 'SELECT * FROM game WHERE token=%s'
-    # token = request.values['token']
-    # queryParam = token
-    # mock data
-    startTime = time.time()
-    label = random.choice(labels)
+
+    # get token from frontend
+    token = request.values['token']
+    # get values from function in models
+    name, startTime, label = models.queryGame(token)
+
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
@@ -82,12 +93,23 @@ def submitAnswer():
         "hasWon": hasWon,
         "timeUsed": timeUsed,
     }
+    score = 700
+    # add to db with function from models
+    models.insertIntoScores(name, score)
     return jsonify(data), 200
+
+
+def clearTable(table):
+    """
+        Clear a table in the database.
+    """
+    response = models.clearTable(table)
+    return response
 
 
 def classify(image):
     """
-    Classify image with Azure Custom Vision.
+        Classify image with Azure Custom Vision.
     """
     # TODO: implement custom vision here
     label = random.choice(labels)
@@ -118,4 +140,7 @@ def allowedFile(image):
 
 
 if __name__ == "__main__":
+    # creates table if does not exist
+    models.createTables(app)
+
     app.run(debug=True)
