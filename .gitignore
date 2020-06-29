@@ -3,4 +3,4 @@
 .vscode
 *__pycache__*
 config.json
-4504435055132672.png
+*.pytest_cache*
