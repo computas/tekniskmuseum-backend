@@ -25,9 +25,10 @@ def saveImage(image, label):
         blob = BlobClient.from_connection_string(
             conn_str=connectionString,
             container_name=containerName,
-            blob_name=filename)
+            blob_name=filename,
+        )
         blob.upload_blob(image)
     except Exception as e:
         print(e)
-    url = baseurl + "/" + containerName + "/r" + filename
+    url = baseurl + "/" + containerName + "/" + filename
     return url

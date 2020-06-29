@@ -12,6 +12,7 @@ from azure.cognitiveservices.vision.customvision.training.models import (
 import uuid
 import time
 
+
 import sys
 import os
 
@@ -22,17 +23,16 @@ import keys  # noqa: e402
 
 
 class CVClassifier:
-
     def __init__(self, blob_service_client: BlobServiceClient) -> None:
         """
-        Reads configuration file
-        Initializes connection to Azure Custom Vision predictor and training resources.
+            Reads configuration file
+            Initializes connection to Azure Custom Vision predictor and training resources.
 
-        Parameters:
-        blob_service_client: Azure Blob Service interaction client
+            Parameters:
+            blob_service_client: Azure Blob Service interaction client
 
-        Returns:
-        None
+            Returns:
+            None
         """
 
         self.ENDPOINT = keys.get("ENDPOINT")
@@ -55,19 +55,20 @@ class CVClassifier:
             self.ENDPOINT, self.training_credentials
         )
         self.blob_service_client = blob_service_client
+
         iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
 
-    def predict(self, img_url: str) -> Dict[str, float]:
+    def predict_url(self, img_url: str) -> Dict[str, float]:
         """
-        Predicts label(s) of Image read from URL.
+            Predicts label(s) of Image read from URL.
 
-        Parameters:
-        img_url: Image URL
+            Parameters:
+            img_url: Image URL
 
-        Returns:
-        prediction (dict[str,float]): labels and assosiated probabilities
+            Returns:
+            prediction (dict[str,float]): labels and assosiated probabilities
         """
 
         res = self.predictor.classify_image_url(
@@ -78,23 +79,48 @@ class CVClassifier:
 
         return pred_kv
 
+    def predict_png(self, png_img) -> Dict[str, float]:
+        """
+            Predicts label(s) of Image read from URL.
+            ASSUMES:
+            -image of type .png
+            -image size less than 4MB
+            -image resolution at least 256x256 pixels
+
+            Parameters:
+            img_url: .png file
+
+            Returns:
+            prediction (dict[str,float]): labels and assosiated probabilities
+        """
+
+        res = self.predictor.classify_image(
+            self.project_id, self.iteration_name, png_img
+        )
+
+        pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+
+        return pred_kv
+
     def __chunks(self, lst, n):
-        """Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision."""
+        """
+            Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
+        """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
-        Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
-        If label in input already exists in Custom Vision project, all images are uploaded directly.
-        If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
+            Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
+            If label in input already exists in Custom Vision project, all images are uploaded directly.
+            If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
 
 
-        Parameters:
-        labels (str[]): List of labels
+            Parameters:
+            labels (str[]): List of labels
 
-        Returns:
-        None
+            Returns:
+            None
         """
 
         url_list = []
@@ -152,24 +178,46 @@ class CVClassifier:
                     if image.status != "OK":
                         print("Image status: ", image.status)
 
+    def delete_iteration(self) -> None:
+        """
+            Deletes the oldest iteration in Custom Vision if there are 11 iterations. 
+            Custom Vision allows maximum 10 iterations in the free version. 
+        """
+
+        iterations = self.trainer.get_iterations(self.project_id)
+
+        if len(iterations) >= 10:
+
+            iterations.sort(key=lambda i: i.created)
+            oldest_iteration = iterations[0].id
+
+            self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
+            self.trainer.delete_iteration(self.project_id, oldest_iteration)
+
     def train(self, labels: list) -> None:
         """
-        Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
-        Generates unique iteration name, publishes model and sets self.iteration_name if successful.
+            Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
+            Generates unique iteration name, publishes model and sets self.iteration_name if successful.
 
-        then publishes the model.
-        C
-        Parameters:
-        labels (str[]): List of labels
+            then publishes the model.
+            C
+            Parameters:
+            labels (str[]): List of labels
 
-        Returns:
-        None
+            Returns:
+            None
 
-        #TODO return error if model is asked to train with non existent label.
-        #TODO delete iterations to make sure projct never exceeds 11 iterations.
+            # TODO
+            There might arrise an error where the self.iteration_name is not syncronised between processes.
+            If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
+
+            Potential fixes for this are requesting the latest iteration_name every time you predict, 
+            or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
 
         email = None
+
+        self.delete_iteration()
 
         print("Training...")
         iteration = self.trainer.train_project(
@@ -181,7 +229,8 @@ class CVClassifier:
         # Wait for training to complete
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
-                self.project_id, iteration.id)
+                self.project_id, iteration.id
+            )
             print("Training status: " + iteration.status)
             time.sleep(1)
 
@@ -189,19 +238,20 @@ class CVClassifier:
         iteration_name = uuid.uuid4()
 
         self.trainer.publish_iteration(
-            self.project_id, iteration.id, iteration_name, self.prediction_resource_id
+            self.project_id,
+            iteration.id,
+            iteration_name,
+            self.prediction_resource_id,
         )
         self.iteration_name = iteration_name
 
 
 def main():
     """
-    Use main if you want to run the complete program with init, train and prediction of and example image.
-    To be able to run main, make sure:
-    -no more than two projects created in Azure Custom Vision
-    -no more than 11 iterations done in one project
-
-    #TODO: make method for cleaning up iterations before making a new one(max 11 iterations in Azure Custom Vision)
+        Use main if you want to run the complete program with init, train and prediction of and example image.
+        To be able to run main, make sure:
+        -no more than two projects created in Azure Custom Vision
+        -no more than 11 iterations done in one projectS
     """
 
     connect_str = keys.get("CONNECT_STR")
@@ -209,14 +259,24 @@ def main():
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
+
     labels = ["ambulance", "bench", "circle", "star", "square"]
     classifier = CVClassifier(blob_service_client)
-    classifier.upload_images(labels)
+    # classifier.upload_images(labels)
 
-    classifier.train(labels)
-    result = classifier.predict(test_url)
+    # classifier.train(labels)
 
-    print(result)
+    # with open(
+    #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
+    # ) as f:
+    #    pass
+    # result = classifier.predict_png(f)
+
+    # print(f"png result {result}")
+
+    result = classifier.predict_url(test_url)
+
+    print(f"url result {result}")
 
 
 if __name__ == "__main__":
