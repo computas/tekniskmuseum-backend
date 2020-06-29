@@ -256,7 +256,7 @@ def main():
         -no more than 11 iterations done in one projectS
     """
 
-    connect_str = keys.get("BLOB_CONNECTION_STRNG")
+    connect_str = keys.get("BLOB_CONNECTION_STRING")
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
