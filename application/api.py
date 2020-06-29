@@ -47,20 +47,18 @@ def startGame():
     startTime = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    name = None # get name from POST request ?
-
+    name = None  # get name from POST request ?
 
     # function from models for adding to db
     models.insertIntoGames(token, name, startTime, label)
 
-
-    #data is stored in a json object and returned to frontend
+    # data is stored in a json object and returned to frontend
     data = {
         "token": token,
         "label": label,
         "startTime": startTime,
     }
-    
+
     return jsonify(data), 200
 
 
@@ -77,17 +75,17 @@ def submitAnswer():
     if not allowedFile(image):
         return "Image does not satisfy constraints", 415
     classification, certainty = classify(image)
-  
+
     # get token from frontend
     token = request.values['token']
-    # get values from function in models 
+    # get values from function in models
     name, startTime, label = models.queryGame(token)
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = time.time() - startTime
     hasWon = timeUsed < timeLimit and classification == label
-    #storage.saveImage(image, label)
+    storage.saveImage(image, label)
     data = {
         "classificaton": classification,
         "certainty": certainty,
@@ -100,16 +98,18 @@ def submitAnswer():
     models.insertIntoScores(name, score)
     return jsonify(data), 200
 
-#@app.route('/clearTable', methods=['POST'])
+
 def clearTable(table):
-    #table = request.values['table']
+    """
+        Clear a table in the database.
+    """
     response = models.clearTable(table)
     return response
 
 
 def classify(image):
     """
-    Classify image with Azure Custom Vision.
+        Classify image with Azure Custom Vision.
     """
     # TODO: implement custom vision here
     label = random.choice(labels)
@@ -140,8 +140,7 @@ def allowedFile(image):
 
 
 if __name__ == "__main__":
-    #creates table if does not exist
+    # creates table if does not exist
     models.createTables(app)
 
-    
     app.run(debug=True)

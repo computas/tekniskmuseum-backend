@@ -1,4 +1,5 @@
 ./training-tool/data/*
 ./training-tool/images/*
 .vscode
-*__pycache__config.json
+*__pycache__*
+config.json
