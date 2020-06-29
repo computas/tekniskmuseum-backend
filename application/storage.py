@@ -8,7 +8,7 @@ from azure.storage.blob import BlobClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import keys  # E402
+import keys  # noqa: E402
 
 
 def saveImage(image, label):
