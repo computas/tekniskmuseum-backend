@@ -102,7 +102,9 @@ class CVClassifier:
         return pred_kv
 
     def __chunks(self, lst, n):
-        """Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision."""
+        """
+            Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
+        """
         for i in range(0, len(lst), n):
             yield lst[i: i + n]
 
