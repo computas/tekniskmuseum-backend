@@ -71,7 +71,8 @@ def insert_into_scores(name, score):
 
 def query_game(token):
     """
-        Return the first record of Games that matches the query.
+        Return name, starttime and label of the first record of Games that
+        matches the query.
     """
     try:
         game = Games.query.filter_by(token=token).first()
