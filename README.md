@@ -55,7 +55,7 @@ _A rule of thumb when working on the project is to always branch out to a new br
 | `testing/awesome-branch-name`     | When writing new tests to existing features |
 
 ### **Pull Requests**
-_When an issue has been solved and tested by the developer, an pull request must be submitted in the repository for validation. This is so the branch can be merged with the master branch. The Merge Request must follow the rules given below._
+_When an issue has been solved and tested by the developer, a pull request must be submitted in the repository for validation. This is so the branch can be merged with the master branch. The Merge Request must follow the rules given below._
 #### **Pull Request Rules**
 1. Don't use the branch name as header for the pull request.
 2. Use a header called "Changes" where you explain pointwise what the pull requests add to the project.
