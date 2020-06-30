@@ -27,6 +27,10 @@ _To make the code as easy to maintain and read as possible, it is necessary to f
 6. Develop tests when a new feature is implemented.
 7. Don't EVER use 'import *'
 8. Leave an empty line at the end of a statement, loop or a similiar code structure.
+9. Don't use more than 1 newline between code chunks within functions/methods.
+10. When creating strings, use double quotation marks ("string here") instead of single ('string here').
+11. The triple quotations in a docstring should be on separate lines from the content. Remember to indent the content of the docstring as well. This makes it more readable.
+12. Ideally, only a single class should be placed within each file.
 
 #### **Commit Message Rules**
 
