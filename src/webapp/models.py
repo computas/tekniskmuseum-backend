@@ -90,9 +90,11 @@ def clear_table(table):
         if table == 'Games':
             Games.query.delete()
             db.session.commit()
+            return "Table successfully cleared"
         elif table == 'Scores':
             Scores.query.delete()
             db.session.commit()
+            return "Table successfully cleared"
     except AttributeError:
         db.session.rollback()
         return "Table does not exist."

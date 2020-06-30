@@ -105,7 +105,7 @@ def submitAnswer():
 
 def clearTable(table):
     """
-        Clear a table in the database.
+        Clear a table in the database and return the result of the action.
     """
     response = models.clear_table(table)
     return response
