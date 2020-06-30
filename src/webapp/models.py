@@ -15,8 +15,9 @@ class Games(db.Model):
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
+    __tablename__="Games"
     token = db.Column(
-        db.NVARCHAR(450),
+        db.NVARCHAR(50),
         primary_key=True,
     )
     start_time = db.Column(
@@ -74,14 +75,19 @@ def insert_into_scores(name, score):
     db.session.commit()
 
 
-def query_game(token):
+def query_game(table,token):
     """
         Return name, starttime and label of the first record of Games that
         matches the query.
     """
     try:
+<<<<<<< HEAD
         game = Games.query.filter_by(token=token).first()
         return game.start_time, game.label
+=======
+        game = get_class_by_tablename(table).query.filter_by(token=token).first()
+        return game.name, game.starttime, game.label
+>>>>>>> Add function for getting class by tablename
     except AttributeError:
         return "Could not find record for " + token + "."
 
@@ -103,3 +109,14 @@ def clear_table(table):
     except AttributeError:
         db.session.rollback()
         return "Table does not exist."
+
+def get_class_by_tablename(tablename):
+  """Return class reference mapped to table.
+
+  :param tablename: String with name of table.
+  :return: Class reference or None.
+  """
+  for c in db.Model._decl_class_registry.values():
+    print("C= " + str(c))
+    if hasattr(c, '__tablename__') and c.__tablename__ == tablename:
+      return c
