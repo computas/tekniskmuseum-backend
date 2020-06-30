@@ -1,0 +1,43 @@
+tekniskmuseum-backend/
+        |--README.md
+        |--.gitignore
+        |--.flake8
+        |--.pylintrc
+        |--pyproject.toml
+        |--requirements.txt
+	|--startapp.sh
+        |--config.json
+        |--src/
+        |   |--__init__.py
+        |   |--keys.py
+        |   |--webapp/
+        |   |    |--__init__.py
+        |   |    |--api.py
+        |   |    |--storage.py
+        |   |    |--models.py
+        |   |    |--config.py
+        |   |--custom_vision/
+        |   |    |--__init__.py
+        |   |    |--CV_classifier.py
+        |   |    |--train_test.py
+        |   |--preprocessing/
+        |   |    |--__init__.py
+        |   |    |--data_migration.py
+        |   |--testing/
+        |   |    |--__init__.py
+        |   |    |--test_api.py
+        |--docs/
+        |   |--figures/
+        |   |    |--<all documenting figures here>
+        |   |--documents/
+        |   |    |--<all written documentation here>
+	|--data/
+	|   |--test_data/
+        |   |    |--allowedFile_test1.PNG
+        |   |    |--allowedFile_test2.PNG
+        |   |    |--allowedFile_test3.JPG
+        |   |    |--allowedFile_test4.PNG
+        |--.github/
+        |   |--pull_request_template.md
+        |   |--workflows/
+        |   |    |--master_tekniskback.yml
