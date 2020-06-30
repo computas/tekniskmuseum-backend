@@ -145,6 +145,6 @@ def allowedFile(image):
 
 if __name__ == "__main__":
     # creates table if does not exist
-    models.createTables(app)
+    models.create_tables(app)
 
     app.run(debug=True)
