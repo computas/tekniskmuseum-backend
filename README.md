@@ -31,6 +31,7 @@ _To make the code as easy to maintain and read as possible, it is necessary to f
 10. When creating strings, use double quotation marks ("string here") instead of single ('string here').
 11. The triple quotations in a docstring should be on separate lines from the content. Remember to indent the content of the docstring as well. This makes it more readable.
 12. Ideally, only a single class should be placed within each file.
+13. Ensure that method names use underscores between words instead of camel case.
 
 #### **Commit Message Rules**
 
