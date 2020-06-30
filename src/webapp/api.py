@@ -6,7 +6,7 @@ import sys
 import os
 import storage
 import models
-from machine_learning_utilities.CV_classifier import CVClassifier
+from CustomVision.CV_classifier import CVClassifier
 from io import BytesIO
 from PIL import Image
 from flask import Flask
@@ -53,7 +53,7 @@ def startGame():
     name = None  # get name from POST request ?
 
     # function from models for adding to db
-    models.insertIntoGames(token, name, startTime, label)
+    models.insert_into_games(token, name, startTime, label)
 
     # data is stored in a json object and returned to frontend
     data = {
@@ -83,7 +83,7 @@ def submitAnswer():
     # get token from frontend
     token = request.values['token']
     # get values from function in models
-    name, startTime, label = models.queryGame(token)
+    name, startTime, label = models.query_game(token)
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
@@ -99,7 +99,7 @@ def submitAnswer():
     }
     score = 700
     # add to db with function from models
-    models.insertIntoScores(name, score)
+    models.insert_into_scores(name, score)
     return jsonify(data), 200
 
 
@@ -107,7 +107,7 @@ def clearTable(table):
     """
         Clear a table in the database.
     """
-    response = models.clearTable(table)
+    response = models.clear_table(table)
     return response
 
 
