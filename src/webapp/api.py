@@ -38,8 +38,7 @@ def start_game():
     start_time = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    name = None  # TODO: name not needed until highscore row is created
-    models.insert_into_games(token, name, start_time, label)
+    models.insert_into_games(token, start_time, label)
 
     # return game data as json object
     data = {
@@ -71,7 +70,7 @@ def submit_answer():
 
     # use token submitted by player to find game
     token = request.values["token"]
-    name, start_time, label = models.query_game(token)
+    start_time, label = models.query_game(token)
 
     # check if player won the game
     time_used = stop_time - start_time
