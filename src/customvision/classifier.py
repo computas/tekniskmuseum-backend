@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities.keys import Keys  # noqa: e402
 
 
+
 class Classifier:
     def __init__(self) -> None:
         """
