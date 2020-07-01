@@ -29,10 +29,10 @@ def hello():
 @app.route("/startGame")
 def start_game():
     """
-    Starts a new game. A unique token is generated to keep track
-    of game. A random label is chosen for the player to draw.
-    Startime is recorded to calculate elapsed time when the game ends.
-    Name can be either None or a name and is not unique. Will be sent from frontend.
+        Starts a new game. A unique token is generated to keep track of game.
+        A random label is chosen for the player to draw. Startime is
+        recorded to calculate elapsed time when the game ends. Name can be
+        either None or a name and is not unique. Will be sent from frontend.
     """
     # start a game and insert it into the games table
     start_time = time.time()
@@ -53,9 +53,9 @@ def start_game():
 @app.route("/submit_answer", methods=["POST"])
 def submit_answer():
     """
-    Endpoint for user to submit drawing. Drawing is classified with Custom
-    Vision.The player wins if the classification is correct and the time
-    used is less than the time limit.
+        Endpoint for user to submit drawing. Drawing is classified with Custom
+        Vision.The player wins if the classification is correct and the time
+        used is less than the time limit.
     """
     stop_time = time.time()
 
@@ -98,7 +98,7 @@ def submit_answer():
 
 def allowed_file(image):
     """
-    Check if image satisfies the constraints of Custom Vision.
+        Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
         return False

@@ -1,5 +1,5 @@
 """
-imports secrets from GitHub Secrets or config.json
+    imports secrets from GitHub Secrets or config.json
 """
 import os
 import json
@@ -19,8 +19,8 @@ else:
 
 def get(keyName):
     """
-    Returns secret matching the key. Returns appropriate error message if key
-    is not found.
+        Returns secret matching the key. Returns appropriate error message if
+        key is not found.
     """
     try:
         return keys[keyName]

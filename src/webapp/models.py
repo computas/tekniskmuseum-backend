@@ -46,7 +46,7 @@ class Scores(db.Model):
     )
 
 
-def createTables(app):
+def create_tables(app):
     """
         The tables will be created if they do not already exist.
     """
@@ -54,7 +54,7 @@ def createTables(app):
         db.create_all()
 
 
-def insertIntoGames(token, name, starttime, label):
+def insert_into_games(token, name, starttime, label):
     """
         Insert values into Games table.
     """
@@ -63,7 +63,7 @@ def insertIntoGames(token, name, starttime, label):
     db.session.commit()
 
 
-def insertIntoScores(name, score):
+def insert_into_scores(name, score):
     """
         Insert values into Scores table.
     """
@@ -72,9 +72,10 @@ def insertIntoScores(name, score):
     db.session.commit()
 
 
-def queryGame(token):
+def query_game(token):
     """
-        Return the first record of Games that matches the query.
+        Return name, starttime and label of the first record of Games that
+        matches the query.
     """
     try:
         game = Games.query.filter_by(token=token).first()
@@ -83,7 +84,7 @@ def queryGame(token):
         return "Could not find record for " + token + "."
 
 
-def clearTable(table):
+def clear_table(table):
     """
         Clear the table sent as the argument and return a response
         corresponding to the result of the task.
@@ -92,9 +93,11 @@ def clearTable(table):
         if table == 'Games':
             Games.query.delete()
             db.session.commit()
+            return "Table successfully cleared"
         elif table == 'Scores':
             Scores.query.delete()
             db.session.commit()
+            return "Table successfully cleared"
     except AttributeError:
         db.session.rollback()
         return "Table does not exist."
