@@ -3,7 +3,7 @@ import sys
 import werkzeug
 import tempfile
 import pytest
-from application import api
+from webapp import api
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def test_root_example(client):
         Use GET request on root and check if the response is correct.
     """
     req = client.get("/")
-    assert req.data == b"Hello, World!"
+    assert req.data == b"Yes, we're up"
 
 
 def test_allowedFile_small_resolution(client):
@@ -31,7 +31,7 @@ def test_allowedFile_small_resolution(client):
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowedFileHelper("allowedFile_test1.png", False)
+    allowed_file_helper("allowedFile_test1.png", False)
 
 
 def test_allowedFile_too_large_file(client):
@@ -41,7 +41,7 @@ def test_allowedFile_too_large_file(client):
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowedFileHelper("allowedFile_test2.png", False)
+    allowed_file_helper("allowedFile_test2.png", False)
 
 
 def test_allowedFile_wrong_format(client):
@@ -51,7 +51,7 @@ def test_allowedFile_wrong_format(client):
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowedFileHelper("allowedFile_test3.jpg", False)
+    allowed_file_helper("allowedFile_test3.jpg", False)
 
 
 def test_allowedFile_correct(client):
@@ -61,15 +61,15 @@ def test_allowedFile_correct(client):
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'true'.
-    allowedFileHelper("allowedFile_test4.png", True)
+    allowed_file_helper("allowedFile_test4.png", True)
 
 
-def allowedFileHelper(filename, expected_result):
+def allowed_file_helper(filename, expected_result):
     """
         Helper function for the allowedFile function tests.
     """
     # The path is only valid if the program runs from the outmost directory
-    path = os.path.join("test", "test_data", filename)
+    path = os.path.join("..", "data", filename)
     with open(path, "rb") as f:
         data_stream = f.read()
         # Create temporary file and reset seek to avoid EOF errors
@@ -79,6 +79,6 @@ def allowedFileHelper(filename, expected_result):
         # Create file storage object containing the image
         image = werkzeug.datastructures.FileStorage(stream=tmp, filename=path)
         # Test allowedFile function with the image file
-        result = api.allowedFile(image)
+        result = api.allowed_file(image)
 
     assert result == expected_result
