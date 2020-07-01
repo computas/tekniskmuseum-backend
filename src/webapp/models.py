@@ -14,10 +14,7 @@ class Games(db.Model):
         db.NVARCHAR(450),
         primary_key=True,
     )
-    name = db.Column(
-        db.String(64),
-    )
-    starttime = db.Column(
+    start_time = db.Column(
         db.Float,
         nullable=False
     )
@@ -54,11 +51,11 @@ def create_tables(app):
         db.create_all()
 
 
-def insert_into_games(token, name, starttime, label):
+def insert_into_games(token, start_time, label):
     """
         Insert values into Games table.
     """
-    game = Games(token=token, name=name, starttime=starttime, label=label)
+    game = Games(token=token, start_time=start_time, label=label)
     db.session.add(game)
     db.session.commit()
 
@@ -79,7 +76,7 @@ def query_game(token):
     """
     try:
         game = Games.query.filter_by(token=token).first()
-        return game.name, game.starttime, game.label
+        return game.start_time, game.label
     except AttributeError:
         return "Could not find record for " + token + "."
 
