@@ -32,8 +32,8 @@ from utilities.keys import Keys  # noqa: e402
 class Classifier:
     def __init__(self) -> None:
         """
-            Reads configuration file
-            Initializes connection to Azure Custom Vision predictor and training resources.
+            Reads configuration file. Initializes connection to Azure Custom
+            Vision predictor and training resources.
 
             Parameters:
             blob_service_client: Azure Blob Service interaction client
@@ -82,7 +82,7 @@ class Classifier:
             img_url: Image URL
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            prediction (dict[str,float]): labels and assosiated probabilities.
         """
 
         res = self.predictor.classify_image_url(
@@ -123,17 +123,19 @@ class Classifier:
 
     def __chunks(self, lst, n):
         """
-            Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
+            Helper method used by upload_images() to upload URL chunks of 64,
+            which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
-            Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
-            If label in input already exists in Custom Vision project, all images are uploaded directly.
-            If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
-
+            Takes as input a list of labels, uploads all assosiated images to
+            Azure Custom Vision project. If label in input already exists in
+            Custom Vision project, all images are uploaded directly. If label
+            in input does not exist in Custom Vision project, new label (Tag
+            object in Custom Vision) is created before uploading images
 
             Parameters:
             labels (str[]): List of labels
@@ -199,8 +201,9 @@ class Classifier:
 
     def delete_iteration(self) -> None:
         """
-            Deletes the oldest iteration in Custom Vision if there are 11 iterations.
-            Custom Vision allows maximum 10 iterations in the free version.
+            Deletes the oldest iteration in Custom Vision if there are 11
+            iterations. Custom Vision allows maximum 10 iterations in the
+            free version.
         """
 
         iterations = self.trainer.get_iterations(self.project_id)
@@ -215,23 +218,21 @@ class Classifier:
 
     def train(self, labels: list) -> None:
         """
-            Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
-            Generates unique iteration name, publishes model and sets self.iteration_name if successful.
-
-            then publishes the model.
-            C
+            Trains model on all labels specified in input list, exeption is
+            raised by self.trainer.train_projec() is asked to train on non 
+            existent labels. Generates unique iteration name, publishes model
+            and sets self.iteration_name if successful. The model is finally 
+            published.
+            
             Parameters:
             labels (str[]): List of labels
 
             Returns:
             None
 
-            # TODO
-            There might arrise an error where the self.iteration_name is not syncronised between processes.
-            If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
-
-            Potential fixes for this are requesting the latest iteration_name every time you predict,
-            or storing the latest iteration name in a database and fetching this every time you do a prediction
+            #TODO return error if model is asked to train with non existent
+            label. Also, delete iterations to make sure projct never exceeds
+            11 iterations.
         """
 
         email = None
@@ -267,10 +268,13 @@ class Classifier:
 
 def main():
     """
-        Use main if you want to run the complete program with init, train and prediction of and example image.
-        To be able to run main, make sure:
+        Use main if you want to run the complete program with init, train and
+        prediction of and example image. To be able to run main, make sure:
         -no more than two projects created in Azure Custom Vision
-        -no more than 11 iterations done in one projectS
+        -no more than 11 iterations done in one project
+
+        #TODO: make method for cleaning up iterations before making a new
+        one(max 11 iterations in Azure Custom Vision)
     """
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 

@@ -47,10 +47,10 @@ def hello():
 @app.route("/startGame")
 def startGame():
     """
-    Starts a new game. A unique token is generated to keep track
-    of game. A random label is chosen for the player to draw.
-    Startime is recorded to calculate elapsed time when the game ends.
-    Name can be either None or a name and is not unique. Will be sent from frontend.
+        Starts a new game. A unique token is generated to keep track of game.
+        A random label is chosen for the player to draw. Startime is
+        recorded to calculate elapsed time when the game ends. Name can be
+        either None or a name and is not unique. Will be sent from frontend.
     """
     startTime = time.time()
     token = uuid.uuid4().hex
@@ -58,7 +58,7 @@ def startGame():
     name = None  # get name from POST request ?
 
     # function from models for adding to db
-    models.insertIntoGames(token, name, startTime, label)
+    models.insert_into_games(token, name, startTime, label)
 
     # data is stored in a json object and returned to frontend
     data = {
@@ -73,9 +73,9 @@ def startGame():
 @app.route("/submitAnswer", methods=["POST"])
 def submitAnswer():
     """
-    Endpoint for user to submit drawing. Drawing is classified with Custom
-    Vision.The player wins if the classification is correct and the time
-    used is less than the time limit.
+        Endpoint for user to submit drawing. Drawing is classified with Custom
+        Vision.The player wins if the classification is correct and the time
+        used is less than the time limit.
     """
     stopTime = time.time()
     if "file" not in request.files:
@@ -91,7 +91,7 @@ def submitAnswer():
     token = request.values["token"]
 
     # get values from function in models
-    name, startTime, label = models.queryGame(token)
+    name, startTime, label = models.query_game(token)
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
@@ -106,15 +106,15 @@ def submitAnswer():
     }
     score = 700
     # add to db with function from models
-    models.insertIntoScores(name, score)
+    models.insert_into_scores(name, score)
     return jsonify(data), 200
 
 
 def clearTable(table):
     """
-        Clear a table in the database.
+        Clear a table in the database and return the result of the action.
     """
-    response = models.clearTable(table)
+    response = models.clear_table(table)
     return response
 
 
@@ -130,7 +130,7 @@ def classify(image):
 
 def allowedFile(image):
     """
-    Check if image satisfies the constraints of Custom Vision.
+        Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
         return False
@@ -152,6 +152,6 @@ def allowedFile(image):
 
 if __name__ == "__main__":
     # creates table if does not exist
-    models.createTables(app)
+    models.create_tables(app)
 
     app.run(debug=True)
