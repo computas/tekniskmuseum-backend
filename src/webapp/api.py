@@ -6,7 +6,9 @@ import sys
 import os
 from webapp import storage
 from webapp import models
+from webapp import setup
 from customvision.classifier import Classifier
+from utilities.keys import Keys
 from io import BytesIO
 from PIL import Image
 from flask import Flask
@@ -14,14 +16,14 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-print("ok")
-base_url = Keys.get("BASE_IMAGE_URL")
-print(base_url)
 # Global variables
 app = Flask(__name__)
 app.config.from_object("webapp.config.Config")
 models.db.init_app(app)
+models.create_tables(app)
 classifier = Classifier()
+labels = setup.labels
+time_limit = setup.time_limit
 
 
 @app.route("/")
@@ -41,12 +43,7 @@ def start_game():
     start_time = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-<<<<<<< HEAD
-    name = None  # TODO: name not needed until highscore row is created
-    models.insert_into_games(token, name, start_time, label)
-=======
     models.insert_into_games(token, start_time, label)
->>>>>>> 89752bfcc70dd3aa17c5ca747f4e83c279d335e6
 
     # return game data as json object
     data = {
@@ -57,7 +54,7 @@ def start_game():
     return jsonify(data), 200
 
 
-@app.route("/submit_answer", methods=["POST"])
+@app.route("/submitAnswer", methods=["POST"])
 def submit_answer():
     """
         Endpoint for user to submit drawing. Drawing is classified with Custom
@@ -67,14 +64,14 @@ def submit_answer():
     stop_time = time.time()
 
     # Check if image submitted correctly
-    if "file" not in request.files:
+    if "image" not in request.files:
         return "No image submitted", 400
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
 
     # get classification from customvision
-    best_guess, certainty = classifier.predict_png(image)
+    best_guess, certainty = classifier.predict_image(image)
 
     # use token submitted by player to find game
     token = request.values["token"]
@@ -94,7 +91,7 @@ def submit_answer():
 
     # return json response
     data = {
-        "certainty": classification,
+        "certainty": certainty,
         "guess": best_guess,
         "correctLabel": label,
         "hasWon": has_won,
@@ -127,6 +124,5 @@ def allowed_file(image):
 
 if __name__ == "__main__":
     # creates table if does not exist
-    models.create_tables(app)
 
     app.run(debug=True)

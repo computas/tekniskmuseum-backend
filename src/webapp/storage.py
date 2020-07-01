@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities.keys import Keys  # noqa: E402
 
 
-def saveImage(image, label):
+def save_image(image, label):
     """
         Upload image to blob storage container with same name as image label.
         Image is renamed to assure unique name. Returns public URL to access
