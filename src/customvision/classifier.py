@@ -38,12 +38,12 @@ class Classifier:
             None
         """
 
-        self.ENDPOINT = Keys.get("ENDPOINT")
-        self.project_id = Keys.get("PROJECT_ID")
-        self.prediction_key = Keys.get("PREDICTION_KEY")
-        self.training_key = Keys.get("TRAINING_KEY")
-        self.base_img_url = Keys.get("BASE_IMAGE_URL")
-        self.prediction_resource_id = Keys.get("PREDICTION_RESOURCE_ID")
+        self.ENDPOINT = Keys.get("CV_ENDPOINT")
+        self.project_id = Keys.get("CV_PROJECT_ID")
+        self.prediction_key = Keys.get("CV_PREDICTION_KEY")
+        self.training_key = Keys.get("CV_TRAINING_KEY")
+        self.base_img_url = Keys.get("BASE_BLOB_URL")
+        self.prediction_resource_id = Keys.get("CV_PREDICTION_RESOURCE_ID")
 
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": self.prediction_key}

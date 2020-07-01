@@ -120,9 +120,3 @@ def allowed_file(image):
         return False
     else:
         return True
-
-
-if __name__ == "__main__":
-    # creates table if does not exist
-
-    app.run(debug=True)
