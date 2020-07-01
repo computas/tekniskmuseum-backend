@@ -8,4 +8,4 @@ labels = [
     "sun",
     "triangle",
 ]
-timeLimit = 22
+time_limit = 22

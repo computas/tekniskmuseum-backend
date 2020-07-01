@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -9,6 +11,7 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+
 import uuid
 import time
 
@@ -19,14 +22,14 @@ import os
 from typing import Dict, List
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import keys  # noqa: e402
+from utilities.keys import Keys  # noqa: e402
 
 
-class CVClassifier:
+class Classifier:
     def __init__(self) -> None:
         """
-            Reads configuration file. Initializes connection to Azure Custom
-            Vision predictor and training resources.
+            Reads configuration file
+            Initializes connection to Azure Custom Vision predictor and training resources.
 
             Parameters:
             blob_service_client: Azure Blob Service interaction client
@@ -35,33 +38,39 @@ class CVClassifier:
             None
         """
 
-        self.ENDPOINT = keys.get("ENDPOINT")
-        self.project_id = keys.get("PROJECT_ID")
-        self.prediction_key = keys.get("PREDICTION_KEY")
-        self.training_key = keys.get("TRAINING_KEY")
-        self.base_img_url = keys.get("BASE_IMAGE_URL")
-        self.prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
+        self.ENDPOINT = Keys.get("ENDPOINT")
+        self.project_id = Keys.get("PROJECT_ID")
+        self.prediction_key = Keys.get("PREDICTION_KEY")
+        self.training_key = Keys.get("TRAINING_KEY")
+        self.base_img_url = Keys.get("BASE_IMAGE_URL")
+        self.prediction_resource_id = Keys.get("PREDICTION_RESOURCE_ID")
 
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": self.prediction_key}
         )
+
         self.predictor = CustomVisionPredictionClient(
             self.ENDPOINT, self.prediction_credentials
         )
+
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
         )
+
         self.trainer = CustomVisionTrainingClient(
             self.ENDPOINT, self.training_credentials
         )
-        connect_str = keys.get("BLOB_CONNECTION_STRING")
-        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+
+        connect_str = Keys.get("BLOB_CONNECTION_STRING")
+        self.blob_service_client = BlobServiceClient.from_connection_string(
+            connect_str
+        )
 
         iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
 
-    def predict_url(self, img_url: str) -> Dict[str, float]:
+    def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
             Predicts label(s) of Image read from URL.
 
@@ -69,7 +78,7 @@ class CVClassifier:
             img_url: Image URL
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities.
+            prediction (dict[str,float]): labels and assosiated probabilities
         """
 
         res = self.predictor.classify_image_url(
@@ -77,10 +86,10 @@ class CVClassifier:
         )
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+        best_guess = max(pred_kv, key=pred_kv.get)
+        return pred_kv, best_guess
 
-        return pred_kv
-
-    def predict_png(self, png_img) -> Dict[str, float]:
+    def predict_image(self, img) -> Dict[str, float]:
         """
             Predicts label(s) of Image read from URL.
             ASSUMES:
@@ -96,29 +105,31 @@ class CVClassifier:
         """
 
         res = self.predictor.classify_image(
-            self.project_id, self.iteration_name, png_img
+            self.project_id, self.iteration_name, img
         )
-        png_img.seek(0)
+
+        # reset the file head such that it does not affect the state of the file handle
+        img.seek(0)
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
 
-        return pred_kv
+        best_guess = max(pred_kv, key=pred_kv.get)
+
+        return best_guess, pred_kv
 
     def __chunks(self, lst, n):
         """
-            Helper method used by upload_images() to upload URL chunks of 64,
-            which is maximum chunk size in Azure Custom Vision.
+            Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
-            Takes as input a list of labels, uploads all assosiated images to
-            Azure Custom Vision project. If label in input already exists in
-            Custom Vision project, all images are uploaded directly. If label
-            in input does not exist in Custom Vision project, new label (Tag
-            object in Custom Vision) is created before uploading images
+            Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
+            If label in input already exists in Custom Vision project, all images are uploaded directly.
+            If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
+
 
             Parameters:
             labels (str[]): List of labels
@@ -184,9 +195,8 @@ class CVClassifier:
 
     def delete_iteration(self) -> None:
         """
-            Deletes the oldest iteration in Custom Vision if there are 11
-            iterations. Custom Vision allows maximum 10 iterations in the
-            free version.
+            Deletes the oldest iteration in Custom Vision if there are 11 iterations.
+            Custom Vision allows maximum 10 iterations in the free version.
         """
 
         iterations = self.trainer.get_iterations(self.project_id)
@@ -201,21 +211,23 @@ class CVClassifier:
 
     def train(self, labels: list) -> None:
         """
-            Trains model on all labels specified in input list, exeption is
-            raised by self.trainer.train_projec() is asked to train on non 
-            existent labels. Generates unique iteration name, publishes model
-            and sets self.iteration_name if successful. The model is finally 
-            published.
-            
+            Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
+            Generates unique iteration name, publishes model and sets self.iteration_name if successful.
+
+            then publishes the model.
+            C
             Parameters:
             labels (str[]): List of labels
 
             Returns:
             None
 
-            #TODO return error if model is asked to train with non existent
-            label. Also, delete iterations to make sure projct never exceeds
-            11 iterations.
+            # TODO
+            There might arrise an error where the self.iteration_name is not syncronised between processes.
+            If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
+
+            Potential fixes for this are requesting the latest iteration_name every time you predict,
+            or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
 
         email = None
@@ -251,37 +263,32 @@ class CVClassifier:
 
 def main():
     """
-        Use main if you want to run the complete program with init, train and
-        prediction of and example image. To be able to run main, make sure:
+        Use main if you want to run the complete program with init, train and prediction of and example image.
+        To be able to run main, make sure:
         -no more than two projects created in Azure Custom Vision
-        -no more than 11 iterations done in one project
-
-        #TODO: make method for cleaning up iterations before making a new
-        one(max 11 iterations in Azure Custom Vision)
+        -no more than 11 iterations done in one projectS
     """
-
-    connect_str = keys.get("BLOB_CONNECTION_STRING")
-
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
-    classifier = CVClassifier(blob_service_client)
-    # classifier.upload_images(labels)
+    labels = ["star"]
 
-    # classifier.train(labels)
+    classifier = Classifier()
+
+    classifier.upload_images(labels)
+
+    classifier.train(labels)
 
     # with open(
     #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
     # ) as f:
-    #    pass
-    # result = classifier.predict_png(f)
+    #     pass
+    # result = classifier.predict_image(f)
 
     # print(f"png result {result}")
 
-    result = classifier.predict_url(test_url)
+    best_guess, result = classifier.predict_image_url(test_url)
 
-    print(f"url result {result}")
+    print(f"best guess: {best_guess} url result {result}")
 
 
 if __name__ == "__main__":
