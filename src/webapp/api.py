@@ -6,7 +6,7 @@ import sys
 import os
 from webapp import storage
 from webapp import models
-from CustomVision.CV_classifier import CVClassifier
+from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
 from flask import Flask
@@ -18,7 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config.from_object("webapp.config.Config")
 models.db.init_app(app)
-classifier = CVClassifier()
+classifier = Classifier()
 
 
 @app.route("/")
