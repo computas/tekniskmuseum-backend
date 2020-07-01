@@ -1,4 +1,7 @@
-from api import db
+from flask_sqlalchemy import SQLAlchemy
+
+
+db = SQLAlchemy()
 
 
 class Games(db.Model):
