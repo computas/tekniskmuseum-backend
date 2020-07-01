@@ -27,6 +27,11 @@ _To make the code as easy to maintain and read as possible, it is necessary to f
 6. Develop tests when a new feature is implemented.
 7. Don't EVER use 'import *'
 8. Leave an empty line at the end of a statement, loop or a similiar code structure.
+9. Don't use more than 1 newline between code chunks within functions/methods.
+10. When creating strings, use double quotation marks ("string here") instead of single ('string here').
+11. The triple quotations in a docstring should be on separate lines from the content. Remember to indent the content of the docstring as well. This makes it more readable.
+12. Ideally, only a single class should be placed within each file.
+13. Ensure that method names use underscores between words instead of camel case.
 
 #### **Commit Message Rules**
 
@@ -55,7 +60,7 @@ _A rule of thumb when working on the project is to always branch out to a new br
 | `testing/awesome-branch-name`     | When writing new tests to existing features |
 
 ### **Pull Requests**
-_When an issue has been solved and tested by the developer, an pull request must be submitted in the repository for validation. This is so the branch can be merged with the master branch. The Merge Request must follow the rules given below._
+_When an issue has been solved and tested by the developer, a pull request must be submitted in the repository for validation. This is so the branch can be merged with the master branch. The Merge Request must follow the rules given below._
 #### **Pull Request Rules**
 1. Don't use the branch name as header for the pull request.
 2. Use a header called "Changes" where you explain pointwise what the pull requests add to the project.

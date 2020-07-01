@@ -8,12 +8,13 @@ environ = os.environ
 if "IS_PRODUCTION" in environ:
     keys = environ
     isProduction = True
-elif os.path.isfile("./config.json"):
-    with open("./config.json") as configFile:
+elif os.path.isfile("../config.json"):
+    with open("../config.json") as configFile:
         keys = json.load(configFile)
     isProduction = False
 else:
-    raise OSError('Keys must be stored in "config.json" during development')
+    raise OSError("Keys must either be set as environment variables"
+                  "or in a file called 'config.json' in the src directory")
 
 
 def get(keyName):

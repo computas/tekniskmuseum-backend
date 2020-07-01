@@ -4,12 +4,9 @@ import random
 import time
 import sys
 import os
-
-import storage
-import models
-
+from webapp import storage
+from webapp import models
 from customvision.classifier import Classifier
-from utilities.keys import Keys
 from io import BytesIO
 from PIL import Image
 from flask import Flask
@@ -22,113 +19,87 @@ base_url = Keys.get("BASE_IMAGE_URL")
 print(base_url)
 # Global variables
 app = Flask(__name__)
-app.config.from_object("config.Config")
-db = SQLAlchemy(app)
+app.config.from_object("webapp.config.Config")
+models.db.init_app(app)
 classifier = Classifier()
-
-labels = [
-    "ambulance",
-    "bench",
-    "circle",
-    "drawings",
-    "square",
-    "star",
-    "sun",
-    "triangle",
-]
-timeLimit = 20
 
 
 @app.route("/")
 def hello():
-    return "Hello, World!"
+    return "Yes, we're up"
 
 
 @app.route("/startGame")
-def startGame():
+def start_game():
     """
         Starts a new game. A unique token is generated to keep track of game.
         A random label is chosen for the player to draw. Startime is
         recorded to calculate elapsed time when the game ends. Name can be
         either None or a name and is not unique. Will be sent from frontend.
     """
-    startTime = time.time()
+    # start a game and insert it into the games table
+    start_time = time.time()
     token = uuid.uuid4().hex
     label = random.choice(labels)
-    name = None  # get name from POST request ?
+    name = None  # TODO: name not needed until highscore row is created
+    models.insert_into_games(token, name, start_time, label)
 
-    # function from models for adding to db
-    models.insert_into_games(token, name, startTime, label)
-
-    # data is stored in a json object and returned to frontend
+    # return game data as json object
     data = {
         "token": token,
         "label": label,
-        "startTime": startTime,
+        "start_time": start_time,
     }
-
     return jsonify(data), 200
 
 
-@app.route("/submitAnswer", methods=["POST"])
-def submitAnswer():
+@app.route("/submit_answer", methods=["POST"])
+def submit_answer():
     """
         Endpoint for user to submit drawing. Drawing is classified with Custom
         Vision.The player wins if the classification is correct and the time
         used is less than the time limit.
     """
-    stopTime = time.time()
+    stop_time = time.time()
+
+    # Check if image submitted correctly
     if "file" not in request.files:
         return "No image submitted", 400
-
-    image = request.files["file"]
-    if not allowedFile(image):
+    image = request.files["image"]
+    if not allowed_file(image):
         return "Image does not satisfy constraints", 415
 
-    bestGuess, classification = classifier.predict_image(image)
+    # get classification from customvision
+    best_guess, certainty = classifier.predict_png(image)
 
-    # get token from frontend
+    # use token submitted by player to find game
     token = request.values["token"]
+    name, start_time, label = models.query_game(token)
 
-    # get values from function in models
-    name, startTime, label = models.query_game(token)
+    # check if player won the game
+    time_used = stop_time - start_time
+    has_won = time_used < time_limit and best_guess == label
 
-    # This might be a proble if user has slow connection...
-    # Stop time on first line of function instead
-    timeUsed = stopTime - startTime
-    hasWon = timeUsed < timeLimit and bestGuess == label
-    storage.saveImage(image, label)
-    data = {
-        "classificaton": classification,
-        "correctLabel": label,
-        "hasWon": hasWon,
-        "timeUsed": timeUsed,
-    }
-    score = 700
-    # add to db with function from models
+    # save image in blob storage
+    storage.save_image(image, label)
+
+    # save score in highscore table
+    name = request.values["name"]
+    score = time_used
     models.insert_into_scores(name, score)
+
+    # return json response
+    data = {
+        "certainty": classification,
+        "guess": best_guess,
+        "correctLabel": label,
+        "hasWon": has_won,
+        "timeUsed": time_used,
+    }
     return jsonify(data), 200
 
 
-def clearTable(table):
-    """
-        Clear a table in the database and return the result of the action.
-    """
-    response = models.clear_table(table)
-    return response
-
-
-def classify(image):
-    """
-        Classify image with Azure Custom Vision.
-    """
-    # TODO: implement custom vision here
-    label = random.choice(labels)
-    confidence = random.random()
-    return label, confidence
-
-
-def allowedFile(image):
+def allowed_file(image):
     """
         Check if image satisfies the constraints of Custom Vision.
     """
