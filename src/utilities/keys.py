@@ -19,15 +19,15 @@ else:
 class Keys:
     def get(keyName):
         """
-        Returns secret matching the key. Returns appropriate error message if key
-        is not found.
+            Returns secret matching the key. Returns appropriate error message if key
+            is not found.
         """
         try:
             return keys[keyName]
         except KeyError:
             if isProduction:
-                message = """Key not found. Check if your key is added to GitHub
-                secrets."""
+                message = ("Key not found. Keys need to be stored as"
+                           " environment variables or in 'src/config.json'.")
             else:
                 message = "Key not in config.json"
             raise KeyError(message)
