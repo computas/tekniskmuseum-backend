@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -9,6 +11,7 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+
 import uuid
 import time
 
@@ -19,10 +22,10 @@ import os
 from typing import Dict, List
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import keys  # noqa: e402
+from utilities.keys import Keys  # noqa: e402
 
 
-class CVClassifier:
+class Classifier:
     def __init__(self) -> None:
         """
             Reads configuration file
@@ -35,33 +38,39 @@ class CVClassifier:
             None
         """
 
-        self.ENDPOINT = keys.get("ENDPOINT")
-        self.project_id = keys.get("PROJECT_ID")
-        self.prediction_key = keys.get("PREDICTION_KEY")
-        self.training_key = keys.get("TRAINING_KEY")
-        self.base_img_url = keys.get("BASE_IMAGE_URL")
-        self.prediction_resource_id = keys.get("PREDICTION_RESOURCE_ID")
+        self.ENDPOINT = Keys.get("CV_ENDPOINT")
+        self.project_id = Keys.get("CV_PROJECT_ID")
+        self.prediction_key = Keys.get("CV_PREDICTION_KEY")
+        self.training_key = Keys.get("CV_TRAINING_KEY")
+        self.base_img_url = Keys.get("BASE_BLOB_URL")
+        self.prediction_resource_id = Keys.get("CV_PREDICTION_RESOURCE_ID")
 
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": self.prediction_key}
         )
+
         self.predictor = CustomVisionPredictionClient(
             self.ENDPOINT, self.prediction_credentials
         )
+
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
         )
+
         self.trainer = CustomVisionTrainingClient(
             self.ENDPOINT, self.training_credentials
         )
-        connect_str = keys.get("BLOB_CONNECTION_STRING")
-        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+
+        connect_str = Keys.get("BLOB_CONNECTION_STRING")
+        self.blob_service_client = BlobServiceClient.from_connection_string(
+            connect_str
+        )
 
         iterations = self.trainer.get_iterations(self.project_id)
         iterations.sort(key=lambda i: i.created)
         self.iteration_name = iterations[-1].publish_name
 
-    def predict_url(self, img_url: str) -> Dict[str, float]:
+    def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
             Predicts label(s) of Image read from URL.
 
@@ -77,10 +86,10 @@ class CVClassifier:
         )
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+        best_guess = max(pred_kv, key=pred_kv.get)
+        return pred_kv, best_guess
 
-        return pred_kv
-
-    def predict_png(self, png_img) -> Dict[str, float]:
+    def predict_image(self, img) -> Dict[str, float]:
         """
             Predicts label(s) of Image read from URL.
             ASSUMES:
@@ -96,13 +105,17 @@ class CVClassifier:
         """
 
         res = self.predictor.classify_image(
-            self.project_id, self.iteration_name, png_img
+            self.project_id, self.iteration_name, img
         )
-        png_img.seek(0)
+
+        # reset the file head such that it does not affect the state of the file handle
+        img.seek(0)
 
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
 
-        return pred_kv
+        best_guess = max(pred_kv, key=pred_kv.get)
+
+        return best_guess, pred_kv
 
     def __chunks(self, lst, n):
         """
@@ -255,29 +268,27 @@ def main():
         -no more than two projects created in Azure Custom Vision
         -no more than 11 iterations done in one projectS
     """
-
-    connect_str = keys.get("BLOB_CONNECTION_STRING")
-
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
-    classifier = CVClassifier(blob_service_client)
-    # classifier.upload_images(labels)
+    labels = ["star"]
 
-    # classifier.train(labels)
+    classifier = Classifier()
+
+    classifier.upload_images(labels)
+
+    classifier.train(labels)
 
     # with open(
     #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
     # ) as f:
-    #    pass
-    # result = classifier.predict_png(f)
+    #     pass
+    # result = classifier.predict_image(f)
 
     # print(f"png result {result}")
 
-    result = classifier.predict_url(test_url)
+    best_guess, result = classifier.predict_image_url(test_url)
 
-    print(f"url result {result}")
+    print(f"best guess: {best_guess} url result {result}")
 
 
 if __name__ == "__main__":

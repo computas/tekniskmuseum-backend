@@ -1,8 +1,11 @@
-from api import db
+from flask_sqlalchemy import SQLAlchemy
+
+
+db = SQLAlchemy()
 
 
 class Games(db.Model):
-    """ 
+    """
        This is the Games model in the database. It is important that the
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
@@ -11,10 +14,7 @@ class Games(db.Model):
         db.NVARCHAR(450),
         primary_key=True,
     )
-    name = db.Column(
-        db.String(64),
-    )
-    starttime = db.Column(
+    start_time = db.Column(
         db.Float,
         nullable=False
     )
@@ -25,8 +25,8 @@ class Games(db.Model):
 
 
 class Scores(db.Model):
-    """ 
-        This is the Scores model in the database. It is important that the 
+    """
+        This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
     id = db.Column(
@@ -43,24 +43,24 @@ class Scores(db.Model):
     )
 
 
-def createTables(app):
-    """ 
+def create_tables(app):
+    """
         The tables will be created if they do not already exist.
     """
     with app.app_context():
         db.create_all()
 
 
-def insertIntoGames(token, name, starttime, label):
+def insert_into_games(token, start_time, label):
     """
         Insert values into Games table.
     """
-    game = Games(token=token, name=name, starttime=starttime, label=label)
+    game = Games(token=token, start_time=start_time, label=label)
     db.session.add(game)
     db.session.commit()
 
 
-def insertIntoScores(name, score):
+def insert_into_scores(name, score):
     """
         Insert values into Scores table.
     """
@@ -69,37 +69,32 @@ def insertIntoScores(name, score):
     db.session.commit()
 
 
-def queryGame(token):
+def query_game(token):
     """
-        Return the first record of Games that matches the query.
+        Return name, starttime and label of the first record of Games that
+        matches the query.
     """
     try:
         game = Games.query.filter_by(token=token).first()
-        return game.name, game.starttime, game.label
+        return game.start_time, game.label
     except AttributeError:
         return "Could not find record for " + token + "."
 
 
-def clearTable(table):
+def clear_table(table):
     """
-        Clear the table sent as the argument and return a response 
-        corresponding to the result of the task. 
+        Clear the table sent as the argument and return a response
+        corresponding to the result of the task.
     """
-    if table == 'Games':
-        try:
+    try:
+        if table == 'Games':
             Games.query.delete()
             db.session.commit()
-            return "Table, " + table + ", is cleared."
-        except:
-            db.session.rollback()
-            return "Could not clear table " + table + ".", 500
-    elif table == 'Scores':
-        try:
+            return "Table successfully cleared"
+        elif table == 'Scores':
             Scores.query.delete()
             db.session.commit()
-            return "Table, " + table + ", is cleared.", 200
-        except:
-            db.session.rollback()
-            return "Could not clear table: " + table + ".", 500
-    else:
-        return "Table does not exist.", 400
+            return "Table successfully cleared"
+    except AttributeError:
+        db.session.rollback()
+        return "Table does not exist."

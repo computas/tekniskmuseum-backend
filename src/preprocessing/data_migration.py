@@ -37,7 +37,7 @@ def vector_to_raster(
     keys=[],
 ):
     """
-    padding and line_diameter are relative to the original 256x256 image.
+        padding and line_diameter are relative to the original 256x256 image.
     """
 
     original_side = 256.0

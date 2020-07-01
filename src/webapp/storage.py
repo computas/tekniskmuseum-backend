@@ -8,27 +8,27 @@ from azure.storage.blob import BlobClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import keys  # noqa: E402
+from utilities.keys import Keys  # noqa: E402
 
 
-def saveImage(image, label):
+def save_image(image, label):
     """
         Upload image to blob storage container with same name as image label.
         Image is renamed to assure unique name. Returns public URL to access
         image.
     """
-    filename = label + uuid.uuid4().hex + ".png"
-    connectionString = keys.get("BLOB_CONNECTION_STRING")
-    containerName = "new-" + label
-    baseurl = keys.get("BASE_IMAGE_URL")
+    file_name = label + uuid.uuid4().hex + ".png"
+    connection_string = Keys.get("BLOB_CONNECTION_STRING")
+    container_name = "new-" + label
+    base_url = Keys.get("BASE_BLOB_URL")
     try:
         blob = BlobClient.from_connection_string(
-            conn_str=connectionString,
-            container_name=containerName,
-            blob_name=filename,
+            conn_str=connection_string,
+            container_name=container_name,
+            blob_name=file_name,
         )
         blob.upload_blob(image)
     except Exception as e:
         print(e)
-    url = baseurl + "/" + containerName + "/" + filename
+    url = base_url + "/" + container_name + "/" + file_name
     return url
