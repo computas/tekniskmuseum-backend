@@ -4,9 +4,12 @@ import random
 import time
 import sys
 import os
+
 import storage
 import models
-from machine_learning_utilities.CV_classifier import CVClassifier
+
+from customvision.classifier import Classifier
+from utilities.keys import Keys
 from io import BytesIO
 from PIL import Image
 from flask import Flask
@@ -14,12 +17,14 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 
+print("ok")
+base_url = Keys.get("BASE_IMAGE_URL")
+print(base_url)
 # Global variables
 app = Flask(__name__)
-app.config.from_object('config.Config')
+app.config.from_object("config.Config")
 db = SQLAlchemy(app)
-classifier = CVClassifier()
-
+classifier = Classifier()
 
 labels = [
     "ambulance",
@@ -75,20 +80,22 @@ def submitAnswer():
     stopTime = time.time()
     if "file" not in request.files:
         return "No image submitted", 400
+
     image = request.files["file"]
     if not allowedFile(image):
         return "Image does not satisfy constraints", 415
-    classification = classifier.predict_png(image)
+
+    bestGuess, classification = classifier.predict_image(image)
 
     # get token from frontend
-    token = request.values['token']
+    token = request.values["token"]
+
     # get values from function in models
     name, startTime, label = models.queryGame(token)
 
     # This might be a proble if user has slow connection...
     # Stop time on first line of function instead
     timeUsed = stopTime - startTime
-    bestGuess = max(classification, key=classification.get)
     hasWon = timeUsed < timeLimit and bestGuess == label
     storage.saveImage(image, label)
     data = {
