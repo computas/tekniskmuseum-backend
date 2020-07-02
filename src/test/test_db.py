@@ -8,16 +8,9 @@ from webapp import models
 
 
 def test_create_tables():
-    models.create_all
+    result = models.create_tables(api.app)
 
-
-def create_tables(app):
-    """
-        Something.
-    """
-    with api.app.app_context():
-        api.db.create_all()
-
-
+    assert result == "Models created!"
 
 def test_insert_into_test_games():
+    pass
