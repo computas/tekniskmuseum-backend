@@ -32,11 +32,7 @@ Options:
 "
 
 if [[ $test = true ]]; then
-<<<<<<< HEAD
-    cd src
-=======
     cd src/
->>>>>>> a5dd272c3c476d5c9c78c3eac66a2fa5b8f76032
     python -m pytest
     exit
 elif [[ $help = true ]]; then
