@@ -1,3 +1,10 @@
+"""
+    API with endpoints runned by Flask. Contains three key endpoints:
+        - hello(): return a dummy string
+        - start_game(): starts a game
+        - submit_answer(): takes an image, returns the prediction and time used by user
+"""
+
 #! /usr/bin/env python
 import uuid
 import random
