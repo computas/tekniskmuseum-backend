@@ -1,3 +1,8 @@
+"""
+    This file contains the Quick start tutorial of Custom Vision python SDK provided from Microsoft.
+    Link to tutorial: https://docs.microsoft.com/en-us/azure/cognitive-services/custom-vision-service/quickstarts/image-classification?pivots=programming-language-python 
+"""
+
 from azure.cognitiveservices.vision.customvision.training import (
     CustomVisionTrainingClient,
 )
@@ -24,7 +29,7 @@ def chunks(lst, n):
         Yield successive n-sized chunks from lst.
     """
     for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+        yield lst[i: i + n]
 
 
 publish_iteration_name = "drawings"
