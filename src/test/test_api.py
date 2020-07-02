@@ -24,6 +24,49 @@ def test_root_example(client):
     assert req.data == b"Yes, we're up"
 
 
+def test_start_game_wrong_request(client):
+    """
+
+    """
+    pass
+
+
+def test_start_game_correct(client):
+    """
+
+    """
+    pass
+
+
+def test_submit_answer_wrong_request(client):
+    """
+
+    """
+    pass
+
+
+def test_submit_answer_no_image(client):
+    """
+
+    """
+    pass
+
+
+def test_submit_answer_wrong_image(client):
+    """
+
+    """
+    pass
+
+
+def test_submit_answer_correct(client):
+    """
+
+    """
+    pass
+
+
+
 def test_allowedFile_small_resolution():
     """
         Test if the allowedFile function within the API returns False if an
