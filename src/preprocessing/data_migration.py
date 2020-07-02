@@ -1,3 +1,9 @@
+"""
+    Preprocessing of data. Converts data from Google Quickdraw to .png files. Then uploads files to Azure Blob Storage.
+    This code follow the tutorial provided by Google: https://github.com/googlecreativelab/quickdraw-dataset#get-the-data
+    Note: You need to download the dataset beforehand using: 'gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data'
+"""
+
 import numpy as np
 import cairocffi as cairo
 import json
