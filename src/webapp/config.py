@@ -1,3 +1,7 @@
+"""
+    Configuration class for connecting to azure database.
+"""
+
 import sys
 import os
 from utilities.keys import Keys

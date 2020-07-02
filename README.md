@@ -1,7 +1,9 @@
 # **Teknisk Museum Back-End**
 ## **Usage**
 ### **Development**
-_Guide on how to run the api in developer mode comes here!_
+* clone repository
+* install requirements from requirements.txt
+* run script startup.sh
 
 ### **Tests**
 _When running the tests, ensure that you are located in the same directory as this README._
