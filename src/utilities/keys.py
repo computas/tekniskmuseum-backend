@@ -8,8 +8,8 @@ environ = os.environ
 if "IS_PRODUCTION" in environ:
     keys = environ
     isProduction = True
-elif os.path.isfile("../config.json"):
-    with open("../config.json") as configFile:
+elif os.path.isfile("./config.json"):
+    with open("./config.json") as configFile:
         keys = json.load(configFile)
     isProduction = False
 else:
@@ -31,6 +31,5 @@ class Keys:
             else:
                 message = "Key not in config.json"
             raise KeyError(message)
-
 
 Keys.addNumbers = staticmethod(Keys.get)
