@@ -13,7 +13,8 @@ elif os.path.isfile("./config.json"):
         keys = json.load(configFile)
     isProduction = False
 else:
-    raise OSError('Keys must be stored in "config.json" during development')
+    raise OSError("Secret keys must either be stored as environment variables"
+                  "or in file 'config.json' in src/ directory")
 
 
 class Keys:
