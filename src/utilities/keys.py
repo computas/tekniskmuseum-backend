@@ -1,5 +1,5 @@
 """
-imports secrets from GitHub Secrets or config.json
+    Imports secrets from GitHub Secrets or config.json.
 """
 import os
 import json
@@ -8,8 +8,8 @@ environ = os.environ
 if "IS_PRODUCTION" in environ:
     keys = environ
     isProduction = True
-elif os.path.isfile("./config.json"):
-    with open("./config.json") as configFile:
+elif os.path.isfile("../config.json"):
+    with open("../config.json") as configFile:
         keys = json.load(configFile)
     isProduction = False
 else:
