@@ -1,6 +1,6 @@
 """
     This file contains the Quick start tutorial of Custom Vision python SDK provided from Microsoft.
-    Link to tutorial: https://docs.microsoft.com/en-us/azure/cognitive-services/custom-vision-service/quickstarts/image-classification?pivots=programming-language-python 
+    Link to tutorial: https://docs.microsoft.com/en-us/azure/cognitive-services/custom-vision-service/quickstarts/image-classification?pivots=programming-language-python
 """
 
 from azure.cognitiveservices.vision.customvision.training import (
