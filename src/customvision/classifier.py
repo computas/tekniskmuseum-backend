@@ -21,6 +21,8 @@ import os
 
 from typing import Dict, List
 
+import setup
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities.keys import Keys  # noqa: e402
 
@@ -183,7 +185,7 @@ class Classifier:
                 )
 
         # upload URLs in chunks of 64
-        for url_chunk in self.__chunks(url_list, 64):
+        for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
             )
@@ -201,7 +203,7 @@ class Classifier:
 
         iterations = self.trainer.get_iterations(self.project_id)
 
-        if len(iterations) >= 10:
+        if len(iterations) >= setup.CV_MAX_ITERATIONS:
 
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
