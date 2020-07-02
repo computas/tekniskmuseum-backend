@@ -15,6 +15,8 @@ _When running the tests, ensure that you are located in the same directory as th
 All python requirements should be included in `requirements.txt`, and can be installed by running
 * `pip install -r requirements.txt`
 
+Follow steps in this microsoft tutorial to install microsoft odbc [installation](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15#ubuntu17)
+
 ## **Conventions and Rules**
 
 ### **Coding Conventions**
