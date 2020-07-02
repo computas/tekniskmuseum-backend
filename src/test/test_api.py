@@ -6,6 +6,7 @@ import pytest
 from webapp import api
 from test import config as cfg
 
+
 @pytest.fixture
 def client():
     """
@@ -85,6 +86,7 @@ def allowed_file_helper(filename, expected_result):
 
     assert result == expected_result
 
+
 def construct_path(dir_list):
     """
         Take in a list of directories in sequential order with regards to path
@@ -96,5 +98,5 @@ def construct_path(dir_list):
     for elem in dir_list[1:]:
         # Append the remaining paths sequentially
         path = os.path.join(path, elem)
-    
+
     return path

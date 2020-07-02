@@ -1,6 +1,6 @@
 """
     Classes for describing tables in the database and additional functions for
-    manipulating them. 
+    manipulating them.
 """
 
 from flask_sqlalchemy import SQLAlchemy
