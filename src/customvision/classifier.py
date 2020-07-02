@@ -21,10 +21,11 @@ import os
 
 from typing import Dict, List
 
-import setup
 
+# these lines imports must be below the path append due to issues with python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities.keys import Keys  # noqa: e402
+from utilities import setup  # noqa: e402
 
 
 class Classifier:
@@ -231,8 +232,11 @@ class Classifier:
             Potential fixes for this are requesting the latest iteration_name every time you predict,
             or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
-
-        email = None
+        try:
+            email = Keys.get("EMAIL")
+        except Exception:
+            print("No email found, setting to empty")
+            email = ""
 
         self.delete_iteration()
 

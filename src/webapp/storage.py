@@ -6,6 +6,7 @@ import uuid
 import sys
 from azure.storage.blob import BlobClient
 
+# these lines imports must be below the path append due to issues with python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utilities.keys import Keys  # noqa: E402
