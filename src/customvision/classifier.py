@@ -1,8 +1,7 @@
+#! /usr/bin/env python
 """
     Tools for interacting with Azure Custom Vision and Azure Blob Storage
 """
-
-#! /usr/bin/env python
 import uuid
 import time
 import sys

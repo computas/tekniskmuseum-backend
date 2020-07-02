@@ -7,6 +7,7 @@ import sys
 from azure.storage.blob import BlobClient
 from utilities.keys import Keys
 
+
 def save_image(image, label):
     """
         Upload image to blob storage container with same name as image label.

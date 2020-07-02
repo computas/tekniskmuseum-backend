@@ -34,4 +34,5 @@ class Keys:
                 message = "Key not in config.json"
             raise KeyError(message)
 
+
 Keys.addNumbers = staticmethod(Keys.get)
