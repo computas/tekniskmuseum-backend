@@ -24,7 +24,7 @@ def test_root_example(client):
     assert req.data == b"Yes, we're up"
 
 
-def test_allowedFile_small_resolution(client):
+def test_allowedFile_small_resolution():
     """
         Test if the allowedFile function within the API returns False if an
         image with too small resolution is sent as parameter.
@@ -34,7 +34,7 @@ def test_allowedFile_small_resolution(client):
     allowed_file_helper("allowedFile_test1.png", False)
 
 
-def test_allowedFile_too_large_file(client):
+def test_allowedFile_too_large_file():
     """
         Test if the allowedFile function within the API returns False if an
         image above the maximum size is sent as parameter.
@@ -44,7 +44,7 @@ def test_allowedFile_too_large_file(client):
     allowed_file_helper("allowedFile_test2.png", False)
 
 
-def test_allowedFile_wrong_format(client):
+def test_allowedFile_wrong_format():
     """
         Test if the allowedFile function within the API returns False if an
         image of the wrong format is sent as parameter.
@@ -54,7 +54,7 @@ def test_allowedFile_wrong_format(client):
     allowed_file_helper("allowedFile_test3.jpg", False)
 
 
-def test_allowedFile_correct(client):
+def test_allowedFile_correct():
     """
         Test if the allowedFile function within the API returns True if an
         image with all constraints satisfied is sent as parameter.
