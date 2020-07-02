@@ -18,8 +18,6 @@ from azure.cognitiveservices.vision.customvision.training.models import (
 
 import uuid
 import time
-
-
 import sys
 import os
 
