@@ -43,7 +43,6 @@ def start_game():
     token = uuid.uuid4().hex
     label = random.choice(labels)
     models.insert_into_games(token, start_time, label)
-
     # return game data as json object
     data = {
         "token": token,
@@ -61,33 +60,31 @@ def submit_answer():
         used is less than the time limit.
     """
     stop_time = time.time()
-
     # Check if image submitted correctly
     if "image" not in request.files:
         return "No image submitted", 400
+    
+    # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
 
     # get classification from customvision
     best_guess, certainty = classifier.predict_image(image)
-
     # use token submitted by player to find game
     token = request.values["token"]
+    # Retrieve a start time and a label
     start_time, label = models.query_game(token)
-
     # check if player won the game
     time_used = stop_time - start_time
+    # The player has won if the game is completed within the ime limit
     has_won = time_used < time_limit and best_guess == label
-
     # save image in blob storage
     storage.save_image(image, label)
-
     # save score in highscore table
     name = request.values["name"]
     score = time_used
     models.insert_into_scores(name, score)
-
     # return json response
     data = {
         "certainty": certainty,
