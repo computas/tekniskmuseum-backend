@@ -31,6 +31,7 @@ Options:
 "
 
 if [[ $test = true ]]; then
+    cd src
     python -m pytest
     exit
 elif [[ $help = true ]]; then
