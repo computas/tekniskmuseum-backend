@@ -23,9 +23,9 @@ from typing import Dict, List
 
 
 # these lines imports must be below the path append due to issues with python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utilities.keys import Keys  # noqa: e402
-from utilities import setup  # noqa: e402
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ..utilities.keys import Keys  # noqa: e402
+from ..utilities import setup  # noqa: e402
 
 
 class Classifier:

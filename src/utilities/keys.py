@@ -8,8 +8,8 @@ environ = os.environ
 if "IS_PRODUCTION" in environ:
     keys = environ
     isProduction = True
-elif os.path.isfile("./config.json"):
-    with open("./config.json") as configFile:
+elif os.path.isfile("src/config.json"):
+    with open("src/config.json") as configFile:
         keys = json.load(configFile)
     isProduction = False
 else:
@@ -26,8 +26,10 @@ class Keys:
             return keys[keyName]
         except KeyError:
             if isProduction:
-                message = ("Key not found. Keys need to be stored as"
-                           " environment variables or in 'src/config.json'.")
+                message = (
+                    "Key not found. Keys need to be stored as"
+                    " environment variables or in 'src/config.json'."
+                )
             else:
                 message = "Key not in config.json"
             raise KeyError(message)
