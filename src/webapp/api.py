@@ -8,7 +8,6 @@ from webapp import storage
 from webapp import models
 from webapp import setup
 from customvision.classifier import Classifier
-from utilities.keys import Keys
 from io import BytesIO
 from PIL import Image
 from flask import Flask

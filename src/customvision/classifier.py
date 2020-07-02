@@ -3,7 +3,12 @@
 """
 
 #! /usr/bin/env python
-
+import uuid
+import time
+import sys
+import os
+from typing import Dict, List
+from utilities.keys import Keys
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -15,16 +20,6 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
-
-import uuid
-import time
-import sys
-import os
-
-from typing import Dict, List
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utilities.keys import Keys  # noqa: e402
 
 
 class Classifier:
@@ -46,7 +41,6 @@ class Classifier:
             Returns:
             None
         """
-
         self.ENDPOINT = Keys.get("CV_ENDPOINT")
         self.project_id = Keys.get("CV_PROJECT_ID")
         self.prediction_key = Keys.get("CV_PREDICTION_KEY")
