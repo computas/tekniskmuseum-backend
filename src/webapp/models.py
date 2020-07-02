@@ -55,6 +55,9 @@ def create_tables(app):
     """
     with app.app_context():
         db.create_all()
+        return "Models created!"
+
+    return "Couldn't create tables.." 
 
 
 def insert_into_games(token, start_time, label):
@@ -81,13 +84,8 @@ def query_game(table,token):
         matches the query.
     """
     try:
-<<<<<<< HEAD
         game = Games.query.filter_by(token=token).first()
         return game.start_time, game.label
-=======
-        game = get_class_by_tablename(table).query.filter_by(token=token).first()
-        return game.name, game.starttime, game.label
->>>>>>> Add function for getting class by tablename
     except AttributeError:
         return "Could not find record for " + token + "."
 
@@ -109,6 +107,13 @@ def clear_table(table):
     except AttributeError:
         db.session.rollback()
         return "Table does not exist."
+
+def drop_table(table):
+    """
+        Function for dropping a table, or all.
+    """
+    # Calling 'drop_table' with None as parameter means dropping all tables.
+    db.drop_all(bind=table)
 
 def get_class_by_tablename(tablename):
   """Return class reference mapped to table.

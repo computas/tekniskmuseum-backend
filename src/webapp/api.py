@@ -27,6 +27,7 @@ time_limit = setup.time_limit
 
 @app.route("/")
 def hello():
+    models.drop_table(None)
     return "Yes, we're up"
 
 
@@ -68,8 +69,6 @@ def submit_answer():
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
-<<<<<<< HEAD
-=======
     classification = classifier.predict_png(image)
 
     # get token from frontend
@@ -93,7 +92,6 @@ def submit_answer():
     # add to db with function from models
     models.insert_into_scores(name, score)
     return jsonify(data), 200
->>>>>>> Add function for getting class by tablename
 
     # get classification from customvision
     best_guess, certainty = classifier.predict_image(image)
