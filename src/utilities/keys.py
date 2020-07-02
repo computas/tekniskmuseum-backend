@@ -9,12 +9,13 @@ environ = os.environ
 if "IS_PRODUCTION" in environ:
     keys = environ
     isProduction = True
-elif os.path.isfile("../config.json"):
-    with open("../config.json") as configFile:
+elif os.path.isfile("./config.json"):
+    with open("./config.json") as configFile:
         keys = json.load(configFile)
     isProduction = False
 else:
-    raise OSError('Keys must be stored in "config.json" during development')
+    raise OSError("Secret keys must either be stored as environment variables"
+                  "or in file 'config.json' in src/ directory")
 
 
 class Keys:
@@ -32,6 +33,5 @@ class Keys:
             else:
                 message = "Key not in config.json"
             raise KeyError(message)
-
 
 Keys.addNumbers = staticmethod(Keys.get)
