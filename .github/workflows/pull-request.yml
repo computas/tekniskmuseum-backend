@@ -44,9 +44,10 @@ jobs:
       
     - name: Run tests
       env: '${{secrets.TEST_SETTINGS}}'
+      shell: bash
       run: |
-       echo ----- is prod -----
-       echo $IS_PRODUCTION
-       echo -------------------
+       echo "----- is prod -----"
+       echo "$IS_PRODUCTION"
+       echo "-------------------"
        cd src/
        python -m pytest
