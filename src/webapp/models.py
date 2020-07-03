@@ -64,18 +64,25 @@ def insert_into_games(token, start_time, label):
     """
         Insert values into Games table.
     """
-    game = Games(token=token, start_time=start_time, label=label)
-    db.session.add(game)
-    db.session.commit()
+    try:
+        game = Games(token=token, start_time=start_time, label=label)
+        db.session.add(game)
+        db.session.commit()
+        return "Inserted"
+    except AttributeError:
+        raise AttributeError ("Could not insert into games")
 
 
 def insert_into_scores(name, score):
     """
         Insert values into Scores table.
     """
-    score = Scores(name=name, score=score)
-    db.session.add(score)
-    db.session.commit()
+    try:
+        score = Scores(name=name, score=score)
+        db.session.add(score)
+        db.session.commit()
+    except AttributeError:
+        raise AttributeError ("Could not insert into scores")
 
 
 def query_game(table,token):
@@ -87,7 +94,8 @@ def query_game(table,token):
         game = Games.query.filter_by(token=token).first()
         return game.start_time, game.label
     except AttributeError:
-        return "Could not find record for " + token + "."
+        db.session.rollback()
+        raise AttributeError("Could not find record for " + token + ".")
 
 
 def clear_table(table):
@@ -115,13 +123,4 @@ def drop_table(table):
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
 
-def get_class_by_tablename(tablename):
-  """Return class reference mapped to table.
 
-  :param tablename: String with name of table.
-  :return: Class reference or None.
-  """
-  for c in db.Model._decl_class_registry.values():
-    print("C= " + str(c))
-    if hasattr(c, '__tablename__') and c.__tablename__ == tablename:
-      return c

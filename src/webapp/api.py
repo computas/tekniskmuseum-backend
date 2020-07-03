@@ -27,7 +27,6 @@ time_limit = setup.time_limit
 
 @app.route("/")
 def hello():
-    models.drop_table(None)
     return "Yes, we're up"
 
 
@@ -69,29 +68,6 @@ def submit_answer():
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
-    classification = classifier.predict_png(image)
-
-    # get token from frontend
-    token = request.values['token']
-    # get values from function in models
-    name, startTime, label = models.query_game("Games", token)
-
-    # This might be a proble if user has slow connection...
-    # Stop time on first line of function instead
-    timeUsed = stopTime - startTime
-    bestGuess = max(classification, key=classification.get)
-    hasWon = timeUsed < timeLimit and bestGuess == label
-    storage.saveImage(image, label)
-    data = {
-        "classificaton": classification,
-        "correctLabel": label,
-        "hasWon": hasWon,
-        "timeUsed": timeUsed,
-    }
-    score = 500
-    # add to db with function from models
-    models.insert_into_scores(name, score)
-    return jsonify(data), 200
 
     # get classification from customvision
     best_guess, certainty = classifier.predict_image(image)
