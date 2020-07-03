@@ -21,6 +21,5 @@ class Config:
         # Database configuration string
         con_str = Keys.get("DB_CONNECTION_STRING")
 
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str

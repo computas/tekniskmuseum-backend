@@ -63,18 +63,25 @@ def insert_into_games(token, start_time, label):
     """
         Insert values into Games table.
     """
-    game = Games(token=token, start_time=start_time, label=label)
-    db.session.add(game)
-    db.session.commit()
+    try:
+        game = Games(token=token, start_time=start_time, label=label)
+        db.session.add(game)
+        db.session.commit()
+        return "Inserted"
+    except AttributeError:
+        raise AttributeError ("Could not insert into games")
 
 
 def insert_into_scores(name, score):
     """
         Insert values into Scores table.
     """
-    score = Scores(name=name, score=score)
-    db.session.add(score)
-    db.session.commit()
+    try:
+        score = Scores(name=name, score=score)
+        db.session.add(score)
+        db.session.commit()
+    except AttributeError:
+        raise AttributeError ("Could not insert into scores")
 
 
 def query_game(token):
@@ -86,7 +93,8 @@ def query_game(token):
         game = Games.query.filter_by(token=token).first()
         return game.start_time, game.label
     except AttributeError:
-        return "Could not find record for " + token + "."
+        db.session.rollback()
+        raise AttributeError("Could not find record for " + token + ".")
 
 
 def clear_table(table):
