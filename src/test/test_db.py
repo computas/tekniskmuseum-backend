@@ -5,10 +5,12 @@
 
 from webapp import api
 from webapp import models
+import uuid
+import time
 
 token = uuid.uuid4().hex
 start_time = time.time()
-label = "test label"
+label = "label"
 
 
 def test_create_tables():
@@ -36,8 +38,5 @@ def test_query_euqals_insert():
     expected_result = models.query_game(token2)
     assert result == expected_result
 
-
-
-
-
     
+
