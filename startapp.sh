@@ -17,7 +17,8 @@ while [[ "$#" > 0 ]]; do
                             shift ;;
         -w=* | --workers=*) NWORKERS="${1#*=}";
                             shift ;;
-        *)                  echo "Unexpected option: $1, use -h for help"; exit 1 ;;
+        *)                  echo "Unexpected option: $1, use -h for help";
+                            exit 1 ;;
     esac
     shift
 done
@@ -26,7 +27,7 @@ usage="Script to start webapp with gunicorn.
 Options:
     -h, --help      Print this help page.
     -t, --test      Run unit tests with pytest.
-    -w,--workers    Specify number of gunicorn workers.
+    -w, --workers   Specify number of gunicorn workers.
                     Recommended values are 3-12 workers.
 "
 
