@@ -5,10 +5,12 @@
 
 from webapp import api
 from webapp import models
+import uuid
+import time
 
 token = uuid.uuid4().hex
 start_time = time.time()
-label = "test label"
+label = "label"
 
 
 def test_create_tables():
@@ -17,7 +19,7 @@ def test_create_tables():
 
     assert result == "Models created!"
 
-def test_insert_into_test_games():
+def test_insert_into_games():
     models.insert_into_games(token, start_time, label)
     record = models.query_games(token)
-    assert 
+    assert record.label == label
