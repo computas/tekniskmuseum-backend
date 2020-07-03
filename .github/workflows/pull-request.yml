@@ -43,7 +43,10 @@ jobs:
       run: pip install -r requirements.txt
       
     - name: Run tests
+      env: '${{secrets.TEST_SETTINGS}}'
       run: |
+       echo ----- is prod -----
+       echo $IS_PRODUCTION
+       echo -------------------
        cd src/
        python -m pytest
-      env: '${{secrets.TEST_SETTINGS}}'
