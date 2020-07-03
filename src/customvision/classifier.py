@@ -6,8 +6,7 @@ import uuid
 import time
 import sys
 import os
-from typing import Dict, List
-from utilities.keys import Keys
+
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -19,6 +18,9 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+from typing import Dict, List
+from utilities.keys import Keys
+from utilities import setup
 
 
 class Classifier:
