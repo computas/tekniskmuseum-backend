@@ -23,14 +23,15 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-# Global variables
+# Initialization
 app = Flask(__name__)
+labels = setup.labels
+time_limit = setup.time_limit
+
 app.config.from_object("webapp.config.Config")
 models.db.init_app(app)
 models.create_tables(app)
 classifier = Classifier()
-labels = setup.labels
-time_limit = setup.time_limit
 
 
 @app.route("/")
