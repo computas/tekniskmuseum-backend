@@ -53,7 +53,7 @@ def insert_into_games(token, start_time, label):
         db.session.commit()
         return "Inserted"
     except AttributeError:
-        raise AttributeError ("Could not insert into games")
+        return "Could not insert into games"
 
 
 def insert_into_scores(name, score):
@@ -65,7 +65,7 @@ def insert_into_scores(name, score):
         db.session.add(score)
         db.session.commit()
     except AttributeError:
-        raise AttributeError ("Could not insert into scores")
+        return "Could not insert into scores"
 
 
 def query_game(token):
