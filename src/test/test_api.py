@@ -37,9 +37,14 @@ def test_start_game_wrong_request(client):
 
 def test_start_game_correct(client):
     """
-
+        Ensure that the API doesn't return error when sumitting a GET request.
     """
-    pass
+    req = client.get("/startGame", data=dict())
+    # Ensure that the returned dictionary contains a label, start time
+    # and a token.
+    assert(b"label" in req.data)
+    assert(b"start_time" in req.data)
+    assert(b"token" in req.data)
 
 
 def test_submit_answer_wrong_request(client):
