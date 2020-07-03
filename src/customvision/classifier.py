@@ -1,8 +1,7 @@
+#! /usr/bin/env python
 """
     Tools for interacting with Azure Custom Vision and Azure Blob Storage
 """
-
-#! /usr/bin/env python
 import uuid
 import time
 import sys
@@ -125,7 +124,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -186,7 +185,7 @@ class Classifier:
                 )
 
         # upload URLs in chunks of 64
-        for url_chunk in self.__chunks(url_list, 64):
+        for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
             )
@@ -204,7 +203,7 @@ class Classifier:
 
         iterations = self.trainer.get_iterations(self.project_id)
 
-        if len(iterations) >= 10:
+        if len(iterations) >= setup.CV_MAX_ITERATIONS:
 
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
@@ -232,8 +231,11 @@ class Classifier:
             Potential fixes for this are requesting the latest iteration_name every time you predict,
             or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
-
-        email = None
+        try:
+            email = Keys.get("EMAIL")
+        except Exception:
+            print("No email found, setting to empty")
+            email = ""
 
         self.delete_iteration()
 
