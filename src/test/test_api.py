@@ -27,9 +27,12 @@ def test_root_example(client):
 
 def test_start_game_wrong_request(client):
     """
-
+        Ensure that the API returns error due to unsupported request type
+        (something else than GET).
     """
-    pass
+    # send request to test client with empty dictionary
+    req = client.post("/startGame", data=dict())
+    assert(b"405 Method Not Allowed" in req.data)
 
 
 def test_start_game_correct(client):
