@@ -17,6 +17,8 @@ while [[ "$#" > 0 ]]; do
                             shift ;;
         -w=* | --workers=*) NWORKERS="${1#*=}";
                             shift ;;
+        -l | --learn)        train=true;
+                            shift ;;
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
     esac
@@ -37,6 +39,12 @@ if [[ $test = true ]]; then
     exit
 elif [[ $help = true ]]; then
     echo "$usage"
+    exit
+fi
+
+if [[ $train = true ]]; then
+    cd src/
+    python -m customvision.classifier
     exit
 fi
 

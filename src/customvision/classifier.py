@@ -7,7 +7,6 @@ import time
 import sys
 import os
 from typing import Dict, List
-from utilities.keys import Keys
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -19,6 +18,9 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+
+from utilities.keys import Keys
+from utilities import setup
 
 
 class Classifier:
@@ -105,7 +107,7 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
-
+        print(self.iteration_name, self.project_id)
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img
         )
