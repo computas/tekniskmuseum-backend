@@ -59,9 +59,16 @@ def test_submit_answer_wrong_request(client):
 
 def test_submit_answer_no_image(client):
     """
-
+        Ensure that the API returns error when there is no image submitted
+        in the request.
     """
-    pass
+    # Since the API checks if the image is there before anything else,
+    # we don't need to include anything with the request
+    req = client.post("submitAnswer", data=dict())
+    # Check if the correct message is returned
+    assert(b"No image submitted" == req.data)
+    # Check if the correct error code is returned
+    assert(req.status_code == 400)
 
 
 def test_submit_answer_wrong_image(client):
