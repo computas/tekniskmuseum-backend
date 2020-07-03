@@ -73,7 +73,7 @@ class Classifier:
 
         # find published iterations
         puplished_iterations = [
-            iteration for iteration in iterations if iteratoin.publish_name != None]
+            iteration for iteration in iterations if iteration.publish_name != None]
 
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
