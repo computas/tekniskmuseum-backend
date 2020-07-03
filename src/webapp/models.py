@@ -1,6 +1,6 @@
 """
     Classes for describing tables in the database and additional functions for
-    manipulating them.
+    manipulating them. 
 """
 
 from flask_sqlalchemy import SQLAlchemy
@@ -15,7 +15,6 @@ class Games(db.Model):
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
-    __tablename__="Games"
     token = db.Column(
         db.NVARCHAR(50),
         primary_key=True,
@@ -85,7 +84,7 @@ def insert_into_scores(name, score):
         raise AttributeError ("Could not insert into scores")
 
 
-def query_game(table,token):
+def query_game(token):
     """
         Return name, starttime and label of the first record of Games that
         matches the query.
@@ -122,5 +121,3 @@ def drop_table(table):
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
-
-

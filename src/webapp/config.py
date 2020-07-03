@@ -13,7 +13,7 @@ class Config:
     """
 
     if "pytest" in sys.modules:
-        # Insert connection string for test database
+        # Connection string for test database
         con_str = Keys.get("TEST_DB_CONNECTION_STRING")
         pass
 
