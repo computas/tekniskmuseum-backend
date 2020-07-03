@@ -49,9 +49,12 @@ def test_start_game_correct(client):
 
 def test_submit_answer_wrong_request(client):
     """
-
+        Ensure that the API returns error due to unsupported request type
+        (something else than POST).
     """
-    pass
+    # Submit GET request, since POST is required
+    req = client.get("/submitAnswer")
+    assert(b"405 Method Not Allowed" in req.data)
 
 
 def test_submit_answer_no_image(client):
