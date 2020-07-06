@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 """
-    API with endpoints runned by Flask. Contains three key endpoints:
+    API with endpoints runned by Flask. Contains three endpoints:
         - hello(): return a dummy string
         - start_game(): starts a game
         - submit_answer(): takes an image, returns the prediction and time used by user
 """
+
 import uuid
 import random
 import time
@@ -12,7 +13,7 @@ import sys
 import os
 from webapp import storage
 from webapp import models
-from webapp import setup
+from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -21,14 +22,15 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-# Global variables
+# Initialization
 app = Flask(__name__)
-app.config.from_object("webapp.config.Config")
+labels = setup.labels
+time_limit = setup.time_limit
+
+app.config.from_object("utilities.set.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
 classifier = Classifier()
-labels = setup.labels
-time_limit = setup.time_limit
 
 
 @app.route("/")
