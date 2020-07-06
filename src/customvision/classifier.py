@@ -18,7 +18,8 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
-from typing import Dict, List
+from typing import Dict
+from typing import List
 from utilities.keys import Keys
 from utilities import setup
 
