@@ -23,8 +23,8 @@ def test_root_example(client):
     """
         Use GET request on root and check if the response is correct.
     """
-    req = client.get("/")
-    assert req.data == b"Yes, we're up"
+    res = client.get("/")
+    assert res.data == b"Yes, we're up"
 
 
 def test_start_game_wrong_request(client):
@@ -33,20 +33,20 @@ def test_start_game_wrong_request(client):
         (something else than GET).
     """
     # send request to test client with empty dictionary
-    req = client.post("/startGame", data=dict())
-    assert(b"405 Method Not Allowed" in req.data)
+    res = client.post("/startGame", data=dict())
+    assert(b"405 Method Not Allowed" in res.data)
 
 
 def test_start_game_correct(client):
     """
         Ensure that the API doesn't return error when sumitting a GET request.
     """
-    req = client.get("/startGame", data=dict())
+    res = client.get("/startGame", data=dict())
     # Ensure that the returned dictionary contains a label, start time
     # and a token.
-    assert(b"label" in req.data)
-    assert(b"start_time" in req.data)
-    assert(b"token" in req.data)
+    assert(b"label" in res.data)
+    assert(b"start_time" in res.data)
+    assert(b"token" in res.data)
 
 
 def test_submit_answer_wrong_request(client):
@@ -54,9 +54,10 @@ def test_submit_answer_wrong_request(client):
         Ensure that the API returns error due to unsupported request type
         (something else than POST).
     """
-    # Submit GET request, since POST is required
-    req = client.get("/submitAnswer")
-    assert(b"405 Method Not Allowed" in req.data)
+    # Submit GET request
+    res = client.get("/submitAnswer")
+    # Should give error since POST is required
+    assert(b"405 Method Not Allowed" in res.data)
 
 
 def test_submit_answer_no_image(client):
@@ -66,11 +67,11 @@ def test_submit_answer_no_image(client):
     """
     # Since the API checks if the image is there before anything else,
     # we don't need to include anything with the request
-    req = client.post("/submitAnswer", data=dict())
+    res = client.post("/submitAnswer", data=dict())
     # Check if the correct message is returned
-    assert(b"No image submitted" == req.data)
+    assert(b"No image submitted" == res.data)
     # Check if the correct error code is returned
-    assert(req.status_code == 400)
+    assert(res.status_code == 400)
 
 
 def test_submit_answer_wrong_image(client):
@@ -87,11 +88,11 @@ def test_submit_answer_wrong_image(client):
         img_string = io.BytesIO(f.read())
     
     answer = {"image" : (img_string, cfg.api_image1), "token" : "shit"}
-    req = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
     # Check if the correct message is returned
-    assert(req.data == b"Image does not satisfy constraints")
+    assert(res.data == b"Image does not satisfy constraints")
     # Check if the correct error code is returned
-    assert(req.status_code == 415)
+    assert(res.status_code == 415)
 
 
 def test_submit_answer_correct(client):
@@ -118,16 +119,16 @@ def test_submit_answer_correct(client):
               "start_time" : start_time,
               "name" : name
     }
-    req = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
     # Check if the correct response data is returned
-    data = json.loads(req.data.decode("utf-8"))
+    data = json.loads(res.data.decode("utf-8"))
     assert(isinstance(data, dict))
     # Check if the correct keys are included
     assert("certainty" in data)
     assert("hasWon" in data)
     assert("timeUsed" in data)
     # Check if 200 is returned
-    assert(req.status_code == 200)
+    assert(res.status_code == 200)
 
 
 def test_allowedFile_small_resolution():
