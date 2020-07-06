@@ -19,7 +19,6 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 * Run script: `bash startapp.sh -l`to run the app locally.
 
 ### **Tests**
-_When running the tests, ensure that you are located in the same directory as this README._
 #### Run the tests with the following command:
 * `bash startapp.sh -t`
 
