@@ -6,8 +6,7 @@ import uuid
 import time
 import sys
 import os
-from typing import Dict, List
-from utilities.keys import Keys
+
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -19,6 +18,10 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+from typing import Dict
+from typing import List
+from utilities.keys import Keys
+from utilities import setup
 
 
 class Classifier:
@@ -68,9 +71,16 @@ class Classifier:
             connect_str
         )
 
+        # get all project iterations
         iterations = self.trainer.get_iterations(self.project_id)
-        iterations.sort(key=lambda i: i.created)
-        self.iteration_name = iterations[-1].publish_name
+
+        # find published iterations
+        puplished_iterations = [
+            iteration for iteration in iterations if iteration.publish_name != None]
+
+        # get the latest published iteration
+        puplished_iterations.sort(key=lambda i: i.created)
+        self.iteration_name = puplished_iterations[-1].publish_name
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -124,7 +134,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List) -> None:
         """

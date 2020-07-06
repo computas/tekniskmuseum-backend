@@ -1,14 +1,16 @@
 # **Teknisk Museum Back-End**
 ## **Usage**
 ### **Development**
-* clone repository
-* install requirements from requirements.txt
-* run script startup.sh
+* Clone repository.
+* Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15).
+* Install python requirements with pip: `pip install -r requirements.txt`.
+* Save the secret keys as a json object in: `src/config.json`.
+* Run script: `bash startapp.sh`to start the app. Use `bash startapp.sh -h` for help.
 
 ### **Tests**
 _When running the tests, ensure that you are located in the same directory as this README._
-#### Run the tests with the following command (include the -s flag to show prints):
-* pytest --ignore=machine_learning_utilities
+#### Run the tests with the following command:
+* `bash startapp.sh -t`
 
 ### **Required Installation**
 

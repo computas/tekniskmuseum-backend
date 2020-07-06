@@ -1,5 +1,7 @@
 import os
+import io
 import sys
+import json
 import werkzeug
 import tempfile
 import pytest
@@ -21,8 +23,102 @@ def test_root_example(client):
     """
         Use GET request on root and check if the response is correct.
     """
-    req = client.get("/")
-    assert req.data == b"Yes, we're up"
+    res = client.get("/")
+    assert res.data == b"Yes, we're up"
+
+
+def test_start_game_wrong_request(client):
+    """
+        Ensure that the API returns error due to unsupported request type
+        (something else than GET).
+    """
+    # send request to test client with empty dictionary
+    res = client.post("/startGame", data=dict())
+    assert(b"405 Method Not Allowed" in res.data)
+
+
+def test_start_game_correct(client):
+    """
+        Ensure that the API doesn't return error when sumitting a GET request.
+    """
+    res = client.get("/startGame", data=dict())
+    # Ensure that the returned dictionary contains a label, start time
+    # and a token.
+    assert(b"label" in res.data)
+    assert(b"start_time" in res.data)
+    assert(b"token" in res.data)
+
+
+def test_submit_answer_wrong_request(client):
+    """
+        Ensure that the API returns error due to unsupported request type
+        (something else than POST).
+    """
+    # Submit GET request
+    res = client.get("/submitAnswer")
+    # Should give error since POST is required
+    assert(b"405 Method Not Allowed" in res.data)
+
+
+def test_submit_answer_no_image(client):
+    """
+        Ensure that the API returns error when there is no image submitted
+        in the request.
+    """
+    # Since the API checks if the image is there before anything else,
+    # we don't need to include anything with the request
+    res = client.post("/submitAnswer", data=dict())
+    # Check if the correct message is returned
+    assert(b"No image submitted" == res.data)
+    # Check if the correct error code is returned
+    assert(res.status_code == 400)
+
+
+def test_submit_answer_wrong_image(client):
+    """
+        Ensure that the API returns error when the image submitted in the
+        request doesn't comply with the constraints checked for in the
+        allowedFile function.
+    """
+    # Start time, token and user doesn't need to be valid, since the error is
+    # supposed to be caught before these are used
+    start = 0
+    token, user = "", ""
+    # Submit answer with the given parameters and get results
+    res = submit_answer_helper(
+        client, cfg.api_path_data, cfg.api_image1, start, token, user
+    )
+    # Check if the correct message is returned
+    assert(res.data == b"Image does not satisfy constraints")
+    # Check if the correct error code is returned
+    assert(res.status_code == 415)
+
+
+def test_submit_answer_correct(client):
+    """
+        Ensure that the API returns no errors when the image submitted in the
+        request complies with constraints and everything seem to be good.
+    """
+    # Username is not unique, can therefore use the same repeatedly
+    name = "testing_api"
+    # Need to start a new game to get a token we can submit
+    res1 = client.get("/startGame")
+    response = json.loads(res1.data.decode("utf-8"))
+    token = response["token"]
+    start_time = response["start_time"]
+    # submit answer with parameters and retrieve results
+    res = submit_answer_helper(
+        client, cfg.api_path_data, cfg.api_image4, start_time, token, name
+    )
+    # Check if the correct response data is returned
+    data = json.loads(res.data.decode("utf-8"))
+    assert(isinstance(data, dict))
+    # Check if the correct keys are included
+    assert("certainty" in data)
+    assert("hasWon" in data)
+    assert("timeUsed" in data)
+    # Check if 200 is returned
+    assert(res.status_code == 200)
 
 
 def test_allowedFile_small_resolution():
@@ -85,6 +181,34 @@ def allowed_file_helper(filename, expected_result):
         result = api.allowed_file(image)
 
     assert result == expected_result
+
+
+def submit_answer_helper(client, data_path, image, start, token, user):
+    """
+        Helper function which sends post request to client on /submitAnswer.
+        The function returns the response given from the client
+
+        client: client object to communicate with
+        data_path: path to directory containing data
+        image: name of the image in the directory given by data_path
+        start: start_time of the game
+        token: token used to validate session
+        user: username of the player
+    """
+    # Construct path to the directory storing the test data
+    dir_path = construct_path(data_path)
+    path = os.path.join(dir_path, image)
+    # Open image and retrieve bytes stream
+    with open(path, "rb") as f:
+        img_string = io.BytesIO(f.read())
+
+    answer = {"image" : (img_string, image),
+              "token" : token,
+              "start_time" : start,
+              "name" : user}
+
+    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    return res
 
 
 def construct_path(dir_list):
