@@ -1,10 +1,10 @@
 # **Teknisk Museum Back-End**
 ## **Usage**
-The main entry point for the app is the bash script `startapp.sh`.
+The main entry point off the app is the bash script `startapp.sh`.
 Just runing the script `bash startapp.sh` will launch the app.
 The script accepts the following flags `bash startapp.sh <flag>`:
 
-| Flag          | Function                        |
+| Flag          | Result                          |
 |---------------|---------------------------------|
 | -h, --help    | display options                 |
 | -t, --test    | run PEP8 linter and unit tests  |
