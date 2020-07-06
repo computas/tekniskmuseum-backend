@@ -8,20 +8,10 @@ from webapp import models
 import uuid
 import time
 import pytest
-import pdb
+from flask import Flask
 
 token = uuid.uuid4().hex
 start_time = time.time()
-
-
-@pytest.fixture(scope="session")
-def client():
-    """
-        Pytest fixture which configures application for testing.
-    """
-    api.app.config["TESTING"] = True
-    with api.app.test_client() as client:
-        yield client
 
 
 def test_create_tables():
@@ -29,25 +19,24 @@ def test_create_tables():
     assert result == "Models created!"
 
 
-@pytest.fixture(scope="session")
 def test_insert_into_games():
-    result = models.insert_into_games(token, start_time, "sun")
-    breakpoint()
+    with api.app.app_context():
+        result = models.insert_into_games(token, start_time, "sun")
     assert result == "Inserted"
 
 
-@pytest.fixture(scope="session")
 def test_query_games():
-    result = models.query_game(token)
+    with api.app.app_context():
+        result = models.query_game(token)
     # If result not string
     assert type(result) == "list"
 
 
-@pytest.fixture(scope="session")
 def test_query_euqals_insert():
     token2 = uuid.uuid4().hex
     start_time = time.time()
-    models.insert_into_games(token2, start_time, "bench")
-    expected_result = [start_time, "bench"]
-    result = models.query_game(token2)
+    with api.app.app_context():
+        models.insert_into_games(token2, start_time, "bench")
+        expected_result = (start_time, "bench")
+        result = models.query_game(token2)
     assert result == expected_result

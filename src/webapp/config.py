@@ -15,7 +15,6 @@ class Config:
     if "pytest" in sys.modules:
         # Connection string for test database
         con_str = Keys.get("TEST_DB_CONNECTION_STRING")
-        pass
 
     else:
         # Database configuration string
