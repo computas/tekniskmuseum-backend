@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 import werkzeug
 import tempfile
@@ -64,7 +65,7 @@ def test_submit_answer_no_image(client):
     """
     # Since the API checks if the image is there before anything else,
     # we don't need to include anything with the request
-    req = client.post("submitAnswer", data=dict())
+    req = client.post("/submitAnswer", data=dict())
     # Check if the correct message is returned
     assert(b"No image submitted" == req.data)
     # Check if the correct error code is returned
@@ -73,9 +74,23 @@ def test_submit_answer_no_image(client):
 
 def test_submit_answer_wrong_image(client):
     """
-
+        Ensure that the API returns error when the image submitted in the
+        request doesn't comply with the constraints checked for in the
+        allowedFile function.
     """
-    pass
+    # Construct path to the directory storing the test data
+    dir_path = construct_path(cfg.api_path_data)
+    path = os.path.join(dir_path, cfg.api_image1)
+    # Open image and retrieve bytes stream
+    with open(path, "rb") as f:
+        img_string = io.BytesIO(f.read())
+    
+    answer = {"image" : (img_string, cfg.api_image1), "token" : "shit"}
+    req = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    # Check if the correct message is returned
+    assert(req.data == b"Image does not satisfy constraints")
+    # Check if the correct error code is returned
+    assert(req.status_code == 415)
 
 
 def test_submit_answer_correct(client):
@@ -83,7 +98,6 @@ def test_submit_answer_correct(client):
 
     """
     pass
-
 
 
 def test_allowedFile_small_resolution():
