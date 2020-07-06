@@ -16,7 +16,7 @@ elif os.path.isfile("./config.json"):
 else:
     raise OSError(
         "Secret keys must either be stored as environment variables"
-        "or in file 'config.json' in src/ directory"
+        " or in file 'config.json' in src/ directory"
     )
 
 

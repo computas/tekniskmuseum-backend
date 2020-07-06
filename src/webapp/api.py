@@ -104,6 +104,13 @@ def submit_answer():
     return jsonify(data), 200
 
 
+@app.route("/clearTable", methods=["POST"])
+def clear_table():
+    table = request.values["table"]
+    models.clear_table(table)
+    return "Table cleared", 200
+
+
 def allowed_file(image):
     """
         Check if image satisfies the constraints of Custom Vision.
