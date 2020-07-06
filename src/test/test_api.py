@@ -80,15 +80,14 @@ def test_submit_answer_wrong_image(client):
         request doesn't comply with the constraints checked for in the
         allowedFile function.
     """
-    # Construct path to the directory storing the test data
-    dir_path = construct_path(cfg.api_path_data)
-    path = os.path.join(dir_path, cfg.api_image1)
-    # Open image and retrieve bytes stream
-    with open(path, "rb") as f:
-        img_string = io.BytesIO(f.read())
-    
-    answer = {"image" : (img_string, cfg.api_image1), "token" : "shit"}
-    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    # Start time, token and user doesn't need to be valid, since the error is
+    # supposed to be caught before these are used
+    start = 0
+    token, user = "",""
+    # Submit answer with the given parameters and get results
+    res = submit_answer_helper(
+        client, cfg.api_path_data, cfg.api_image1, start, token, user
+    )
     # Check if the correct message is returned
     assert(res.data == b"Image does not satisfy constraints")
     # Check if the correct error code is returned
@@ -107,19 +106,10 @@ def test_submit_answer_correct(client):
     response = json.loads(res1.data.decode("utf-8"))
     token = response["token"]
     start_time = response["start_time"]
-    # Construct path to the directory storing the test data
-    dir_path = construct_path(cfg.api_path_data)
-    path = os.path.join(dir_path, cfg.api_image4)
-    # Open image and retrieve bytes stream
-    with open(path, "rb") as f:
-        img_string = io.BytesIO(f.read())
-
-    answer = {"image" : (img_string, cfg.api_image4),
-              "token" : token,
-              "start_time" : start_time,
-              "name" : name
-    }
-    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    # submit answer with parameters and retrieve results
+    res = submit_answer_helper(
+        client, cfg.api_path_data, cfg.api_image4, start_time, token, name
+    )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
     assert(isinstance(data, dict))
@@ -191,6 +181,34 @@ def allowed_file_helper(filename, expected_result):
         result = api.allowed_file(image)
 
     assert result == expected_result
+
+
+def submit_answer_helper(client, data_path, image, start, token, user):
+    """
+        Helper function which sends post request to client on /submitAnswer.
+        The function returns the response given from the client
+
+        client: client object to communicate with
+        data_path: path to directory containing data
+        image: name of the image in the directory given by data_path
+        start: start_time of the game
+        token: token used to validate session
+        user: username of the player
+    """
+    # Construct path to the directory storing the test data
+    dir_path = construct_path(data_path)
+    path = os.path.join(dir_path, image)
+    # Open image and retrieve bytes stream
+    with open(path, "rb") as f:
+        img_string = io.BytesIO(f.read())
+
+    answer = {"image" : (img_string, image),
+              "token" : token,
+              "start_time" : start,
+              "name" : user
+    }
+    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    return res
 
 
 def construct_path(dir_list):
