@@ -130,11 +130,15 @@ def get_size_of_table(table):
         return "Table does not exist."
 
 
-def get_daily_high_score(n_hours):
+def get_daily_high_score(table, n_hours):
 
     return [1, 2, 3]
 
 
 def get_top_n_high_score_list(top_n):
 
-    return[1, 2, 3]
+    #read top n high scores
+    try:
+        high_score = Games.query.order_by(Games.score)[:top_n]
+    except AttributeError:
+        print("Could not read top " + str(top_n) + " high score from database")
