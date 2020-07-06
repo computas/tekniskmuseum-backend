@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 """
     API with endpoints runned by Flask. Contains three endpoints:
         - hello(): return a dummy string
@@ -5,7 +6,6 @@
         - submit_answer(): takes an image, returns the prediction and time used by user
 """
 
-#! /usr/bin/env python
 import uuid
 import random
 import time
@@ -14,7 +14,6 @@ import os
 from webapp import storage
 from webapp import models
 from utilities import setup
-# from webapp import setup
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
