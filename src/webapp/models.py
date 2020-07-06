@@ -50,7 +50,7 @@ def insert_into_games(token, start_time, label):
         Insert values into Games table.
     """
     if (isinstance(token, str) and isinstance(start_time, float)
-       and isinstance(label, str)):
+            and isinstance(label, str)):
         try:
             game = Games(token=token, start_time=start_time, label=label)
             db.session.add(game)
@@ -127,3 +127,14 @@ def get_size_of_table(table):
     elif table == "Scores":
         rows = db.session.query(Scores).count()
         return rows
+        return "Table does not exist."
+
+
+def get_daily_high_score(n_hours):
+
+    return [1, 2, 3]
+
+
+def get_top_n_high_score_list(top_n):
+
+    return[1, 2, 3]

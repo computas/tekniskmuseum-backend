@@ -126,3 +126,18 @@ def allowed_file(image):
         return False
     else:
         return True
+
+
+@app.route("/viewHighScore")
+def view_high_score():
+    """
+        Read highscore from database. Return top n of all time and top n of last 24 hours.
+    """
+    #read top 10 in db
+
+    data = {
+        "token": token,
+        "label": label,
+        "start_time": start_time,
+    }
+    return jsonify(data), 200
