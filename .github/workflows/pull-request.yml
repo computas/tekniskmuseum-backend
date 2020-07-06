@@ -28,7 +28,7 @@ jobs:
   run-tests:
     name: Run unit tests
     runs-on: ubuntu-latest
-    #env: '${{secrets.TEST_SETTINGS}}'
+    env: '${{ secrets.TEST_SETTINGS }}'
     
  
     steps:
@@ -46,6 +46,5 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
-       echo '${{secrets.TEST_SETTINGS}}'
        cd src/
        python -m pytest
