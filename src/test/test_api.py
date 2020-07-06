@@ -1,6 +1,7 @@
 import os
 import io
 import sys
+import json
 import werkzeug
 import tempfile
 import pytest
@@ -95,9 +96,38 @@ def test_submit_answer_wrong_image(client):
 
 def test_submit_answer_correct(client):
     """
-
+        Ensure that the API returns no errors when the image submitted in the
+        request complies with constraints and everything seem to be good.
     """
-    pass
+    # Username is not unique, can therefore use the same repeatedly
+    name = "testing_api"
+    # Need to start a new game to get a token we can submit
+    res1 = client.get("/startGame")
+    response = json.loads(res1.data.decode("utf-8"))
+    token = response["token"]
+    start_time = response["start_time"]
+    # Construct path to the directory storing the test data
+    dir_path = construct_path(cfg.api_path_data)
+    path = os.path.join(dir_path, cfg.api_image4)
+    # Open image and retrieve bytes stream
+    with open(path, "rb") as f:
+        img_string = io.BytesIO(f.read())
+
+    answer = {"image" : (img_string, cfg.api_image4),
+              "token" : token,
+              "start_time" : start_time,
+              "name" : name
+    }
+    req = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    # Check if the correct response data is returned
+    data = json.loads(req.data.decode("utf-8"))
+    assert(isinstance(data, dict))
+    # Check if the correct keys are included
+    assert("certainty" in data)
+    assert("hasWon" in data)
+    assert("timeUsed" in data)
+    # Check if 200 is returned
+    assert(req.status_code == 200)
 
 
 def test_allowedFile_small_resolution():
