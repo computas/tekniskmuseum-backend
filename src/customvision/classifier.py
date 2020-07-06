@@ -1,5 +1,13 @@
 #! /usr/bin/env python
-
+"""
+    Tools for interacting with Azure Custom Vision and Azure Blob Storage
+"""
+import uuid
+import time
+import sys
+import os
+from typing import Dict, List
+from utilities.keys import Keys
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -12,20 +20,15 @@ from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
 
-import uuid
-import time
-
-
-import sys
-import os
-
-from typing import Dict, List
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utilities.keys import Keys  # noqa: e402
-
 
 class Classifier:
+    """
+        Class for interacting with Custom Vision. Contatins three key methods:
+            - predict_imgage() / predicts a an image
+            - upload_images() / reads image URLs from Blob Storage and uploads to Custom Vision
+            - train() / trains a model
+    """
+
     def __init__(self) -> None:
         """
             Reads configuration file
@@ -37,7 +40,6 @@ class Classifier:
             Returns:
             None
         """
-
         self.ENDPOINT = Keys.get("CV_ENDPOINT")
         self.project_id = Keys.get("CV_PROJECT_ID")
         self.prediction_key = Keys.get("CV_PREDICTION_KEY")
@@ -122,7 +124,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -266,7 +268,7 @@ def main():
         Use main if you want to run the complete program with init, train and prediction of and example image.
         To be able to run main, make sure:
         -no more than two projects created in Azure Custom Vision
-        -no more than 11 iterations done in one projectS
+        -no more than 10 iterations done in one projectS
     """
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
@@ -278,6 +280,7 @@ def main():
 
     classifier.train(labels)
 
+    # classify image
     # with open(
     #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
     # ) as f:
@@ -286,6 +289,7 @@ def main():
 
     # print(f"png result {result}")
 
+    # classify image with URL reference
     best_guess, result = classifier.predict_image_url(test_url)
 
     print(f"best guess: {best_guess} url result {result}")
