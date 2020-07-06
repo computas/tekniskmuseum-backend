@@ -47,25 +47,33 @@ def insert_into_games(token, start_time, label):
     """
         Insert values into Games table.
     """
-    try:
-        game = Games(token=token, start_time=start_time, label=label)
-        db.session.add(game)
-        db.session.commit()
-        return "Inserted"
-    except AttributeError:
-        return "Could not insert into games"
+    if (isinstance(token, str) and isinstance(start_time, float)
+       and isinstance(label, str)):
+        try:
+            game = Games(token=token, start_time=start_time, label=label)
+            db.session.add(game)
+            db.session.commit()
+            return "Inserted"
+        except AttributeError:
+            raise AttributeError("Could not insert into games")
+    else:
+        raise AttributeError("Token has to be int, start time has to be float, label has to be string.")
 
 
 def insert_into_scores(name, score):
     """
         Insert values into Scores table.
     """
-    try:
-        score = Scores(name=name, score=score)
-        db.session.add(score)
-        db.session.commit()
-    except AttributeError:
-        return "Could not insert into scores"
+    if (isinstance(name, str) and isinstance(score, int)):
+        try:
+            score = Scores(name=name, score=score)
+            db.session.add(score)
+            db.session.commit()
+            return "Inserted"
+        except AttributeError:
+            return AttributeError("Could not insert into scores")
+    else:
+        raise AttributeError("Name has to be string, score has to be float.")
 
 
 def query_game(token):
@@ -96,7 +104,7 @@ def clear_table(table):
             return "Table successfully cleared"
     except AttributeError:
         db.session.rollback()
-        return "Table does not exist."
+        return AttributeError("Table does not exist.")
 
 
 def drop_table(table):
@@ -105,3 +113,12 @@ def drop_table(table):
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
+
+
+def get_size_of_table(table):
+    if table == "Games":
+        rows = db.session.query(Games).count()
+        return rows
+    elif table == "Scores":
+        rows = db.session.query(Scores).count()
+        return rows
