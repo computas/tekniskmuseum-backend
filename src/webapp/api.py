@@ -69,7 +69,7 @@ def submit_answer():
     # Check if image submitted correctly
     if "image" not in request.files:
         return "No image submitted", 400
-    
+
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     if not allowed_file(image):

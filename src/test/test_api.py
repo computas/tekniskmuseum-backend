@@ -83,7 +83,7 @@ def test_submit_answer_wrong_image(client):
     # Start time, token and user doesn't need to be valid, since the error is
     # supposed to be caught before these are used
     start = 0
-    token, user = "",""
+    token, user = "", ""
     # Submit answer with the given parameters and get results
     res = submit_answer_helper(
         client, cfg.api_path_data, cfg.api_image1, start, token, user
@@ -205,8 +205,8 @@ def submit_answer_helper(client, data_path, image, start, token, user):
     answer = {"image" : (img_string, image),
               "token" : token,
               "start_time" : start,
-              "name" : user
-    }
+              "name" : user}
+
     res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
     return res
 
