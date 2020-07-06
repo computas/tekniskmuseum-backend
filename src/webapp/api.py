@@ -27,7 +27,7 @@ app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
 
-app.config.from_object("utilities.set.Flask_config")
+app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
 classifier = Classifier()
