@@ -1,6 +1,6 @@
 """
     Classes for describing tables in the database and additional functions for
-    manipulating them. 
+    manipulating them.
 """
 
 from flask_sqlalchemy import SQLAlchemy
@@ -40,7 +40,7 @@ def create_tables(app):
         db.create_all()
         return "Models created!"
 
-    return "Couldn't create tables.." 
+    return "Couldn't create tables.."
 
 
 def insert_into_games(token, start_time, label):
@@ -97,6 +97,7 @@ def clear_table(table):
     except AttributeError:
         db.session.rollback()
         return "Table does not exist."
+
 
 def drop_table(table):
     """

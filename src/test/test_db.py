@@ -10,6 +10,9 @@ import time
 import pytest
 import pdb
 
+token = uuid.uuid4().hex
+start_time = time.time()
+
 
 @pytest.fixture(scope="session")
 def client():
@@ -25,19 +28,20 @@ def test_create_tables():
     result = models.create_tables(api.app)
     assert result == "Models created!"
 
+
 @pytest.fixture(scope="session")
 def test_insert_into_games():
-    token = uuid.uuid4().hex
-    start_time = time.time()
     result = models.insert_into_games(token, start_time, "sun")
     breakpoint()
     assert result == "Inserted"
 
+
 @pytest.fixture(scope="session")
 def test_query_games():
-   result = models.query_game(token)
-   #if result not string
-   assert type(result) == "list"
+    result = models.query_game(token)
+    # If result not string
+    assert type(result) == "list"
+
 
 @pytest.fixture(scope="session")
 def test_query_euqals_insert():
