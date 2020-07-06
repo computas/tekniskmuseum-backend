@@ -1,32 +1,15 @@
 #!/bin/bash
 # Start webapp or run tests
 
-# compute number of gunicorn workers
+# Compute number of gunicorn workers
 NCORES=$(nproc)
 NWORKERS=$(((2*$NCORES)+1))
 if [[ $NWORKERS > 12 ]]; then
     NWORKERS=12
 fi
 
-# Get console widtg
+# Get console width
 cols=$(tput cols)
-
-# Parse flags
-while [[ "$#" > 0 ]]; do
-    case $1 in
-        -l | --local)       local=true;
-                            shift ;;
-        -t | --test)        test=true;
-                            shift ;;
-        -h | --help)        help=true;
-                            shift ;;
-        -w=* | --workers=*) NWORKERS="${1#*=}";
-                            shift ;;
-        *)                  echo "Unexpected option: $1, use -h for help";
-                            exit 1 ;;
-    esac
-    shift
-done
 
 # Help string
 usage="Script to start webapp with gunicorn.
@@ -50,6 +33,23 @@ printHeadline() {
 printline() {
     printf %"$cols"s | tr " " "-"
 }
+
+# Parse flags
+while [[ "$#" > 0 ]]; do
+    case $1 in
+        -l | --local)       local=true;
+                            shift ;;
+        -t | --test)        test=true;
+                            shift ;;
+        -h | --help)        help=true;
+                            shift ;;
+        -w=* | --workers=*) NWORKERS="${1#*=}";
+                            shift ;;
+        *)                  echo "Unexpected option: $1, use -h for help";
+                            exit 1 ;;
+    esac
+    shift
+done
 
 if [[ $test = true ]]; then
     cd src/
