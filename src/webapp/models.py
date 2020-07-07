@@ -124,7 +124,7 @@ def get_daily_high_score():
 
         #filter by today and sort by score
         top_n_list = Scores.query.filter_by(
-            date=today).order_by(Scores.score).all()
+            date=today).order_by(Scores.score.desc()).all()
 
         #structure data
         new = [{"name": player.name, "score": player.score}
