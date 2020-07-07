@@ -19,6 +19,8 @@ labels = [
     "triangle",
 ]
 time_limit = 22  # time limit for one guess
+num_games = 3
+certainty_threshold = 0.5 # certainties from costum vision lower than this -> haswon=False
 
 
 # Config Flask
@@ -33,7 +35,7 @@ class Flask_config:
 
     else:
         # Database configuration string
-        con_str = Keys.get("DB_CONNECTION_STRING")
+        con_str = Keys.get("TEST_DB_CONNECTION_STRING")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str
