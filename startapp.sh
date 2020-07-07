@@ -14,11 +14,13 @@ cols=$(tput cols)
 # Help string
 usage='Script to start webapp with gunicorn.
 Options:
-    -h, --help      Print this help page
-    -t, --test      Run unit tests with pytest
-    -l, --local     Only expose 127.0.0.1
+    -h, --help      Print this help page.
+    -t, --test      Run linter and unit tests.
+    -d, --debug     Gunicorn reloads on code change,
+                    number of workers set to 1,
+                    and only 127.0.0.1 is exposed.
     -w, --workers   Specify number of gunicorn workers,
-                    recommended values are 3-12 workers'
+                    recommended values are 3-12 workers.'
 
 # print headline with first argument
 printHeadline() {
@@ -26,29 +28,36 @@ printHeadline() {
     if [[ $1 = green ]]; then
         printf '\e[32m'
         shift
+    elif [[ $1 = red ]]; then
+        printf '\e[31m'
+        shift
+    else
+        printf '\e[1m'
     fi
     wordlength=${#1}
     padlength=$(( ($cols - $wordlength - 2) / 2 ))
-    printf '\e[1m'
     printf %"$padlength"s | tr " " "="
-    printf " $1 "
+    printf "\e[1m $1 \e[21m"
     printf %"$padlength"s | tr " " "="
+    printf '\e[0m\n'
 }
 
 # print line with terminal width
 printline() {
     printf '\e[1m'
     printf %"$cols"s | tr " " "-"
+    printf '\e[0m\n'
 }
 
 # Parse flags
 while [[ "$#" > 0 ]]; do
     case $1 in
-        -l | --local)       local=true;
-                            shift ;;
         -t | --test)        test=true;
                             shift ;;
         -h | --help)        help=true;
+                            shift ;;
+        -d | --debug)       debug=true;
+                            nworkers=1;
                             shift ;;
         -w=* | --workers=*) nworkers="${1#*=}";
                             shift ;;
@@ -59,8 +68,8 @@ done
 
 if [[ $test = true ]]; then
     cd src/
-    printHeadline 'flake8'
-    flake8 && printHeadline green 'No linting errors'
+    printHeadline 'PEP8 linting'
+    flake8 && printHeadline green 'no linting errors'
     python -m pytest
     exit
 elif [[ $help = true ]]; then
@@ -70,17 +79,21 @@ fi
 
 # Print some info
 printHeadline 'Teknisk museum backend'
-echo "
-$(python --version)
+echo "$(python --version)
 $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
-printline
 
-# Local only exposes 127.0.0.1
-if [[ $local = true ]]; then
-    gunicorn --timeout=600 -w=$nworkers --chdir src/ webapp.api:app
+# Flask entrypoint
+entrypoint='--chdir src/ webapp.api:app'
+
+if [[ $debug = true ]]; then
+    printHeadline red 'Debug mode'
+    echo 'Debug mode activated. Gunicorn is reloaded on code changes.'
+    printline
+    gunicorn --reload -w=$nworkers $entrypoint
 else
-    gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers --chdir src/ webapp.api:app
+    printline
+    gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers $entrypoint
 fi
 printline
