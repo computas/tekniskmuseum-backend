@@ -134,11 +134,20 @@ def view_high_score():
     """
         Read highscore from database. Return top n of all time and top n of last 24 hours.
     """
-
     #read top n overall highscore
-    top_n_high_score_dict = models.get_top_n_high_score_list(10)
+    top_n_high_scores = models.get_top_n_high_score_list(10)
 
     #read daily highscore
-    daily_high_score_dict = models.get_daily_high_score()
+    daily_high_scores = models.get_daily_high_score()
 
-    return jsonify(top_n_high_score_dict), 200
+    #high_score_data = ["daily", list(
+    #    daily_high_score_dict), "overall", list(top_n_high_score_dict)]
+
+    #print(daily_high_score_dict)
+
+    data = {
+        "daily": daily_high_scores,
+        "total": top_n_high_scores
+    }
+
+    return jsonify(data), 200

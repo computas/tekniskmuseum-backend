@@ -112,35 +112,25 @@ def clear_table(table):
         return AttributeError("Table does not exist.")
 
 
-def get_daily_high_score(table, n_hours):
+def get_daily_high_score():
     """
         Function for reading all daily scores.
 
-        Returns:
-        top list: (dict[str,float]): player name, assosiated score. Sorted by score
+        Returns list of dictionaries.
     """
 
     try:
-        #read top daily scores
-        query = db.session.query(Scores)
+        today = str(datetime.date.today())
 
-        #filter by today
-        today = datetime.date
-        print("hei1")
-        filter_spec = [{'field': 'date', 'op': '==', 'value': today}]
-        print("he2i")
-        filtered_query = SQLAlchemy.apply_filters(query, filter_spec)
-        print("hei3")
-        #sort by highest to lowest score
-        sort_spec = [
-            {'model': 'Scores', 'field': 'score', 'direction': 'desc'}]
+        #filter by today and sort by score
+        top_n_list = Scores.query.filter_by(
+            date=today).order_by(Scores.score).all()
 
-        sorted_filtered_query = apply_sort(filtered_query, sort_spec)
-        print("hei")
-        result = sorted_filtered_query.all()
+        #structure data
+        new = [{"name": player.name, "score": player.score}
+               for player in top_n_list]
 
-        print(result)
-        return query
+        return new
 
     except AttributeError:
         print("Could not read daily highscore from database")
@@ -150,16 +140,18 @@ def get_daily_high_score(table, n_hours):
 def get_top_n_high_score_list(top_n):
     """
         Funtion for reading overall top n list from database
+
+        Returns list of dictionaries.
     """
     try:
         #read top n high scores
         top_n_list = Scores.query.order_by(
             Scores.score.desc()).limit(top_n).all()
 
-        #convert top 10 list into a dict {name: score}
-        top_n_dict = {player.name: player.score for player in top_n_list}
-        print(top_n_dict)
-        return top_n_dict
+        new = [{"name": player.name, "score": player.score}
+               for player in top_n_list]
+
+        return new
 
     except AttributeError:
         print("Could not read top " + str(top_n) + " high score from database")
