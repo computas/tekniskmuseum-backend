@@ -10,6 +10,7 @@ import random
 import time
 import sys
 import os
+import logging
 from webapp import storage
 from webapp import models
 from webapp import setup
@@ -30,9 +31,15 @@ classifier = Classifier()
 labels = setup.labels
 time_limit = setup.time_limit
 
+if __name__ != "__main__":
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
 
 @app.route("/")
 def hello():
+    app.logger.info("We're up!")
     return "Yes, we're up"
 
 
@@ -42,7 +49,7 @@ def start_game():
         Starts a new game. A unique token is generated to keep track of game.
         A random label is chosen for the player to draw. Startime is
         recorded to calculate elapsed time when the game ends. Name can be
-        either None or a name and is not unique. Will be sent from frontend.
+        either None or a name and is not unique. Will be sent from frontend.   
     """
     # start a game and insert it into the games table
     start_time = time.time()

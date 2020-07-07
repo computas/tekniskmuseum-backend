@@ -48,4 +48,11 @@ echo $(python --version)
 echo "Number processing units: $NCORES"
 echo "Number of workers: $NWORKERS"
 echo "------------------------------------"
-gunicorn --bind=0.0.0.0 --timeout=600 -w=$NWORKERS --chdir src/ webapp.api:app
+
+
+if [-z "$PRODUCTION"]; then
+    LOG_FILE = "./flaskapp.log"
+else
+    LOG_FILE = "/home/LogFiles/flaskapp.log"
+fi
+gunicorn --bind=0.0.0.0 --timeout=600 --log-file=$LOG_FILE -w=$NWORKERS --chdir src/ webapp.api:app
