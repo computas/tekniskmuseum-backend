@@ -94,7 +94,8 @@ def submit_answer():
     # save score in highscore table
     name = request.values["name"]
     score = time_used
-    models.insert_into_scores(name, score)
+    date = datetime.date.today()
+    models.insert_into_scores(name, score, date)
     # return json response
     data = {
         "certainty": certainty,

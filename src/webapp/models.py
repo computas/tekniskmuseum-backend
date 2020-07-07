@@ -113,8 +113,38 @@ def clear_table(table):
 
 
 def get_daily_high_score(table, n_hours):
+    """
+        Function for reading all daily scores.
 
-    return [1, 2, 3]
+        Returns:
+        top list: (dict[str,float]): player name, assosiated score. Sorted by score
+    """
+
+    try:
+        #read top daily scores
+        query = db.session.query(Scores)
+
+        #filter by today
+        today = datetime.date
+        print("hei1")
+        filter_spec = [{'field': 'date', 'op': '==', 'value': today}]
+        print("he2i")
+        filtered_query = SQLAlchemy.apply_filters(query, filter_spec)
+        print("hei3")
+        #sort by highest to lowest score
+        sort_spec = [
+            {'model': 'Scores', 'field': 'score', 'direction': 'desc'}]
+
+        sorted_filtered_query = apply_sort(filtered_query, sort_spec)
+        print("hei")
+        result = sorted_filtered_query.all()
+
+        print(result)
+        return query
+
+    except AttributeError:
+        print("Could not read daily highscore from database")
+        return AttributeError("Could not read daily highscore from database")
 
 
 def get_top_n_high_score_list(top_n):
