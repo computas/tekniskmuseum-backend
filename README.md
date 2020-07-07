@@ -1,14 +1,24 @@
 # **Teknisk Museum Back-End**
 ## **Usage**
+The main entry point off the app is the bash script `startapp.sh`.
+Just runing the script `bash startapp.sh` will launch the app.
+The script accepts the following flags `bash startapp.sh <flag>`:
+
+| Flag          | Result                          |
+|---------------|---------------------------------|
+| -h, --help    | display options                 |
+| -t, --test    | run PEP8 linter and unit tests  |
+| -l, --local   | run on localhost                |
+| -w, --workers | specify number of workers       |
+
 ### **Development**
 * Clone repository.
 * Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15).
 * Install python requirements with pip: `pip install -r requirements.txt`.
 * Save the secret keys as a json object in: `src/config.json`.
-* Run script: `bash startapp.sh`to start the app. Use `bash startapp.sh -h` for help.
+* Run script: `bash startapp.sh -l`to run the app locally.
 
 ### **Tests**
-_When running the tests, ensure that you are located in the same directory as this README._
 #### Run the tests with the following command:
 * `bash startapp.sh -t`
 

@@ -1,3 +1,4 @@
+import sys
 from utilities.keys import Keys
 
 # USED BY CUSTOM VISION
@@ -26,8 +27,13 @@ class Flask_config:
         Config settings for flask and sqlalchemy should be set here.
     """
 
-    # Database configuration string
-    con_str = Keys.get("DB_CONNECTION_STRING")
+    if "pytest" in sys.modules:
+        # Connection string for test database
+        con_str = Keys.get("TEST_DB_CONNECTION_STRING")
+
+    else:
+        # Database configuration string
+        con_str = Keys.get("DB_CONNECTION_STRING")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str
