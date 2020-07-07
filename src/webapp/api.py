@@ -11,6 +11,7 @@ import random
 import time
 import sys
 import os
+import logging
 import datetime
 from webapp import storage
 from webapp import models
@@ -33,9 +34,15 @@ models.db.init_app(app)
 models.create_tables(app)
 classifier = Classifier()
 
+if __name__ != "__main__":
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
 
 @app.route("/")
 def hello():
+    app.logger.info("We're up!")
     return "Yes, we're up"
 
 

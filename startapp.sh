@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # This script servers as the entrypoint to the app
 
 # Compute number of gunicorn workers
@@ -76,6 +77,7 @@ elif [[ $help = true ]]; then
     exit
 fi
 
+
 # Print some info
 printHeadline 'Teknisk museum backend'
 echo "$(python --version)
@@ -86,6 +88,8 @@ Number of workers: $nworkers"
 # Flask entrypoint
 entrypoint='--chdir src/ webapp.api:app'
 
+LOGFILE="/home/LogFiles/flaskapp.log"
+
 if [[ $debug = true ]]; then
     printHeadline red 'Debug mode'
     echo 'Debug mode activated. Gunicorn is reloaded on code changes.'
@@ -93,6 +97,11 @@ if [[ $debug = true ]]; then
     gunicorn --reload -w=$nworkers $entrypoint
 else
     printline
-    gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers $entrypoint
+    if [[ $IS_PRODUCTION == true ]]; then
+        echo "go to $LOGFILE to see logs"
+        gunicorn --bind=0.0.0.0 --log-file=$LOGFILE --timeout=600 -w=$nworkers $entrypoint
+    else
+        gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers $entrypoint
+    fi
 fi
 printline
