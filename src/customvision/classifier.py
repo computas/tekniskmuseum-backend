@@ -6,8 +6,7 @@ import uuid
 import time
 import sys
 import os
-from typing import Dict, List
-from utilities.keys import Keys
+
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -19,6 +18,10 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+from typing import Dict
+from typing import List
+from utilities.keys import Keys
+from utilities import setup
 
 
 class Classifier:
@@ -68,9 +71,16 @@ class Classifier:
             connect_str
         )
 
+        # get all project iterations
         iterations = self.trainer.get_iterations(self.project_id)
-        iterations.sort(key=lambda i: i.created)
-        self.iteration_name = iterations[-1].publish_name
+
+        # find published iterations
+        puplished_iterations = [
+            iteration for iteration in iterations if iteration.publish_name != None]
+
+        # get the latest published iteration
+        puplished_iterations.sort(key=lambda i: i.created)
+        self.iteration_name = puplished_iterations[-1].publish_name
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -185,7 +195,7 @@ class Classifier:
                 )
 
         # upload URLs in chunks of 64
-        for url_chunk in self.__chunks(url_list, 64):
+        for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
             )
@@ -203,7 +213,7 @@ class Classifier:
 
         iterations = self.trainer.get_iterations(self.project_id)
 
-        if len(iterations) >= 10:
+        if len(iterations) >= setup.CV_MAX_ITERATIONS:
 
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
@@ -231,8 +241,11 @@ class Classifier:
             Potential fixes for this are requesting the latest iteration_name every time you predict,
             or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
-
-        email = None
+        try:
+            email = Keys.get("EMAIL")
+        except Exception:
+            print("No email found, setting to empty")
+            email = ""
 
         self.delete_iteration()
 

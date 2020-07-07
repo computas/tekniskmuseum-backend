@@ -1,19 +1,21 @@
 #! /usr/bin/env python
 """
-    API with endpoints runned by Flask. Contains three key endpoints:
+    API with endpoints runned by Flask. Contains three endpoints:
         - hello(): return a dummy string
         - start_game(): starts a game
         - submit_answer(): takes an image, returns the prediction and time used by user
 """
+
 import uuid
 import random
 import time
 import sys
 import os
 import logging
+import datetime
 from webapp import storage
 from webapp import models
-from webapp import setup
+from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -22,14 +24,15 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-# Global variables
+# Initialization
 app = Flask(__name__)
-app.config.from_object("webapp.config.Config")
+labels = setup.labels
+time_limit = setup.time_limit
+
+app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
 classifier = Classifier()
-labels = setup.labels
-time_limit = setup.time_limit
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -56,7 +59,6 @@ def start_game():
     token = uuid.uuid4().hex
     label = random.choice(labels)
     models.insert_into_games(token, start_time, label)
-
     # return game data as json object
     data = {
         "token": token,
@@ -74,33 +76,32 @@ def submit_answer():
         used is less than the time limit.
     """
     stop_time = time.time()
-
     # Check if image submitted correctly
     if "image" not in request.files:
         return "No image submitted", 400
+
+    # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
 
     # get classification from customvision
     best_guess, certainty = classifier.predict_image(image)
-
     # use token submitted by player to find game
     token = request.values["token"]
+    # Retrieve a start time and a label
     start_time, label = models.query_game(token)
-
     # check if player won the game
     time_used = stop_time - start_time
+    # The player has won if the game is completed within the ime limit
     has_won = time_used < time_limit and best_guess == label
-
     # save image in blob storage
     storage.save_image(image, label)
-
     # save score in highscore table
     name = request.values["name"]
     score = time_used
-    models.insert_into_scores(name, score)
-
+    date = datetime.date.today()
+    models.insert_into_scores(name, score, date)
     # return json response
     data = {
         "certainty": certainty,

@@ -1,11 +1,9 @@
-# This is a basic workflow to help you get started with Actions
 
 name: Lint and test pull-request - tekniskback
 
-# Run the workflow on every pull-
+# Run the workflow on every pull-request
 on:
   pull_request:
-    # branches: [ master ]
 
 jobs:
   run-linter:
@@ -30,6 +28,8 @@ jobs:
   run-tests:
     name: Run unit tests
     runs-on: ubuntu-latest
+    env: ${{ fromJSON(secrets.TEST_SETTINGS) }}
+    
  
     steps:
     - name: Check out git repo
@@ -44,6 +44,7 @@ jobs:
       run: pip install -r requirements.txt
       
     - name: Run tests
+      shell: bash
       run: |
        cd src/
        python -m pytest

@@ -1,38 +1,75 @@
 #!/bin/bash
-# Start webapp or run tests
 
-# compute number of gunicorn workers
-NCORES=$(nproc)
-NWORKERS=$(((2*$NCORES)+1))
-if [[ $NWORKERS > 12 ]]; then
-    NWORKERS=12
+# This script servers as the entrypoint to the app
+
+# Compute number of gunicorn workers
+ncores=$(nproc)
+nworkers=$(((2*$ncores)+1))
+if [[ $nworkers > 12 ]]; then
+    nworkers=12
 fi
 
-# check if test run
+# Get console width
+cols=$(tput cols)
+
+# Help string
+usage='Script to start webapp with gunicorn.
+Options:
+    -h, --help      Print this help page.
+    -t, --test      Run linter and unit tests.
+    -d, --debug     Gunicorn reloads on code change,
+                    number of workers set to 1,
+                    and only 127.0.0.1 is exposed.
+    -w, --workers   Specify number of gunicorn workers,
+                    recommended values are 3-12 workers.'
+
+# print headline with first argument
+printHeadline() {
+    # use green text if first argumnet is 'green'
+    if [[ $1 = green ]]; then
+        printf '\e[32m'
+        shift
+    elif [[ $1 = red ]]; then
+        printf '\e[31m'
+        shift
+    fi
+    printf '\e[1m'
+    wordlength=${#1}
+    padlength=$(( ($cols - $wordlength - 2) / 2 ))
+    printf %"$padlength"s | tr " " "="
+    printf " $1 "
+    printf %"$padlength"s | tr " " "="
+    printf '\e[0m\n'
+}
+
+# print line with terminal width
+printline() {
+    printf '\e[1m'
+    printf %"$cols"s | tr " " "-"
+    printf '\e[0m\n'
+}
+
+# Parse flags
 while [[ "$#" > 0 ]]; do
     case $1 in
         -t | --test)        test=true;
                             shift ;;
         -h | --help)        help=true;
                             shift ;;
-        -w=* | --workers=*) NWORKERS="${1#*=}";
+        -d | --debug)       debug=true;
+                            nworkers=1;
+                            shift ;;
+        -w=* | --workers=*) nworkers="${1#*=}";
                             shift ;;
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
     esac
-    shift
 done
-
-usage="Script to start webapp with gunicorn.
-Options:
-    -h, --help      Print this help page.
-    -t, --test      Run unit tests with pytest.
-    -w, --workers   Specify number of gunicorn workers.
-                    Recommended values are 3-12 workers.
-"
 
 if [[ $test = true ]]; then
     cd src/
+    printHeadline 'PEP8 linting'
+    flake8 && printHeadline green 'no linting errors'
     python -m pytest
     exit
 elif [[ $help = true ]]; then
@@ -40,19 +77,31 @@ elif [[ $help = true ]]; then
     exit
 fi
 
-echo "===================================="
-echo "       Teknisk museum backend       "
-echo "===================================="
-echo $(which python)
-echo $(python --version)
-echo "Number processing units: $NCORES"
-echo "Number of workers: $NWORKERS"
-echo "------------------------------------"
 
+# Print some info
+printHeadline 'Teknisk museum backend'
+echo "$(python --version)
+$(which python)
+Number processing units: $ncores
+Number of workers: $nworkers"
 
-if [-z "$PRODUCTION"]; then
-    LOG_FILE = "./flaskapp.log"
+# Flask entrypoint
+entrypoint='--chdir src/ webapp.api:app'
+
+LOGFILE="/home/LogFiles/flaskapp.log"
+
+if [[ $debug = true ]]; then
+    printHeadline red 'Debug mode'
+    echo 'Debug mode activated. Gunicorn is reloaded on code changes.'
+    printline
+    gunicorn --reload -w=$nworkers $entrypoint
 else
-    LOG_FILE = "/home/LogFiles/flaskapp.log"
+    printline
+    if [[ $IS_PRODUCTION == true ]]; then
+        echo "go to $LOGFILE to see logs"
+        gunicorn --bind=0.0.0.0 --log-file=$LOGFILE --timeout=600 -w=$nworkers $entrypoint
+    else
+        gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers $entrypoint
+    fi
 fi
-gunicorn --bind=0.0.0.0 --timeout=600 --log-file=$LOG_FILE -w=$NWORKERS --chdir src/ webapp.api:app
+printline
