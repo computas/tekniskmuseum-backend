@@ -142,8 +142,15 @@ def get_top_n_high_score_list(top_n):
         #high_score = Scores.query.order_by(Games.score).first()
         #score = Scores.query.filter_by().first()
         game = Scores.query.filter_by(name="ole").first().score
-        #game = games[0].score
-        print(game)
+
+        test = Scores.query.order_by(
+            Scores.score.desc()).limit(10).all()
+        print(test)
+        print(test[0].score)
+        print(test[1].score)
+        print(test[2].score)
+        print(test[3].score)
+        print(len(test))
         return game
     except AttributeError:
         print("Could not read top " + str(top_n) + " high score from database")
