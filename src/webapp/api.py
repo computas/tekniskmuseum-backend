@@ -27,6 +27,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
+high_score_list_size = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -132,9 +133,11 @@ def view_high_score():
     """
         Read highscore from database. Return top n of all time and top n of last 24 hours.
     """
-    #read high score for last n hours
-    #daily_high_score_list = models.get_daily_high_score(n_hours)
 
+    #read top n overall highscore
     top_n_high_score_dict = models.get_top_n_high_score_list(10)
+
+    #read daily highscore
+    daily_high_score_dict = models.get_daily_high_score()
 
     return jsonify(top_n_high_score_dict), 200
