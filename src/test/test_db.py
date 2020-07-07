@@ -28,6 +28,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(token, start_time, "sun")
+
     assert result == "Inserted"
 
 
@@ -38,6 +39,7 @@ def test_insert_into_scores():
     date = datetime.date.today()
     with api.app.app_context():
         result = models.insert_into_scores("Test User", 500, date)
+
     assert result == "Inserted"
 
 
@@ -74,6 +76,7 @@ def test_query_euqals_insert():
         models.insert_into_games(token2, start_time, "bench")
         expected_result = (start_time, "bench")
         result = models.query_game(token2)
+
     assert result == expected_result
 
 
@@ -86,5 +89,6 @@ def test_clear_table():
         models.clear_table("Scores")
         games_rows = models.get_size_of_table("Games")
         scores_rows = models.get_size_of_table("Scores")
+
     assert games_rows == 0
     assert scores_rows == 0
