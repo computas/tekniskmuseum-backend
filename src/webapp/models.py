@@ -110,6 +110,7 @@ def clear_table(table):
     except AttributeError:
         db.session.rollback()
         return AttributeError("Table does not exist.")
+<<<<<<< HEAD
 
 
 def drop_table(table):
@@ -128,6 +129,8 @@ def get_size_of_table(table):
         rows = db.session.query(Scores).count()
         return rows
         return "Table does not exist."
+=======
+>>>>>>> get_top_n_high_score_list() works
 
 
 def get_daily_high_score(table, n_hours):
@@ -136,21 +139,39 @@ def get_daily_high_score(table, n_hours):
 
 
 def get_top_n_high_score_list(top_n):
-
-    #read top n high scores
+    """
+        Funtion for reading overall top n list from database
+    """
     try:
-        #high_score = Scores.query.order_by(Games.score).first()
-        #score = Scores.query.filter_by().first()
-        game = Scores.query.filter_by(name="ole").first().score
+        #read top n high scores
+        top_n_list = Scores.query.order_by(
+            Scores.score.desc()).limit(top_n).all()
 
-        test = Scores.query.order_by(
-            Scores.score.desc()).limit(10).all()
-        print(test)
-        print(test[0].score)
-        print(test[1].score)
-        print(test[2].score)
-        print(test[3].score)
-        print(len(test))
-        return game
+        #convert top 10 list into a dict {name: score}
+        top_n_dict = {player.name: player.score for player in top_n_list}
+        print(top_n_dict)
+        return top_n_dict
+
     except AttributeError:
         print("Could not read top " + str(top_n) + " high score from database")
+<<<<<<< HEAD
+=======
+        return AttributeError("Table does not exist.")
+
+
+def drop_table(table):
+    """
+        Function for dropping a table, or all.
+    """
+    # Calling 'drop_table' with None as parameter means dropping all tables.
+    db.drop_all(bind=table)
+
+
+def get_size_of_table(table):
+    if table == "Games":
+        rows = db.session.query(Games).count()
+        return rows
+    elif table == "Scores":
+        rows = db.session.query(Scores).count()
+        return rows
+>>>>>>> get_top_n_high_score_list() works

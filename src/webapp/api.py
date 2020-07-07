@@ -93,8 +93,7 @@ def submit_answer():
     # save score in highscore table
     name = request.values["name"]
     score = time_used
-    date = datetime.date.today()
-    models.insert_into_scores(name, score, date)
+    models.insert_into_scores(name, score)
     # return json response
     data = {
         "certainty": certainty,
@@ -133,10 +132,9 @@ def view_high_score():
     """
         Read highscore from database. Return top n of all time and top n of last 24 hours.
     """
-    print("jeg er her")
     #read high score for last n hours
     #daily_high_score_list = models.get_daily_high_score(n_hours)
 
-    top_n_high_score_list = models.get_top_n_high_score_list(10)
+    top_n_high_score_dict = models.get_top_n_high_score_list(10)
 
-    return jsonify({"score": top_n_high_score_list}), 200
+    return jsonify(top_n_high_score_dict), 200
