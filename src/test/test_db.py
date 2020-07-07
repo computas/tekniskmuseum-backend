@@ -8,6 +8,7 @@ from webapp import models
 import uuid
 import time
 import unittest
+import datetime
 
 token = uuid.uuid4().hex
 start_time = time.time()
@@ -34,8 +35,9 @@ def test_insert_into_scores():
     """
         Check that records exists in Scores table.
     """
+    date = datetime.date.today()
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500)
+        result = models.insert_into_scores("Test User", 500, date)
     assert result == "Inserted"
 
 
@@ -59,7 +61,7 @@ class test(unittest.TestCase):
         """
         with api.app.app_context():
             self.assertRaises(AttributeError, models.insert_into_scores,
-                              100, "score")
+                              100, "score", "01.01.2020")
 
 
 def test_query_euqals_insert():

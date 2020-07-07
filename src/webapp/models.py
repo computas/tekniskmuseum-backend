@@ -4,6 +4,7 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 
 db = SQLAlchemy()
@@ -28,8 +29,9 @@ class Scores(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(32),)
+    name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.date)
 
 
 def create_tables(app):
@@ -57,23 +59,26 @@ def insert_into_games(token, start_time, label):
         except AttributeError:
             raise AttributeError("Could not insert into games")
     else:
-        raise AttributeError("Token has to be int, start time has to be float, label has to be string.")
+        raise AttributeError("Token has to be int, start time has to be float"
+                             + ", label has to be string.")
 
 
-def insert_into_scores(name, score):
+def insert_into_scores(name, score, date):
     """
         Insert values into Scores table.
     """
-    if (isinstance(name, str) and isinstance(score, int)):
+    score_int_or_float = isinstance(score, float) or isinstance(score, int)
+    if isinstance(name, str) and score_int_or_float and isinstance(date, datetime.date):
         try:
-            score = Scores(name=name, score=score)
+            score = Scores(name=name, score=score, date=date)
             db.session.add(score)
             db.session.commit()
             return "Inserted"
         except AttributeError:
             return AttributeError("Could not insert into scores")
     else:
-        raise AttributeError("Name has to be string, score has to be float.")
+        raise AttributeError("Name has to be string, score has to be float"
+                             + " and date has to be datetime.")
 
 
 def query_game(token):

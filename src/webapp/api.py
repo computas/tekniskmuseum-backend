@@ -11,6 +11,7 @@ import random
 import time
 import sys
 import os
+import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
@@ -92,7 +93,8 @@ def submit_answer():
     # save score in highscore table
     name = request.values["name"]
     score = time_used
-    models.insert_into_scores(name, score)
+    date = datetime.date.today()
+    models.insert_into_scores(name, score, date)
     # return json response
     data = {
         "certainty": certainty,
@@ -109,6 +111,13 @@ def clear_table():
     table = request.values["table"]
     models.clear_table(table)
     return "Table cleared", 200
+
+
+@app.route("/deleteTable", methods=["POST"])
+def delete_table():
+    table = request.values["table"]
+    models.drop_table(table)
+    return "Table dropped", 200
 
 
 def allowed_file(image):
