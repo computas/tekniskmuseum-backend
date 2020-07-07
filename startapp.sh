@@ -12,18 +12,24 @@ fi
 cols=$(tput cols)
 
 # Help string
-usage="Script to start webapp with gunicorn.
+usage='Script to start webapp with gunicorn.
 Options:
     -h, --help      Print this help page
     -t, --test      Run unit tests with pytest
     -l, --local     Only expose 127.0.0.1
     -w, --workers   Specify number of gunicorn workers,
-                    recommended values are 3-12 workers"
+                    recommended values are 3-12 workers'
 
 # print headline with first argument
 printHeadline() {
+    # use green text if first argumnet is 'green'
+    if [[ $1 = green ]]; then
+        printf '\e[32m'
+        shift
+    fi
     wordlength=${#1}
     padlength=$(( ($cols - $wordlength - 2) / 2 ))
+    printf '\e[1m'
     printf %"$padlength"s | tr " " "="
     printf " $1 "
     printf %"$padlength"s | tr " " "="
@@ -31,6 +37,7 @@ printHeadline() {
 
 # print line with terminal width
 printline() {
+    printf '\e[1m'
     printf %"$cols"s | tr " " "-"
 }
 
@@ -52,8 +59,8 @@ done
 
 if [[ $test = true ]]; then
     cd src/
-    printHeadline "flake8"
-    flake8
+    printHeadline 'flake8'
+    flake8 && printHeadline green 'No linting errors'
     python -m pytest
     exit
 elif [[ $help = true ]]; then
@@ -62,7 +69,7 @@ elif [[ $help = true ]]; then
 fi
 
 # Print some info
-printHeadline "Teknisk museum backend"
+printHeadline 'Teknisk museum backend'
 echo "
 $(python --version)
 $(which python)
