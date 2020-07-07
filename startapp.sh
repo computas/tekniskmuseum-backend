@@ -1,11 +1,14 @@
 #!/bin/bash
-# Start webapp or run tests
+# This script servers as the entrypoint to the app
+
+# Fail early and pipe errors
+set -eo pipefail
 
 # Compute number of gunicorn workers
-NCORES=$(nproc)
-NWORKERS=$(((2*$NCORES)+1))
-if [[ $NWORKERS > 12 ]]; then
-    NWORKERS=12
+ncores=$(nproc)
+nworkers=$(((2*$ncores)+1))
+if [[ $nworkers > 12 ]]; then
+    nworkers=12
 fi
 
 # Get console width
@@ -43,7 +46,7 @@ while [[ "$#" > 0 ]]; do
                             shift ;;
         -h | --help)        help=true;
                             shift ;;
-        -w=* | --workers=*) NWORKERS="${1#*=}";
+        -w=* | --workers=*) nworkers="${1#*=}";
                             shift ;;
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
@@ -67,14 +70,14 @@ printHeadline "Teknisk museum backend"
 echo "
 $(python --version)
 $(which python)
-Number processing units: $NCORES
-Number of workers: $NWORKERS"
+Number processing units: $ncores
+Number of workers: $nworkers"
 printline
 
 # Local only exposes 127.0.0.1
 if [[ $local = true ]]; then
-    gunicorn --timeout=600 -w=$NWORKERS --chdir src/ webapp.api:app
+    gunicorn --timeout=600 -w=$nworkers --chdir src/ webapp.api:app
 else
-    gunicorn --bind=0.0.0.0 --timeout=600 -w=$NWORKERS --chdir src/ webapp.api:app
+    gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers --chdir src/ webapp.api:app
 fi
 printline
