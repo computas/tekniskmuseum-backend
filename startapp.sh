@@ -31,13 +31,12 @@ printHeadline() {
     elif [[ $1 = red ]]; then
         printf '\e[31m'
         shift
-    else
-        printf '\e[1m'
     fi
+    printf '\e[1m'
     wordlength=${#1}
     padlength=$(( ($cols - $wordlength - 2) / 2 ))
     printf %"$padlength"s | tr " " "="
-    printf "\e[1m $1 \e[21m"
+    printf " $1 "
     printf %"$padlength"s | tr " " "="
     printf '\e[0m\n'
 }
