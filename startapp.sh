@@ -1,9 +1,6 @@
 #!/bin/bash
 # This script servers as the entrypoint to the app
 
-# Fail early and pipe errors
-set -eo pipefail
-
 # Compute number of gunicorn workers
 ncores=$(nproc)
 nworkers=$(((2*$ncores)+1))
@@ -51,7 +48,6 @@ while [[ "$#" > 0 ]]; do
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
     esac
-    shift
 done
 
 if [[ $test = true ]]; then
