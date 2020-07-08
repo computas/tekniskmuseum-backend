@@ -42,39 +42,36 @@ def test_start_game_correct(client):
         Ensure that the API doesn't return error when sumitting a GET request.
     """
     res = client.get("/startGame", data=dict())
-    # Ensure that the returned dictionary contains a label, start time
-    # and a token.
-    assert(b"label" in res.data)
-    assert(b"start_time" in res.data)
+    # Ensure that the returned dictionary contains a token
     assert(b"token" in res.data)
 
 
-def test_submit_answer_wrong_request(client):
+def test_classify_wrong_request(client):
     """
         Ensure that the API returns error due to unsupported request type
         (something else than POST).
     """
     # Submit GET request
-    res = client.get("/submitAnswer")
+    res = client.get("/classify")
     # Should give error since POST is required
     assert(b"405 Method Not Allowed" in res.data)
 
 
-def test_submit_answer_no_image(client):
+def test_classify_no_image(client):
     """
         Ensure that the API returns error when there is no image submitted
         in the request.
     """
     # Since the API checks if the image is there before anything else,
     # we don't need to include anything with the request
-    res = client.post("/submitAnswer", data=dict())
+    res = client.post("/classify", data=dict())
     # Check if the correct message is returned
     assert(b"No image submitted" == res.data)
     # Check if the correct error code is returned
     assert(res.status_code == 400)
 
 
-def test_submit_answer_wrong_image(client):
+def test_classify_wrong_image(client):
     """
         Ensure that the API returns error when the image submitted in the
         request doesn't comply with the constraints checked for in the
@@ -82,11 +79,11 @@ def test_submit_answer_wrong_image(client):
     """
     # Start time, token and user doesn't need to be valid, since the error is
     # supposed to be caught before these are used
-    start = 0
+    time = 0
     token, user = "", ""
     # Submit answer with the given parameters and get results
-    res = submit_answer_helper(
-        client, cfg.api_path_data, cfg.api_image1, start, token, user
+    res = classify_helper(
+        client, cfg.api_path_data, cfg.api_image1, time, token, user
     )
     # Check if the correct message is returned
     assert(res.data == b"Image does not satisfy constraints")
@@ -94,21 +91,21 @@ def test_submit_answer_wrong_image(client):
     assert(res.status_code == 415)
 
 
-def test_submit_answer_correct(client):
+def test_classify_correct(client):
     """
         Ensure that the API returns no errors when the image submitted in the
         request complies with constraints and everything seem to be good.
     """
     # Username is not unique, can therefore use the same repeatedly
     name = "testing_api"
+    time = 0
     # Need to start a new game to get a token we can submit
     res1 = client.get("/startGame")
     response = json.loads(res1.data.decode("utf-8"))
     token = response["token"]
-    start_time = response["start_time"]
     # submit answer with parameters and retrieve results
-    res = submit_answer_helper(
-        client, cfg.api_path_data, cfg.api_image4, start_time, token, name
+    res = classify_helper(
+        client, cfg.api_path_data, cfg.api_image4, time, token, name
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
@@ -116,7 +113,6 @@ def test_submit_answer_correct(client):
     # Check if the correct keys are included
     assert("certainty" in data)
     assert("hasWon" in data)
-    assert("timeUsed" in data)
     # Check if 200 is returned
     assert(res.status_code == 200)
 
@@ -183,15 +179,15 @@ def allowed_file_helper(filename, expected_result):
     assert result == expected_result
 
 
-def submit_answer_helper(client, data_path, image, start, token, user):
+def classify_helper(client, data_path, image, time, token, user):
     """
-        Helper function which sends post request to client on /submitAnswer.
+        Helper function which sends post request to client on /classify.
         The function returns the response given from the client
 
         client: client object to communicate with
         data_path: path to directory containing data
         image: name of the image in the directory given by data_path
-        start: start_time of the game
+        time: time used during game
         token: token used to validate session
         user: username of the player
     """
@@ -204,10 +200,10 @@ def submit_answer_helper(client, data_path, image, start, token, user):
 
     answer = {"image" : (img_string, image),
               "token" : token,
-              "start_time" : start,
+              "time" : time,
               "name" : user}
 
-    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    res = client.post("/classify", content_type="multipart/form-data", data=answer)
     return res
 
 
