@@ -195,4 +195,4 @@ def view_high_score():
         "daily": daily_high_scores,
         "total": top_n_high_scores
     }
-    return jsonify(data), 200
+    return json.jsonify(data), 200
