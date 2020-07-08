@@ -1,6 +1,5 @@
 #!/bin/bash
-
-# This script servers as the default_settings to the app
+# This script serves as the main interface to the app
 
 # Compute number of gunicorn workers
 ncores=$(nproc)
