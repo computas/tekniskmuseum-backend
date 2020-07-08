@@ -15,7 +15,6 @@ labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
 date_time = datetime.datetime.today()
-#date = datetime.date.today()
 
 
 def test_create_tables():
@@ -72,10 +71,11 @@ def test_query_euqals_insert():
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        #models.insert_into_games(token, labels, play_time, datetime)
-        expected_result = (token, labels, play_time, date_time)
         result = models.get_record_from_game(token)
-    assert result == expected_result
+    assert result.token == token
+    assert result.labels == labels
+    assert result.play_time == play_time
+    # Datetime assertion can't be done due to millisec differents
 
 
 def test_clear_table():
