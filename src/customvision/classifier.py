@@ -76,7 +76,10 @@ class Classifier:
 
         # find published iterations
         puplished_iterations = [
-            iteration for iteration in iterations if iteration.publish_name != None]
+            iteration
+            for iteration in iterations
+            if iteration.publish_name != None
+        ]
 
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
@@ -134,7 +137,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -177,7 +180,7 @@ class Classifier:
 
             try:
                 container = self.blob_service_client.get_container_client(
-                    str(label)
+                    Keys.get("CONTAINER_NAME")
                 )
             except Exception as e:
                 print(
@@ -189,10 +192,13 @@ class Classifier:
 
             for blob in container.list_blobs():
                 blob_name = blob.name
-                blob_url = f"{self.base_img_url}/{label}/{blob_name}"
-                url_list.append(
-                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
-                )
+                blob_prefix = f"old/{label}"
+                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
+
+                if blob_name.startswith(blob_prefix):
+                    url_list.append(
+                        ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
+                    )
 
         # upload URLs in chunks of 64
         for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
@@ -285,7 +291,7 @@ def main():
     """
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
 
-    labels = ["star"]
+    labels = ["barn"]
 
     classifier = Classifier()
 
