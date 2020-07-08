@@ -31,7 +31,6 @@ class Classifier:
             - upload_images() / reads image URLs from Blob Storage and uploads to Custom Vision
             - train() / trains a model
     """
-
     def __init__(self) -> None:
         """
             Reads configuration file
@@ -53,19 +52,15 @@ class Classifier:
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": self.prediction_key}
         )
-
         self.predictor = CustomVisionPredictionClient(
             self.ENDPOINT, self.prediction_credentials
         )
-
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
         )
-
         self.trainer = CustomVisionTrainingClient(
             self.ENDPOINT, self.training_credentials
         )
-
         connect_str = Keys.get("BLOB_CONNECTION_STRING")
         self.blob_service_client = BlobServiceClient.from_connection_string(
             connect_str
@@ -73,14 +68,12 @@ class Classifier:
 
         # get all project iterations
         iterations = self.trainer.get_iterations(self.project_id)
-
         # find published iterations
         puplished_iterations = [
             iteration
             for iteration in iterations
             if iteration.publish_name != None
         ]
-
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
         self.iteration_name = puplished_iterations[-1].publish_name
@@ -95,11 +88,9 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
-
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
         )
-
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
         return pred_kv, best_guess
@@ -118,18 +109,13 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
-
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img
         )
-
         # reset the file head such that it does not affect the state of the file handle
         img.seek(0)
-
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
-
         best_guess = max(pred_kv, key=pred_kv.get)
-
         return best_guess, pred_kv
 
     def __chunks(self, lst, n):
@@ -145,36 +131,29 @@ class Classifier:
             If label in input already exists in Custom Vision project, all images are uploaded directly.
             If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
 
-
             Parameters:
             labels (str[]): List of labels
 
             Returns:
             None
         """
-
         url_list = []
         existing_tags = self.trainer.get_tags(self.project_id)
-
         # create list of URLs to be uploaded
         for label in labels:
-
             # check if input has correct type
             if not isinstance(label, str):
                 raise Exception("label " + str(label) + " must be a string")
 
             tag = [t for t in existing_tags if t.name == label]
-
             # check if tag already exists
             if len(tag) == 0:
-
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
                     print("Created new label in project: " + label)
                 except Exception as e:
                     print(e)
                     continue
-
             else:
                 tag = tag[0]
 
@@ -194,7 +173,7 @@ class Classifier:
                 blob_name = blob.name
                 blob_prefix = f"old/{label}"
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-
+                
                 if blob_name.startswith(blob_prefix):
                     url_list.append(
                         ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
@@ -216,14 +195,10 @@ class Classifier:
             Deletes the oldest iteration in Custom Vision if there are 11 iterations.
             Custom Vision allows maximum 10 iterations in the free version.
         """
-
         iterations = self.trainer.get_iterations(self.project_id)
-
         if len(iterations) >= setup.CV_MAX_ITERATIONS:
-
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
-
             self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
             self.trainer.delete_iteration(self.project_id, oldest_iteration)
 
@@ -254,14 +229,12 @@ class Classifier:
             email = ""
 
         self.delete_iteration()
-
         print("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
             notification_email_address=email,
         )
-
         # Wait for training to complete
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
@@ -272,7 +245,6 @@ class Classifier:
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
-
         self.trainer.publish_iteration(
             self.project_id,
             iteration.id,
@@ -290,27 +262,21 @@ def main():
         -no more than 10 iterations done in one projectS
     """
     test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-
     labels = ["barn"]
-
     classifier = Classifier()
-
     classifier.upload_images(labels)
-
     classifier.train(labels)
-
+    
     # classify image
     # with open(
     #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
     # ) as f:
     #     pass
+    
     # result = classifier.predict_image(f)
-
     # print(f"png result {result}")
-
     # classify image with URL reference
     best_guess, result = classifier.predict_image_url(test_url)
-
     print(f"best guess: {best_guess} url result {result}")
 
 
