@@ -196,3 +196,22 @@ def view_high_score():
         "total": top_n_high_scores
     }
     return json.jsonify(data), 200
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error('500 error: %s', (request.path))
+    return "500 error"
+
+
+@app.errorhandler(404)
+def not_found(error):
+    print("should log 404")
+    app.logger.error('404 error: %s', (request.path))
+    return "404 error", 404
+
+
+@app.errorhandler(Exception)
+def unhandled_exception(e):
+    app.logger.error('Unhandled Exception: %s', (e))
+    return render_template('500.htm'), 500
