@@ -31,6 +31,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(token, labels, play_time, date_time)
+
     assert result == True
 
 
@@ -40,6 +41,7 @@ def test_insert_into_scores():
     """
     with api.app.app_context():
         result = models.insert_into_scores("Test User", 500, date_time)
+
     assert result == True
 
 
@@ -72,6 +74,7 @@ def test_query_euqals_insert():
     """
     with api.app.app_context():
         result = models.get_record_from_game(token)
+
     assert result.token == token
     assert result.labels == labels
     assert result.play_time == play_time
