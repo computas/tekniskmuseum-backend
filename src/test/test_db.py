@@ -123,6 +123,7 @@ def test_get_daily_high_score_structure():
         assert "name" in player
 
 
+'''
 def test_get_top_n_high_score_list_structure():
     """
         Check that highscore data has correct attributes score and name
@@ -134,7 +135,7 @@ def test_get_top_n_high_score_list_structure():
         assert "score" in player
         assert "name" in player
 
-
+'''
 '''
 def test_clear_table():
     """

@@ -139,7 +139,9 @@ def get_daily_high_score():
 
 def get_top_n_high_score_list(top_n):
     """
-        Funtion for reading overall top n list from database
+        Funtion for reading tootal top n list from database.
+
+        Parameters: top_n, number of players in top list.
 
         Returns list of dictionaries.
     """
@@ -148,6 +150,7 @@ def get_top_n_high_score_list(top_n):
         top_n_list = Scores.query.order_by(
             Scores.score.desc()).limit(top_n).all()
 
+        #strucutre data
         new = [{"name": player.name, "score": player.score}
                for player in top_n_list]
 
