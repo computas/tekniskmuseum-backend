@@ -1,6 +1,5 @@
 #!/bin/bash
-
-# This script servers as the default_settings to the app
+# This script serves as the main interface to the app
 
 # Compute number of gunicorn workers
 ncores=$(nproc)
@@ -23,9 +22,9 @@ Options:
     -w, --workers   Specify number of gunicorn workers,
                     recommended values are 3-12 workers.'
 
-# print headline with first argument
+# print headline with text. Optional first argument determines color.
 printHeadline() {
-    # use green text if first argumnet is 'green'
+    # use green/red text if first argumnet is 'green' or 'red'
     if [[ $1 = green ]]; then
         printf '\e[32m'
         shift
@@ -85,7 +84,7 @@ $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
 
-# Flask default_settings
+# Default settings and entry point to flask
 default_settings="--timeout=600 -w=$nworkers --chdir src/ webapp.api:app"
 logfile='/home/LogFiles/flaskapp.log'
 
