@@ -36,7 +36,7 @@ class Flask_config:
 
     else:
         # Connection string for production database
-        con_str = Keys.get("TEST_DB_CONNECTION_STRING")
+        con_str = Keys.get("DB_CONNECTION_STRING")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str
