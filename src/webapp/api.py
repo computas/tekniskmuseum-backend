@@ -75,6 +75,7 @@ def submit_answer():
         Vision.The player wins if the classification is correct and the time
         used is less than the time limit.
     """
+    app.logger.info("submit")
     stop_time = time.time()
     # Check if image submitted correctly
     if "image" not in request.files:
