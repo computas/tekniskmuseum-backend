@@ -118,18 +118,14 @@ def get_daily_high_score():
 
         Returns list of dictionaries.
     """
-
     try:
         today = str(datetime.date.today())
-
         #filter by today and sort by score
         top_n_list = Scores.query.filter_by(
             date=today).order_by(Scores.score.desc()).all()
-
         #structure data
         new = [{"name": player.name, "score": player.score}
                for player in top_n_list]
-
         return new
 
     except AttributeError:
@@ -141,7 +137,7 @@ def get_top_n_high_score_list(top_n):
     """
         Funtion for reading tootal top n list from database.
 
-        Parameters: top_n, number of players in top list.
+        Parameter: top_n, number of players in top list.
 
         Returns list of dictionaries.
     """
@@ -149,11 +145,9 @@ def get_top_n_high_score_list(top_n):
         #read top n high scores
         top_n_list = Scores.query.order_by(
             Scores.score.desc()).limit(top_n).all()
-
         #strucutre data
         new = [{"name": player.name, "score": player.score}
                for player in top_n_list]
-
         return new
 
     except AttributeError:

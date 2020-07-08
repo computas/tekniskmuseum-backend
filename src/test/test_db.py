@@ -113,7 +113,7 @@ def sorting_check_helper(high_score_list):
 
 def test_get_daily_high_score_structure():
     """
-        Check that highscore data has correct attributes score and name
+        Check that highscore data has correct attributes: score and name
     """
     with api.app.app_context():
         result = models.get_daily_high_score()
@@ -123,10 +123,9 @@ def test_get_daily_high_score_structure():
         assert "name" in player
 
 
-'''
 def test_get_top_n_high_score_list_structure():
     """
-        Check that highscore data has correct attributes score and name
+        Check that highscore data has correct attributes: score and name
     """
     with api.app.app_context():
         result = models.get_top_n_high_score_list(10)
@@ -135,7 +134,7 @@ def test_get_top_n_high_score_list_structure():
         assert "score" in player
         assert "name" in player
 
-'''
+
 '''
 def test_clear_table():
     """
