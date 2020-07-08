@@ -200,7 +200,7 @@ def classify_helper(client, data_path, image, time, token, user):
 
     answer = {"image" : (img_string, image),
               "token" : token,
-              "time_used" : time,
+              "time" : time,
               "name" : user}
 
     res = client.post("/classify", content_type="multipart/form-data", data=answer)

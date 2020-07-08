@@ -51,7 +51,7 @@ def hello():
 @app.route("/startGame")
 def start_game():
     """
-        Starts a new game by providing the client with a word and an unique token.
+        Starts a new game by providing the client with a unique token.
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex

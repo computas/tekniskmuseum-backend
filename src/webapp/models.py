@@ -50,9 +50,8 @@ def create_tables(app):
     """
     with app.app_context():
         db.create_all()
-        return True
 
-    return False
+    return True
 
 
 def insert_into_games(token, labels, play_time, date):
