@@ -21,9 +21,8 @@ labels = [
 time_limit = 22  # time limit for one guess
 top_n = 10  # number of players in overall high score top list
 
+
 # Config Flask
-
-
 class Flask_config:
     """
         Config settings for flask and sqlalchemy should be set here.
