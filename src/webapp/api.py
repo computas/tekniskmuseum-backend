@@ -80,9 +80,7 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    data = {
-        "label": label
-    }
+    data = {"label": label}
     return json.jsonify(data), 200
 
 
@@ -113,9 +111,11 @@ def classify():
 
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
-    has_won = (time_used < time_limit
-               and best_guess == label
-               and best_certainty >= certainty_threshold)
+    has_won = (
+        time_used < time_limit
+        and best_guess == label
+        and best_certainty >= certainty_threshold
+    )
     # End game if player win or loose
     if has_won or time_used >= time_limit:
         # save image in blob storage
