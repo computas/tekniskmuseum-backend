@@ -198,12 +198,14 @@ def classify_helper(client, data_path, image, time, token, user):
     with open(path, "rb") as f:
         img_string = io.BytesIO(f.read())
 
-    answer = {"image" : (img_string, image),
-              "token" : token,
-              "time" : time,
-              "name" : user}
-
-    res = client.post("/classify", content_type="multipart/form-data", data=answer)
+    answer = {
+        "image": (img_string, image),
+        "token": token,
+        "time": time,
+        "name": user
+    }
+    res = client.post(
+        "/classify", content_type="multipart/form-data", data=answer)
     return res
 
 
@@ -220,3 +222,20 @@ def construct_path(dir_list):
         path = os.path.join(path, elem)
 
     return path
+
+
+def test_view_highscore(client):
+    """
+        Test if highscore data is strucutred correctly, example of format:
+        {"daily":[{"name":"mari","score":83}],
+        "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
+    """
+    # get response
+    res = client.get("/viewHighScore")
+    response = json.loads(res.data)
+    #check that data structure is correct
+    assert(isinstance(response, dict))
+    assert(isinstance(response["daily"], list))
+    assert(isinstance(response["total"], list))
+    assert(isinstance(response["daily"][0], dict))
+    assert(isinstance(response["total"][0], dict))
