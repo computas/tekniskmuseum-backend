@@ -173,7 +173,7 @@ class Classifier:
                 blob_name = blob.name
                 blob_prefix = f"old/{label}"
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                
+
                 if blob_name.startswith(blob_prefix):
                     url_list.append(
                         ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
@@ -266,13 +266,13 @@ def main():
     classifier = Classifier()
     classifier.upload_images(labels)
     classifier.train(labels)
-    
+
     # classify image
     # with open(
     #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
     # ) as f:
     #     pass
-    
+
     # result = classifier.predict_image(f)
     # print(f"png result {result}")
     # classify image with URL reference
