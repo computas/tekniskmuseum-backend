@@ -223,20 +223,18 @@ def construct_path(dir_list):
     return path
 
 
-def test_view_highscore():
+def test_view_highscore(client):
     """
         Test if highscore data is strucutred correctly, example of format:
         {"daily":[{"name":"mari","score":83}],
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
     # get response
-    res1 = client.get("/viewHighScore")
-    response = json.loads(res1.data.decode("utf-8"))
-    # Check if the correct response data is returned
-    data = json.loads(response.data.decode("utf-8"))
+    res = client.get("/viewHighScore")
+    response = json.loads(res.data)
     #check that data structure is correct
-    assert(isinstance(data, dict))
-    assert(isinstance(data["daily"], list))
-    assert(isinstance(data["total"], list))
-    assert(isinstance(data["daily"][0], dict))
-    assert(isinstance(data["total"][0], dict))
+    assert(isinstance(response, dict))
+    assert(isinstance(response["daily"], list))
+    assert(isinstance(response["total"], list))
+    assert(isinstance(response["daily"][0], dict))
+    assert(isinstance(response["total"][0], dict))
