@@ -22,7 +22,7 @@ def test_create_tables():
         Check that the tables exists.
     """
     result = models.create_tables(api.app)
-    assert result == True
+    assert result
 
 
 def test_insert_into_games():
@@ -32,7 +32,7 @@ def test_insert_into_games():
     with api.app.app_context():
         result = models.insert_into_games(token, labels, play_time, date_time)
 
-    assert result == True
+    assert result
 
 
 def test_insert_into_scores():
@@ -42,7 +42,7 @@ def test_insert_into_scores():
     with api.app.app_context():
         result = models.insert_into_scores("Test User", 500, date_time)
 
-    assert result == True
+    assert result
 
 
 class test(unittest.TestCase):
