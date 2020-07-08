@@ -12,7 +12,7 @@ db = SQLAlchemy()
 
 class DataBaseException(Exception):
     """
-        Costum exception for DB errors.
+        Custom exception for DB errors.
     """
     pass
 
