@@ -50,7 +50,7 @@ def insert_into_games(token, start_time, label):
         Insert values into Games table.
     """
     if (isinstance(token, str) and isinstance(start_time, float)
-       and isinstance(label, str)):
+            and isinstance(label, str)):
         try:
             game = Games(token=token, start_time=start_time, label=label)
             db.session.add(game)
@@ -109,6 +109,49 @@ def clear_table(table):
             return "Table successfully cleared"
     except AttributeError:
         db.session.rollback()
+        return AttributeError("Table does not exist.")
+
+
+def get_daily_high_score():
+    """
+        Function for reading all daily scores.
+
+        Returns list of dictionaries.
+    """
+    try:
+        today = str(datetime.date.today())
+        #filter by today and sort by score
+        top_n_list = Scores.query.filter_by(
+            date=today).order_by(Scores.score.desc()).all()
+        #structure data
+        new = [{"name": player.name, "score": player.score}
+               for player in top_n_list]
+        return new
+
+    except AttributeError:
+        print("Could not read daily highscore from database")
+        return AttributeError("Could not read daily highscore from database")
+
+
+def get_top_n_high_score_list(top_n):
+    """
+        Funtion for reading tootal top n list from database.
+
+        Parameter: top_n, number of players in top list.
+
+        Returns list of dictionaries.
+    """
+    try:
+        #read top n high scores
+        top_n_list = Scores.query.order_by(
+            Scores.score.desc()).limit(top_n).all()
+        #strucutre data
+        new = [{"name": player.name, "score": player.score}
+               for player in top_n_list]
+        return new
+
+    except AttributeError:
+        print("Could not read top " + str(top_n) + " high score from database")
         return AttributeError("Table does not exist.")
 
 

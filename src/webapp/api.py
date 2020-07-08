@@ -28,6 +28,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
+high_score_list_size = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -133,3 +134,19 @@ def allowed_file(image):
         return False
     else:
         return True
+
+
+@app.route("/viewHighScore")
+def view_high_score():
+    """
+        Read highscore from database. Return top n of all time and top n of last 24 hours.
+    """
+    #read top n overall high score
+    top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
+    #read daily high score
+    daily_high_scores = models.get_daily_high_score()
+    data = {
+        "daily": daily_high_scores,
+        "total": top_n_high_scores
+    }
+    return jsonify(data), 200

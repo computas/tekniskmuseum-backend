@@ -202,12 +202,13 @@ def submit_answer_helper(client, data_path, image, start, token, user):
     with open(path, "rb") as f:
         img_string = io.BytesIO(f.read())
 
-    answer = {"image" : (img_string, image),
-              "token" : token,
-              "start_time" : start,
-              "name" : user}
+    answer = {"image": (img_string, image),
+              "token": token,
+              "start_time": start,
+              "name": user}
 
-    res = client.post("/submitAnswer", content_type="multipart/form-data", data=answer)
+    res = client.post(
+        "/submitAnswer", content_type="multipart/form-data", data=answer)
     return res
 
 
@@ -224,3 +225,22 @@ def construct_path(dir_list):
         path = os.path.join(path, elem)
 
     return path
+
+
+def test_view_highscore():
+    """
+        Test if highscore data is strucutred correctly, example of format:
+        {"daily":[{"name":"mari","score":83}],
+        "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
+    """
+    # get response
+    res1 = client.get("/viewHighScore")
+    response = json.loads(res1.data.decode("utf-8"))
+    # Check if the correct response data is returned
+    data = json.loads(response.data.decode("utf-8"))
+    #check that data structure is correct
+    assert(isinstance(data, dict))
+    assert(isinstance(data["daily"], list))
+    assert(isinstance(data["total"], list))
+    assert(isinstance(data["daily"][0], dict))
+    assert(isinstance(data["total"][0], dict))

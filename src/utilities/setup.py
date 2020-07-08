@@ -19,6 +19,7 @@ labels = [
     "triangle",
 ]
 time_limit = 22  # time limit for one guess
+top_n = 10  # number of players in overall high score top list
 
 
 # Config Flask

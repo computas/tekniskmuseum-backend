@@ -47,6 +47,7 @@ class test(unittest.TestCase):
     """
         Class for using unittest.TestCase for asserting exceptions.
     """
+
     def test_illegal_parameter_games(self):
         """
             Check that exception is raised when illegal arguments is passed
@@ -80,6 +81,61 @@ def test_query_euqals_insert():
     assert result == expected_result
 
 
+def test_get_daily_high_score_sorted():
+    """
+        Check that daily high score list is sorted.
+    """
+    with api.app.app_context():
+        result = models.get_daily_high_score()
+
+    sorting_check_helper(result)
+
+
+def test_get_top_n_high_score_list_sorted():
+    """
+        Check that total high score list is sorted.
+    """
+    with api.app.app_context():
+        result = models.get_daily_high_score()
+
+    sorting_check_helper(result)
+
+
+def sorting_check_helper(high_score_list):
+    """
+        Helper function for testing if a list of score is sorted by scores, descending.
+    """
+    prev_score = high_score_list[0]["score"]
+    for player in high_score_list[1:]:
+        assert player["score"] <= prev_score
+        prev_score = player["score"]
+
+
+def test_get_daily_high_score_structure():
+    """
+        Check that highscore data has correct attributes: score and name
+    """
+    with api.app.app_context():
+        result = models.get_daily_high_score()
+
+    for player in result:
+        assert "score" in player
+        assert "name" in player
+
+
+def test_get_top_n_high_score_list_structure():
+    """
+        Check that highscore data has correct attributes: score and name
+    """
+    with api.app.app_context():
+        result = models.get_top_n_high_score_list(10)
+
+    for player in result:
+        assert "score" in player
+        assert "name" in player
+
+
+'''
 def test_clear_table():
     """
         Check that number of rows is zero after clearing both tables.
@@ -92,3 +148,4 @@ def test_clear_table():
 
     assert games_rows == 0
     assert scores_rows == 0
+'''
