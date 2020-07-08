@@ -198,11 +198,12 @@ def classify_helper(client, data_path, image, time, token, user):
     with open(path, "rb") as f:
         img_string = io.BytesIO(f.read())
 
-    answer = {"image": (img_string, image),
-              "token": token,
-              "time": time,
-              "name": user}
-
+    answer = {
+        "image": (img_string, image),
+        "token": token,
+        "time": time,
+        "name": user
+    }
     res = client.post(
         "/classify", content_type="multipart/form-data", data=answer)
     return res
