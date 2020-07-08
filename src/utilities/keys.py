@@ -6,7 +6,7 @@ import os
 import json
 
 environ = os.environ
-if "IS_PRODUCTION" in environ:
+if "IS_PRODUCTION" in environ and environ["IS_PRODUCTION"] is True:
     keys = environ
     isProduction = True
 elif os.path.isfile("./config.json"):
@@ -14,8 +14,10 @@ elif os.path.isfile("./config.json"):
         keys = json.load(configFile)
     isProduction = False
 else:
-    raise OSError("Secret keys must either be stored as environment variables"
-                  "or in file 'config.json' in src/ directory")
+    raise OSError(
+        "Secret keys must either be stored as environment variables"
+        " or in file 'config.json' in src/ directory"
+    )
 
 
 class Keys:
@@ -28,8 +30,10 @@ class Keys:
             return keys[keyName]
         except KeyError:
             if isProduction:
-                message = ("Key not found. Keys need to be stored as"
-                           " environment variables or in 'src/config.json'.")
+                message = (
+                    "Key not found. Keys need to be stored as"
+                    " environment variables or in 'src/config.json'."
+                )
             else:
                 message = "Key not in config.json"
             raise KeyError(message)
