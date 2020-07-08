@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script servers as the entrypoint to the app
+# This script servers as the default_settings to the app
 
 # Compute number of gunicorn workers
 ncores=$(nproc)
@@ -85,23 +85,23 @@ $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
 
-# Flask entrypoint
-entrypoint='--chdir src/ webapp.api:app'
-
-LOGFILE="/home/LogFiles/flaskapp.log"
+# Flask default_settings
+default_settings="--timeout=600 -w=$nworkers --chdir src/ webapp.api:app"
+logfile='/home/LogFiles/flaskapp.log'
 
 if [[ $debug = true ]]; then
     printHeadline red 'Debug mode'
     echo 'Debug mode activated. Gunicorn is reloaded on code changes.'
+    export DEBUG=true
     printline
-    gunicorn --reload -w=$nworkers $entrypoint
+    gunicorn --reload $default_settings
 else
-    printline
-    if [[ $IS_PRODUCTION == true ]]; then
-        echo "go to $LOGFILE to see logs"
-        gunicorn --bind=0.0.0.0 --log-file=$LOGFILE --timeout=600 -w=$nworkers $entrypoint
+    if [[ $IS_PRODUCTION = true ]]; then
+        gunicorn --bind=0.0.0.0 --log-file=$logfile $default_settings
+        echo "Logs written to: $logfile"
     else
-        gunicorn --bind=0.0.0.0 --timeout=600 -w=$nworkers $entrypoint
+        printline
+        gunicorn --bind=0.0.0.0 $default_settings
     fi
 fi
 printline
