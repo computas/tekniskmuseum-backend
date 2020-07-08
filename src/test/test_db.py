@@ -87,5 +87,6 @@ def test_clear_table():
         models.clear_table("Scores")
         games_rows = models.get_size_of_table("Games")
         scores_rows = models.get_size_of_table("Scores")
+
     assert games_rows == 0
     assert scores_rows == 0
