@@ -102,7 +102,7 @@ def classify():
     # Get label for game session
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
-    label = labels[game.session_num-1]
+    label = labels[game.session_num-1] # Change default in models to 0
 
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -147,6 +147,7 @@ def end_game():
         date = datetime.date.today() 
         models.insert_into_scores(name, score, date)
 
+    # THIS DOESNT WORK
     models.delete_session_from_game(token)
     models.delete_old_games()
     return "OK", 200

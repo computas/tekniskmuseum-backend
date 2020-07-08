@@ -116,10 +116,10 @@ def delete_session_from_game(token):
         connected to the particular token, is deleted. 
     """
     try:
-        games = Games.query.filter_by(token=token)
-        db.session.delete(games)
+        game = Games.query.filter_by(token=token).first()
+        db.session.delete(game)
         db.session.commit()
-        return "Records connected to " + token + " deleted."
+        return "Record connected to " + token + " deleted."
     except AttributeError:
         db.session.rollback()
         raise AttributeError("Couldn't find token.")
@@ -127,11 +127,11 @@ def delete_session_from_game(token):
 
 def delete_old_games():
     """
-        Delete records in games older than one day.
+        Delete records in games older than one hour.
     """
     try:
-        games = Games.query.filter_by(Games.date<datetime.timedelta(hours=1))
-        db.session.delete(games)
+        db.session.query(Games).filter(Games.date < (datetime.datetime.today()
+        + datetime.timedelta(hour=1))).delete()
         db.session.commit()
         return "Old records deleted."
     except:
