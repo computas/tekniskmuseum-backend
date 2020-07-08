@@ -8,7 +8,7 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 |---------------|---------------------------------|
 | -h, --help    | display options                 |
 | -t, --test    | run PEP8 linter and unit tests  |
-| -l, --local   | run on localhost                |
+| -d, --debug   | run locally with code reloading |
 | -w, --workers | specify number of workers       |
 
 ### **Development**
@@ -16,7 +16,8 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 * Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15).
 * Install python requirements with pip: `pip install -r requirements.txt`.
 * Save the secret keys as a json object in: `src/config.json`.
-* Run script: `bash startapp.sh -l`to run the app locally.
+* Run script: `bash startapp.sh -d`to run the app locally.
+* Use `bash startapp.sh` in production.
 
 ### **Tests**
 #### Run the tests with the following command:
