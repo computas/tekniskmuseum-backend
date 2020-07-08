@@ -104,7 +104,7 @@ def classify():
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
-    time_used = float(request.values["time_used"])
+    time_used = float(request.values["time"])
     # Get label for game session
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
