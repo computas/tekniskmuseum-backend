@@ -59,9 +59,10 @@ def insert_into_games(token, labels, play_time, date):
         Insert values into Games table.
     """
     if (isinstance(token, str) and isinstance(play_time, float)
-       and isinstance(labels, str) and isinstance(date, datetime.date)):
+            and isinstance(labels, str) and isinstance(date, datetime.date)):
         try:
-            game = Games(token=token, labels=labels, play_time=play_time, date=date)
+            game = Games(token=token, labels=labels,
+                         play_time=play_time, date=date)
             db.session.add(game)
             db.session.commit()
             return True
@@ -138,7 +139,7 @@ def delete_old_games():
     """
     try:
         db.session.query(Games).filter(Games.date < (datetime.datetime.today()
-                                       + datetime.timedelta(hours=1))).delete()
+                                                     + datetime.timedelta(hours=1))).delete()
         db.session.commit()
         return True
     except Exception:
