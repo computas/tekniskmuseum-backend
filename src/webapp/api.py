@@ -41,8 +41,6 @@ def hello():
     return "Yes, we're up"
 
 
-# TESTING NEW GAME FOLW
-
 @app.route("/startGame")
 def start_game():
     """
@@ -59,6 +57,7 @@ def start_game():
     }
     return json.jsonify(data), 200
 
+
 @app.route("/getLabel", methods=["POST"])
 def get_label():
     """
@@ -70,9 +69,9 @@ def get_label():
     # Check if game complete
     if game.session_num > num_games:
         return "Game limit reached", 400
-    
+
     labels = json.loads(game.labels)
-    label = labels[game.session_num-1]
+    label = labels[game.session_num - 1]
     data = {
         "label": label
     }
@@ -93,7 +92,7 @@ def classify():
     image = request.files["image"]
     if not allowed_file(image):
         return "Image does not satisfy constraints", 415
-    
+
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
@@ -102,7 +101,7 @@ def classify():
     # Get label for game session
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
-    label = labels[game.session_num-1] # Change default in models to 0
+    label = labels[game.session_num - 1]
 
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -144,10 +143,10 @@ def end_game():
 
     if game.session_num == num_games + 1:
         score = game.play_time
-        date = datetime.date.today() 
+        date = datetime.date.today()
         models.insert_into_scores(name, score, date)
 
-    # THIS DOESNT WORK
+    # Clean database for unnecessary data
     models.delete_session_from_game(token)
     models.delete_old_games()
     return "OK", 200

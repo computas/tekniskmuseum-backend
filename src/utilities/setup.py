@@ -1,4 +1,5 @@
 import sys
+import os
 from utilities.keys import Keys
 
 # USED BY CUSTOM VISION
@@ -20,7 +21,7 @@ labels = [
 ]
 time_limit = 22  # time limit for one guess
 num_games = 3
-certainty_threshold = 0.05 # certainties from costum vision lower than this -> haswon=False
+certainty_threshold = 0.05  # certainties from costum vision lower than this -> haswon=False
 
 
 # Config Flask
@@ -29,13 +30,13 @@ class Flask_config:
         Config settings for flask and sqlalchemy should be set here.
     """
 
-    if "pytest" in sys.modules:
+    if "pytest" in sys.modules or "DEBUG" in os.environ:
         # Connection string for test database
         con_str = Keys.get("TEST_DB_CONNECTION_STRING")
 
     else:
         # Connection string for production database
-        con_str = Keys.get("DB_CONNECTION_STRING")
+        con_str = Keys.get("TEST_DB_CONNECTION_STRING")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str

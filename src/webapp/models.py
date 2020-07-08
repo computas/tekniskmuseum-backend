@@ -10,6 +10,13 @@ import datetime
 db = SQLAlchemy()
 
 
+class DataBaseException(Exception):
+    """
+        Costum exception for DB errors.
+    """
+    pass
+
+
 class Games(db.Model):
     """
        This is the Games model in the database. It is important that the
@@ -36,15 +43,16 @@ class Scores(db.Model):
     date = db.Column(db.DateTime)
 
 
+# Functions to manipulate the tables above
 def create_tables(app):
     """
         The tables will be created if they do not already exist.
     """
     with app.app_context():
         db.create_all()
-        return "Models created!"
+        return True
 
-    return "Couldn't create tables.."
+    return False
 
 
 def insert_into_games(token, labels, play_time, date):
@@ -57,9 +65,9 @@ def insert_into_games(token, labels, play_time, date):
             game = Games(token=token, labels=labels, play_time=play_time, date=date)
             db.session.add(game)
             db.session.commit()
-            return "Inserted"
-        except AttributeError:
-            raise AttributeError("Could not insert into games")
+            return True
+        except DataBaseException:
+            raise DataBaseException("Could not insert into games")
     else:
         raise AttributeError("Token has to be int, start time has to be float"
                              + ", labels has to be string and date has to be datetime.date.")
@@ -75,9 +83,9 @@ def insert_into_scores(name, score, date):
             score = Scores(name=name, score=score, date=date)
             db.session.add(score)
             db.session.commit()
-            return "Inserted"
-        except AttributeError:
-            return AttributeError("Could not insert into scores")
+            return True
+        except DataBaseException:
+            raise DataBaseException("Could not insert into scores")
     else:
         raise AttributeError("Name has to be string, score has to be float"
                              + " and date has to be datetime.date.")
@@ -104,8 +112,8 @@ def update_game(token, session_num, play_time):
         game.session_num += 1
         game.play_time = play_time
         db.session.commit()
-        return "Game record is updated."
-    except:
+        return True
+    except Exception:
         raise Exception("Couldn't update game.")
 
 
@@ -113,7 +121,7 @@ def delete_session_from_game(token):
     """
         To avoid unecessary data in the database this function is called by
         the api after a session is finished. All records in games table,
-        connected to the particular token, is deleted. 
+        connected to the particular token, is deleted.
     """
     try:
         game = Games.query.filter_by(token=token).first()
@@ -131,10 +139,10 @@ def delete_old_games():
     """
     try:
         db.session.query(Games).filter(Games.date < (datetime.datetime.today()
-        + datetime.timedelta(hour=1))).delete()
+                                       + datetime.timedelta(hours=1))).delete()
         db.session.commit()
-        return "Old records deleted."
-    except:
+        return True
+    except Exception:
         db.session.rollback()
         raise Exception("Couldn't delete records.")
 
@@ -148,11 +156,11 @@ def clear_table(table):
         if table == "Games":
             Games.query.delete()
             db.session.commit()
-            return "Table successfully cleared"
+            return True
         elif table == "Scores":
             Scores.query.delete()
             db.session.commit()
-            return "Table successfully cleared"
+            return True
     except AttributeError:
         db.session.rollback()
         return AttributeError("Table does not exist.")

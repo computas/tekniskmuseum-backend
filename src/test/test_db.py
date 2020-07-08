@@ -11,7 +11,11 @@ import unittest
 import datetime
 
 token = uuid.uuid4().hex
+labels = "label1, label2, label3"
+play_time = 21.0
 start_time = time.time()
+datetime = datetime.datetime.today()
+date = datetime.date.today()
 
 
 def test_create_tables():
@@ -19,26 +23,26 @@ def test_create_tables():
         Check that the tables exists.
     """
     result = models.create_tables(api.app)
-    assert result == "Models created!"
+    assert result == True
 
 
 def test_insert_into_games():
     """
-        Check that records exists in Games table.
+        Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(token, start_time, "sun")
-    assert result == "Inserted"
+        result = models.insert_into_games(token, labels, play_time, date)
+    assert result == True
 
 
 def test_insert_into_scores():
     """
-        Check that records exists in Scores table.
+        Check that records exists in Scores table after inserting.
     """
     date = datetime.date.today()
     with api.app.app_context():
         result = models.insert_into_scores("Test User", 500, date)
-    assert result == "Inserted"
+    assert result == True
 
 
 class test(unittest.TestCase):
@@ -52,7 +56,7 @@ class test(unittest.TestCase):
         """
         with api.app.app_context():
             self.assertRaises(AttributeError, models.insert_into_games,
-                              "token", "time", 10)
+                              "token", ["label1", "label2", "label3"], 10, "date")
 
     def test_illegal_parameter_scores(self):
         """
@@ -68,12 +72,12 @@ def test_query_euqals_insert():
     """
         Check that inserted record is the same as record catched by query.
     """
-    token2 = uuid.uuid4().hex
-    start_time = time.time()
+    # token2 = uuid.uuid4().hex
+    # play_time = time.time()
     with api.app.app_context():
-        models.insert_into_games(token2, start_time, "bench")
+        models.insert_into_games(token, labels, play_time, date)
         expected_result = (start_time, "bench")
-        result = models.query_game(token2)
+        result = models.get_record_from_game(token2)
     assert result == expected_result
 
 
