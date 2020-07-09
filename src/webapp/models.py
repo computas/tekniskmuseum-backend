@@ -243,21 +243,10 @@ def get_size_of_table(table):
 # User related functions
 def get_user(email):
     """
-        Return user record with corresponding login string.
+        Return user record with corresponding email.
     """
-    user = db.session.query(User).filter_by(email=email).first()
+    user = db.session.query(User).get(email)
     if user is None:
-        raise Exception  # Custom exception here
+        raise Exception("Invalid email")  # Custom exception here
     
     return user
-
-
-def get_user_count(email):
-    """
-        Return the count of users with the corresponding login string.
-    """
-    count = db.session.query(User).filter_by(email=email).count()
-    if count > 0:
-        raise Exception  # Custom exception here
-    
-    return True

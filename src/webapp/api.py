@@ -204,42 +204,48 @@ def view_high_score():
     return json.jsonify(data), 200
 
 # ADMIN STUFF:
+@app.route("/auth", methods=["POST"])
+def authenticate():
+    """
+        Endpoint for administrating the application; clear/drop tables,
+        retrain ML, clear training set.
+    """
+    email = request.values["email"]
+    password = request.values["password"]
 
-class login_form(form.Form):
-    login = fields.StringField(validators=[validators.required()])
-    password = fields.PasswordField(validators=[validators.required()])
+    user = models.get_user(email)
 
-    def validate_login(self, field):
-        user = models.get_user(self.login.data)
+    if user is None:
+        raise Exception("Invalid user")  # Some custom exception here
 
-        if user is None:
-            raise validators.ValidationError("Invalid user")  # Fix custom exception
-
-        # we're comparing the plaintext pw with the the hash from the db
-        if not check_password_hash(user.password, self.password.data):
-        # to compare plain text passwords use
-        # if user.password != self.password.data:
-            raise validators.ValidationError("Invalid password")  # Fix custom exception
-
-
-class RegistrationForm(form.Form):
-    login = fields.StringField(validators=[validators.required()])
-    email = fields.StringField()
-    username = fields.StringField()  # necessary?
-    password = fields.PasswordField(validators=[validators.required()])
-
-    def validate_login(self, field):
-        return models.get_user_count(self.login.data)
-        # evt: if models... then pass
+    if not check_password_hash(user.password, password)
+        raise Exception("Invalid password")  # Some custom exception here
 
 
+@app.route("/adminPage", methods=["GET"])
+def admin_page():
+    pass
 
-# Initilize flask-login
-def init_login():
-    login_manager = flask_login.LoginManager()
-    login_manager.init_app(app)
 
-    # Create user loader function
-    @login_manager.user_loader
-    def load_user(email):
-        return db.session.query(User).get(email)
+@app.route("/register", methods=["POST"])  # need this?
+def register():
+    email = request.values["email"]
+    password = request.values["password"]
+    username = request.values["username"]
+
+    if validate_user(user, password, username):
+        models.insert_into_user(email, password, username)
+    pass
+
+
+def validate_user(email, password):
+    user = models.get_user(email)
+
+    if user is not None:
+        raise Exception("User already exists")
+    
+    return True
+
+
+def check_secure_password(password):
+    pass
