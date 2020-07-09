@@ -16,6 +16,7 @@ import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
+from utilities.exceptions import HTTPException
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -160,6 +161,22 @@ def end_game():
     return "OK", 200
 
 
+@app.route("/viewHighScore")
+def view_high_score():
+    """
+        Read highscore from database. Return top n of all time and top n of last 24 hours.
+    """
+    #read top n overall high score
+    top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
+    #read daily high score
+    daily_high_scores = models.get_daily_high_score()
+    data = {
+        "daily": daily_high_scores,
+        "total": top_n_high_scores
+    }
+    return json.jsonify(data), 200
+
+
 def allowed_file(image):
     """
         Check if image satisfies the constraints of Custom Vision.
@@ -182,17 +199,10 @@ def allowed_file(image):
         return True
 
 
-@app.route("/viewHighScore")
-def view_high_score():
-    """
-        Read highscore from database. Return top n of all time and top n of last 24 hours.
-    """
-    #read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
-    #read daily high score
-    daily_high_scores = models.get_daily_high_score()
-    data = {
-        "daily": daily_high_scores,
-        "total": top_n_high_scores
-    }
-    return json.jsonify(data), 200
+@app.errorhandler(HTTPException)
+def handle_exception(e):
+    if e.code >= 400 and e.code < 500:
+        return error.dump()
+    else:
+        app.logger.error(error.dump())
+        return "Internal server error", 500
