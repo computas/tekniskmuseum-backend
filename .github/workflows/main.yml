@@ -5,7 +5,7 @@ name: Debug unit tests
 on:
   push:
     branches: 
-      - feature/test-action
+      - feature/test-actions
 
 jobs:
   run-linter:
