@@ -4,6 +4,7 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
+from utilities.exceptions import HTTPError
 import datetime
 
 
@@ -96,11 +97,11 @@ def get_record_from_game(token):
         Return name, starttime and label of the first record of Games that
         matches the query.
     """
-    try:
-        game = Games.query.filter_by(token=token).first()
-        return game
-    except AttributeError:
-        raise AttributeError("Could not find record for " + token + ".")
+    game = Games.query.get(token)
+    if game is None:
+        raise HTTPError("Token invalid or expired", 400)
+
+    return game
 
 
 def update_game(token, session_num, play_time):

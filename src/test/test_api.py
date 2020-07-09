@@ -124,7 +124,7 @@ def test_allowedFile_small_resolution():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image1, False)
+    allowed_file_helper(cfg.api_image1, False, "image/png")
 
 
 def test_allowedFile_too_large_file():
@@ -134,7 +134,7 @@ def test_allowedFile_too_large_file():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image2, False)
+    allowed_file_helper(cfg.api_image2, False, "image/png")
 
 
 def test_allowedFile_wrong_format():
@@ -144,7 +144,7 @@ def test_allowedFile_wrong_format():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image3, False)
+    allowed_file_helper(cfg.api_image3, False, "image/jpeg")
 
 
 def test_allowedFile_correct():
@@ -154,10 +154,10 @@ def test_allowedFile_correct():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'true'.
-    allowed_file_helper(cfg.api_image4, True)
+    allowed_file_helper(cfg.api_image4, True, "image/png")
 
 
-def allowed_file_helper(filename, expected_result):
+def allowed_file_helper(filename, expected_result, content_type):
     """
         Helper function for the allowedFile function tests.
     """
@@ -172,7 +172,8 @@ def allowed_file_helper(filename, expected_result):
         tmp.write(data_stream)
         tmp.seek(0)
         # Create file storage object containing the image
-        image = werkzeug.datastructures.FileStorage(stream=tmp, filename=path)
+        image = werkzeug.datastructures.FileStorage(stream=tmp, filename=path,
+        content_type=content_type)
         # Test allowedFile function with the image file
         result = api.allowed_file(image)
 

@@ -16,7 +16,6 @@ import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
-from utilities.exceptions import HTTPException
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -24,6 +23,7 @@ from flask import Flask
 from flask import request
 from flask import json
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.exceptions import HTTPException
 
 # Initialization
 app = Flask(__name__)
@@ -184,8 +184,8 @@ def allowed_file(image):
     if image.filename == "":
         return False
 
-    # Check if the filename is of PNG type
-    png = image.filename.endswith(".png") or image.filename.endswith(".PNG")
+    # Check that the file is a png
+    is_png = image.content_type == 'image/png'
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
@@ -193,16 +193,24 @@ def allowed_file(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     correct_res = (height >= 256) and (width >= 256)
-    if not png or too_large or not correct_res:
+    if not is_png or too_large or not correct_res:
         return False
     else:
         return True
 
 
-@app.errorhandler(HTTPException)
-def handle_exception(e):
-    if e.code >= 400 and e.code < 500:
-        return error.dump()
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """
+       Captures all exceptions raised. If the Exception is a HTTPError the
+       error message and code is returned to the client. Else the error is
+       logged.
+    """
+    if isinstance(error, HTTPException):
+        # check if 4xx error. This should be returned to user.
+        status_code = error.get_response()._status_code
+        if status_code >= 400 and status_code < 500:
+            return error
     else:
-        app.logger.error(error.dump())
+        app.logger.error(error)
         return "Internal server error", 500
