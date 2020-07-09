@@ -46,4 +46,4 @@ jobs:
       
     - name: Run tests
       shell: bash
-      run: python src/runTests.py --keys='${{ fromJSON(secrets.TEST_SETTINGS) }}'
+      run: python src/runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
