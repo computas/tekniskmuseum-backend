@@ -28,7 +28,6 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
-high_score_list_size = setup.top_n
 num_games = setup.num_games
 certainty_threshold = setup.certainty_threshold
 
@@ -110,14 +109,21 @@ def classify():
     label = labels[game.session_num - 1]
 
     best_certainty = certainty[best_guess]
+
     # The player has won if the game is completed within the time limit
-    has_won = (
+<< << << < HEAD
+   has_won = (
         time_used < time_limit
         and best_guess == label
         and best_certainty >= certainty_threshold
     )
-    # End game if player win or loose
-    if has_won or time_used >= time_limit:
+== == == =
+   has_won = (time_used < time_limit
+               and best_guess == label
+               and best_certainty >= certainty_threshold)
+>>>>>> > script to run tests in actions
+   # End game if player win or loose
+   if has_won or time_used >= time_limit:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
