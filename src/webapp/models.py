@@ -53,26 +53,6 @@ class User(db.Model):
     login = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(64))
 
-    # @property is Flask-login < 0.3.0 methods
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_active(self):
-        return True
-
-    @property
-    def is_anonymous(self):
-        return False
-
-    def get_email(self):  # method for getting primary key? It was originally id
-        return self.email
-
-    # Required for administrative interface
-    def __unicode__(self):
-        return self.username
-
 
 # Functions to manipulate the tables above
 def create_tables(app):
@@ -260,5 +240,24 @@ def get_size_of_table(table):
         return rows
 
 
-def get_user(login):
-    return db.session.query(User).filter_by(login=login).first()
+# User related functions
+def get_user(email):
+    """
+        Return user record with corresponding login string.
+    """
+    user = db.session.query(User).filter_by(email=email).first()
+    if user is None:
+        raise Exception  # Custom exception here
+    
+    return user
+
+
+def get_user_count(email):
+    """
+        Return the count of users with the corresponding login string.
+    """
+    count = db.session.query(User).filter_by(email=email).count()
+    if count > 0:
+        raise Exception  # Custom exception here
+    
+    return True

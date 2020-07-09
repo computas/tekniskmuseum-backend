@@ -205,7 +205,7 @@ def view_high_score():
 
 # ADMIN STUFF:
 
-class LoginForm(form.Form):
+class login_form(form.Form):
     login = fields.StringField(validators=[validators.required()])
     password = fields.PasswordField(validators=[validators.required()])
 
@@ -213,13 +213,25 @@ class LoginForm(form.Form):
         user = models.get_user(self.login.data)
 
         if user is None:
-            raise validators.ValidationError("Invalid user")  # Fix custom exception 
+            raise validators.ValidationError("Invalid user")  # Fix custom exception
 
         # we're comparing the plaintext pw with the the hash from the db
         if not check_password_hash(user.password, self.password.data):
         # to compare plain text passwords use
         # if user.password != self.password.data:
-            raise validators.ValidationError("Invalid password")  # Fix custom exception 
+            raise validators.ValidationError("Invalid password")  # Fix custom exception
+
+
+class RegistrationForm(form.Form):
+    login = fields.StringField(validators=[validators.required()])
+    email = fields.StringField()
+    username = fields.StringField()  # necessary?
+    password = fields.PasswordField(validators=[validators.required()])
+
+    def validate_login(self, field):
+        return models.get_user_count(self.login.data)
+        # evt: if models... then pass
+
 
 
 # Initilize flask-login
