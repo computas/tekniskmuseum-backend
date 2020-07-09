@@ -258,3 +258,7 @@ def get_size_of_table(table):
     elif table == "Scores":
         rows = db.session.query(Scores).count()
         return rows
+
+
+def get_user(login):
+    return db.session.query(User).filter_by(login=login).first()

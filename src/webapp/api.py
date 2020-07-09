@@ -23,6 +23,12 @@ from flask import Flask
 from flask import request
 from flask import json
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import form
+from wtforms import fields
+from wtforms import validators
+import flask_admin
+import flask_login
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Initialization
 app = Flask(__name__)
@@ -196,3 +202,32 @@ def view_high_score():
         "total": top_n_high_scores
     }
     return json.jsonify(data), 200
+
+# ADMIN STUFF:
+
+class LoginForm(form.Form):
+    login = fields.StringField(validators=[validators.required()])
+    password = fields.PasswordField(validators=[validators.required()])
+
+    def validate_login(self, field):
+        user = models.get_user(self.login.data)
+
+        if user is None:
+            raise validators.ValidationError("Invalid user")  # Fix custom exception 
+
+        # we're comparing the plaintext pw with the the hash from the db
+        if not check_password_hash(user.password, self.password.data):
+        # to compare plain text passwords use
+        # if user.password != self.password.data:
+            raise validators.ValidationError("Invalid password")  # Fix custom exception 
+
+
+# Initilize flask-login
+def init_login():
+    login_manager = flask_login.LoginManager()
+    login_manager.init_app(app)
+
+    # Create user loader function
+    @login_manager.user_loader
+    def load_user(email):
+        return db.session.query(User).get(email)
