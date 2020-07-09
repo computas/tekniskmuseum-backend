@@ -4,7 +4,7 @@
 # Compute number of gunicorn workers
 ncores=$(nproc)
 nworkers=$(((2*$ncores)+1))
-if [[ $nworkers > 12 ]]; then
+if [[ $nworkers -gt 12 ]]; then
     nworkers=12
 fi
 
@@ -49,7 +49,7 @@ printline() {
 }
 
 # Parse flags
-while [[ "$#" > 0 ]]; do
+while [[ "$#" -gt 0 ]]; do
     case $1 in
         -t | --test)        test=true;
                             shift ;;
