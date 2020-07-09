@@ -4,19 +4,16 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.exceptions import HTTPException
 import datetime
 
 
 db = SQLAlchemy()
 
 
-class DataBaseException(HTTPException, code, description):
+class DataBaseException(HTTPException):
     """
         Custom exception for DB errors.
     """
-    code = code
-    description = description
 
 
 class Games(db.Model):
@@ -55,6 +52,26 @@ class User(db.Model):
     username = db.Column(db.String(64))
     login = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(64))
+
+    # @property is Flask-login < 0.3.0 methods
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_email(self):  # method for getting primary key? It was originally id
+        return self.email
+
+    # Required for administrative interface
+    def __unicode__(self):
+        return self.username
 
 
 # Functions to manipulate the tables above
