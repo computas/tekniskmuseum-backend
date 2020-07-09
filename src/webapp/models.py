@@ -4,17 +4,19 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.exceptions import HTTPException
 import datetime
 
 
 db = SQLAlchemy()
 
 
-class DataBaseException(Exception):
+class DataBaseException(HTTPException, code, description):
     """
         Custom exception for DB errors.
     """
-    pass
+    code = code
+    description = description
 
 
 class Games(db.Model):
@@ -43,6 +45,18 @@ class Scores(db.Model):
     date = db.Column(db.DateTime)
 
 
+class User(db.Model):
+    """
+        This is user model in the database to store username and psw for
+        administrators.
+    """
+
+    email = db.Column(db.String(120), primary_key=True)
+    username = db.Column(db.String(64))
+    login = db.Column(db.String(80), unique=True)
+    password = db.Column(db.String(64))
+
+
 # Functions to manipulate the tables above
 def create_tables(app):
     """
@@ -67,7 +81,7 @@ def insert_into_games(token, labels, play_time, date):
             db.session.commit()
             return True
         except DataBaseException:
-            raise DataBaseException("Could not insert into games")
+            raise DataBaseException(500, "Cannot connect to database")
     else:
         raise AttributeError("Token has to be int, start time has to be float"
                              + ", labels has to be string and date has to be datetime.date.")
