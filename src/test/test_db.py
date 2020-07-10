@@ -3,18 +3,20 @@
     functions is used on an identical test database.
 """
 
-from webapp import api
-from webapp import models
 import uuid
 import time
-import unittest
-import datetime
+from webapp import api
+from webapp import models
+from datetime import timedelta
+from datetime import date
+from pytest import raises
+from werkzeug import exceptions as excp
 
 token = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
-date_time = datetime.datetime.today()
+date = date.today()
 
 
 def test_create_tables():
@@ -30,7 +32,7 @@ def test_insert_into_games():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(token, labels, play_time, date_time)
+        result = models.insert_into_games(token, labels, play_time, str(date))
 
     assert result
 
@@ -40,33 +42,29 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500, date_time)
+        result = models.insert_into_scores("Test User", 500, str(date))
 
     assert result
 
 
-class test(unittest.TestCase):
+def test_illegal_parameter_games():
     """
-        Class for using unittest.TestCase for asserting exceptions.
+        Check that exception is raised when illegal arguments is passed
+        into games table.
     """
+    with raises(excp.BadRequest):
+        models.insert_into_games(
+            "token", ["label1", "label2", "label3"], 10, "date_time")
 
-    def test_illegal_parameter_games(self):
-        """
-            Check that exception is raised when illegal arguments is passed
-            into games table.
-        """
-        with api.app.app_context():
-            self.assertRaises(AttributeError, models.insert_into_games,
-                              "token", ["label1", "label2", "label3"], 10, "date_time")
 
-    def test_illegal_parameter_scores(self):
-        """
-            Check that exception is raised when illegal arguments is passed
-            into scores table.
-        """
-        with api.app.app_context():
-            self.assertRaises(AttributeError, models.insert_into_scores,
-                              100, "score", "01.01.2020")
+def test_illegal_parameter_scores():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into scores table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_scores(
+            100, "score", "01.01.2020")
 
 
 def test_query_euqals_insert():
@@ -86,9 +84,15 @@ def test_get_daily_high_score_sorted():
     """
         Check that daily high score list is sorted.
     """
+    # insert random data into db
+    with api.app.app_context():
+        for i in range(5):
+            result = models.insert_into_scores(
+                "Test User", 10 + i, str(date - timedelta(days=i)))
+            assert result
+
     with api.app.app_context():
         result = models.get_daily_high_score()
-
     sorting_check_helper(result)
 
 
