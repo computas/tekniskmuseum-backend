@@ -109,7 +109,7 @@ def classify():
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
-    time_used = float(request.values["time"])
+    time_left = float(request.values["time"])
     # Get label for game session
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
@@ -118,22 +118,27 @@ def classify():
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
-        time_used < time_limit
+        time_left > 0
         and best_guess == label
         and best_certainty >= certainty_threshold
     )
-    # End game if player win or loose
-    if has_won or time_used >= time_limit:
+    
+    if has_won:
         # save image in blob storage
         storage.save_image(image, label)
+        # Update game state to be done
+        game_state = "Done"
+    
+    elif time_left == 0:
+        game_state = "Done"
+    
+    if game_state == "Done":
         # Get cumulative time
-        cum_time = game.play_time + time_used
+        cum_score = game.score + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
-        models.update_game(token, session_num, cum_time)
-        # Update game state to be done
-        game_state = "Done"
+        models.update_game(token, session_num, cum_score)
 
     data = {
         "certainty": certainty,
@@ -156,7 +161,7 @@ def end_game():
     game = models.get_record_from_game(token)
 
     if game.session_num == num_games + 1:
-        score = game.play_time
+        score = game.score
         date = datetime.date.today()
         models.insert_into_scores(name, score, date)
 

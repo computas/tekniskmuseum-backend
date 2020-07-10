@@ -26,7 +26,7 @@ class Games(db.Model):
     token = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
-    play_time = db.Column(db.Float, nullable=False)
+    score = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime)
 
 
