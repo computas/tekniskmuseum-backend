@@ -4,8 +4,9 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
-import datetime
-
+from datetime import datetime
+from datetime import timedelta
+from datetime import date
 
 db = SQLAlchemy()
 
@@ -59,7 +60,7 @@ def insert_into_games(token, labels, play_time, date):
         Insert values into Games table.
     """
     if (isinstance(token, str) and isinstance(play_time, float)
-            and isinstance(labels, str) and isinstance(date, datetime.date)):
+            and isinstance(labels, str) and isinstance(date, str)):
         try:
             game = Games(token=token, labels=labels,
                          play_time=play_time, date=date)
@@ -78,7 +79,7 @@ def insert_into_scores(name, score, date):
         Insert values into Scores table.
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
-    if isinstance(name, str) and score_int_or_float and isinstance(date, datetime.date):
+    if isinstance(name, str) and score_int_or_float and isinstance(date, str):
         try:
             score = Scores(name=name, score=score, date=date)
             db.session.add(score)
@@ -173,10 +174,12 @@ def get_daily_high_score():
         Returns list of dictionaries.
     """
     try:
-        today = str(datetime.date.today())
+        today = str(date.today())
         #filter by today and sort by score
         top_n_list = Scores.query.filter_by(
             date=today).order_by(Scores.score.desc()).all()
+
+        liste = Scores.query.order_by(Scores.score.desc()).all()
         #structure data
         new = [{"name": player.name, "score": player.score}
                for player in top_n_list]

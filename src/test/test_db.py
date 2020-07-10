@@ -7,16 +7,16 @@ from webapp import api
 from webapp import models
 from datetime import datetime
 from datetime import timedelta
+from datetime import date
 import uuid
 import time
 import unittest
-import pdb
 
 token = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
-date_time = datetime.today()
+date = date.today()
 
 
 def test_create_tables():
@@ -32,7 +32,7 @@ def test_insert_into_games():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(token, labels, play_time, date_time)
+        result = models.insert_into_games(token, labels, play_time, str(date))
 
     assert result
 
@@ -42,7 +42,7 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500, date_time)
+        result = models.insert_into_scores("Test User", 500, str(date))
 
     assert result
 
@@ -92,13 +92,11 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, datetime.today() - timedelta(days=i))
+                "Test User", 10 + i, str(date - timedelta(days=i)))
             assert result
 
     with api.app.app_context():
         result = models.get_daily_high_score()
-    pdb.set_trace()
-
     sorting_check_helper(result)
 
 

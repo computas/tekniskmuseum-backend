@@ -12,7 +12,7 @@ import time
 import sys
 import os
 import logging
-import datetime
+from datetime import date
 from webapp import storage
 from webapp import models
 from utilities import setup
@@ -55,8 +55,8 @@ def start_game():
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
-    labels_list = random.sample(labels, num_games)
-    date = datetime.datetime.today()
+    labels_list = random.choices(labels, k=num_games)
+    date = str(date.today())
     models.insert_into_games(token, json.dumps(labels_list), 0.0, date)
     # return game data as json object
     data = {
@@ -157,7 +157,7 @@ def end_game():
 
     if game.session_num == num_games + 1:
         score = game.play_time
-        date = datetime.date.today()
+        date = str(date.today())
         models.insert_into_scores(name, score, date)
 
     # Clean database for unnecessary data
