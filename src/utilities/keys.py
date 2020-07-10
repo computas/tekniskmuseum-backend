@@ -7,6 +7,7 @@ import json
 
 environ = os.environ
 if "IS_PRODUCTION" in environ:
+    print("is production is found")
     keys = environ
     isProduction = True
 elif os.path.isfile("./config.json"):
