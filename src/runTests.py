@@ -22,4 +22,5 @@ for keydict in keylist:
 sys.argv = [sys.argv[0]]
 
 # run pytets
-return pytest.main()
+test_result = pytest.main()
+assert test_result == 1
