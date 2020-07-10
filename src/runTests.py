@@ -22,4 +22,4 @@ for keydict in keylist:
 sys.argv = [sys.argv[0]]
 
 # run pytets
-pytest.main()
+return pytest.main()
