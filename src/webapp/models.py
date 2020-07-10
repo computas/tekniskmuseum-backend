@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from datetime import timedelta
 from datetime import date
+from werkzeug import exceptions as excp
 
 db = SQLAlchemy()
 
@@ -70,8 +71,8 @@ def insert_into_games(token, labels, play_time, date):
         except DataBaseException:
             raise DataBaseException("Could not insert into games")
     else:
-        raise AttributeError("Token has to be int, start time has to be float"
-                             + ", labels has to be string and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def insert_into_scores(name, score, date):
@@ -88,8 +89,8 @@ def insert_into_scores(name, score, date):
         except DataBaseException:
             raise DataBaseException("Could not insert into scores")
     else:
-        raise AttributeError("Name has to be string, score has to be float"
-                             + " and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def get_record_from_game(token):
@@ -97,11 +98,11 @@ def get_record_from_game(token):
         Return name, starttime and label of the first record of Games that
         matches the query.
     """
-    try:
-        game = Games.query.filter_by(token=token).first()
-        return game
-    except AttributeError:
-        raise AttributeError("Could not find record for " + token + ".")
+    game = Games.query.get(token)
+    if game is None:
+        raise excp.BadRequest("Token invalid or expired")
+
+    return game
 
 
 def update_game(token, session_num, play_time):
