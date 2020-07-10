@@ -1,7 +1,7 @@
 #!/bin/python3
 """
-    This file is used for running pytests in github actions. It parses keys from github sectrets and runs tests. 
-    The file is called in github action with secrets as argument. 
+    This file is used for running pytests in github actions. It parses keys from github sectrets and runs tests.
+    The file is called in github action with secrets as argument.
 """
 import json
 import os
