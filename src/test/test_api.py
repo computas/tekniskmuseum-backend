@@ -2,11 +2,13 @@ import os
 import io
 import sys
 import json
+import pytest
 import werkzeug
 import tempfile
-import pytest
+from pytest import raises
 from webapp import api
 from test import config as cfg
+from werkzeug import exceptions as excp
 
 
 @pytest.fixture
@@ -65,10 +67,8 @@ def test_classify_no_image(client):
     # Since the API checks if the image is there before anything else,
     # we don't need to include anything with the request
     res = client.post("/classify", data=dict())
-    # Check if the correct message is returned
-    assert(b"No image submitted" == res.data)
     # Check if the correct error code is returned
-    assert(res.status_code == 400)
+    assert b"No image submitted" in res.data
 
 
 def test_classify_wrong_image(client):
@@ -85,10 +85,7 @@ def test_classify_wrong_image(client):
     res = classify_helper(
         client, cfg.api_path_data, cfg.api_image1, time, token, user
     )
-    # Check if the correct message is returned
-    assert(res.data == b"Image does not satisfy constraints")
-    # Check if the correct error code is returned
-    assert(res.status_code == 415)
+    assert b"415 Unsupported Media Type" in res.data
 
 
 def test_classify_correct(client):
@@ -124,7 +121,8 @@ def test_allowedFile_small_resolution():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image1, False, "image/png")
+    with raises(excp.UnsupportedMediaType):
+        allowed_file_helper(cfg.api_image1, False, "image/png")
 
 
 def test_allowedFile_too_large_file():
@@ -134,7 +132,8 @@ def test_allowedFile_too_large_file():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image2, False, "image/png")
+    with raises(excp.UnsupportedMediaType):
+        allowed_file_helper(cfg.api_image2, False, "image/png")
 
 
 def test_allowedFile_wrong_format():
@@ -144,7 +143,8 @@ def test_allowedFile_wrong_format():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
-    allowed_file_helper(cfg.api_image3, False, "image/jpeg")
+    with raises(excp.UnsupportedMediaType):
+        allowed_file_helper(cfg.api_image3, False, "image/jpeg")
 
 
 def test_allowedFile_correct():
@@ -173,11 +173,9 @@ def allowed_file_helper(filename, expected_result, content_type):
         tmp.seek(0)
         # Create file storage object containing the image
         image = werkzeug.datastructures.FileStorage(stream=tmp, filename=path,
-        content_type=content_type)
+                                                    content_type=content_type)
         # Test allowedFile function with the image file
-        result = api.allowed_file(image)
-
-    assert result == expected_result
+        return api.allowed_file(image)
 
 
 def classify_helper(client, data_path, image, time, token, user):

@@ -9,6 +9,7 @@ import uuid
 import time
 import unittest
 import datetime
+from werkzeug import exceptions as excp
 
 token = uuid.uuid4().hex
 labels = "label1, label2, label3"
@@ -56,7 +57,7 @@ class test(unittest.TestCase):
             into games table.
         """
         with api.app.app_context():
-            self.assertRaises(AttributeError, models.insert_into_games,
+            self.assertRaises(excp.BadRequest, models.insert_into_games,
                               "token", ["label1", "label2", "label3"], 10, "date_time")
 
     def test_illegal_parameter_scores(self):
@@ -65,7 +66,7 @@ class test(unittest.TestCase):
             into scores table.
         """
         with api.app.app_context():
-            self.assertRaises(AttributeError, models.insert_into_scores,
+            self.assertRaises(excp.BadRequest, models.insert_into_scores,
                               100, "score", "01.01.2020")
 
 

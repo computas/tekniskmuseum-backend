@@ -97,7 +97,7 @@ def classify():
 
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
-    allowed_file(image):
+    allowed_file(image)
 
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
@@ -183,7 +183,7 @@ def handle_exception(error):
        error message and code is returned to the client. Else the error is
        logged.
     """
-    if isinstance(error, HTTPException):
+    if isinstance(error, excp.HTTPException):
         # check if 4xx error. This should be returned to user.
         if error.code >= 400 and error.code < 500:
             return error

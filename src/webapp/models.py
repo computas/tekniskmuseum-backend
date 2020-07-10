@@ -71,7 +71,7 @@ def insert_into_games(token, labels, play_time, date):
             raise DataBaseException("Could not insert into games")
     else:
         raise excp.BadRequest("Token has to be string, start time has to be float"
-                             ", labels has to be string and date has to be datetime.date.")
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def insert_into_scores(name, score, date):
@@ -89,7 +89,7 @@ def insert_into_scores(name, score, date):
             raise DataBaseException("Could not insert into scores")
     else:
         raise excp.BadRequest("Token has to be string, start time has to be float"
-                             ", labels has to be string and date has to be datetime.date.")
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def get_record_from_game(token):
