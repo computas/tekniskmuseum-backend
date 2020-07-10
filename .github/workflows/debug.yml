@@ -46,4 +46,6 @@ jobs:
       
     - name: Run tests
       shell: bash
-      run: python src/runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
+      run: |
+       cd src/
+       python runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
