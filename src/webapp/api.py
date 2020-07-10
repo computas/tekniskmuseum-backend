@@ -12,7 +12,6 @@ import time
 import sys
 import os
 import logging
-import datetime
 import json
 from datetime import date
 from datetime import datetime
@@ -213,4 +212,3 @@ def allowed_file(image):
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
->>>>>>> a37e6b75d654dea53df5cf85c41ba622bce45a7e
