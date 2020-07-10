@@ -43,4 +43,4 @@ jobs:
       
     - name: Run tests
       shell: bash
-      run: startapp.sh -t --keys='${{ secrets.TEST_SETTINGS }}'
+      run: ./startapp.sh --test --keys='${{ secrets.TEST_SETTINGS }}'
