@@ -42,7 +42,4 @@ jobs:
       run: pip install -r requirements.txt
       
     - name: Run tests
-      shell: bash
-      run: |
-       cd src/
-       python runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
+      run: bash startapp.sh --keys='${{ secrets.TEST_SETTINGS }}'
