@@ -14,6 +14,8 @@ import os
 import logging
 import datetime
 import json
+from datetime import date
+from datetime import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
@@ -23,14 +25,15 @@ from PIL import Image
 from flask import Flask
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug import exceptions as excp
 
 # Initialization
 app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
-high_score_list_size = setup.top_n
 num_games = setup.num_games
 certainty_threshold = setup.certainty_threshold
+high_score_list_size = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -46,7 +49,7 @@ if __name__ != "__main__":
 @app.route("/")
 def hello():
     app.logger.info("We're up!")
-    return "Yes, we're up"
+    return "Yes, we're up", 200
 
 
 @app.route("/startGame")
@@ -57,8 +60,8 @@ def start_game():
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
     labels_list = random.choices(labels, k=num_games)
-    date = datetime.datetime.today()
-    models.insert_into_games(token, json.dumps(labels_list), -1.0, date)
+    today = str(date.today())
+    models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
     # return game data as json object
     data = {
         "token": token,
@@ -76,7 +79,7 @@ def get_label():
 
     # Check if game complete
     if game.session_num > num_games:
-        return "Game limit reached", 400
+        raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
@@ -92,12 +95,11 @@ def classify():
     game_state = "Playing"
     # Check if image submitted correctly
     if "image" not in request.files:
-        return "No image submitted", 400
+        raise excp.BadRequest("No image submitted")
 
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
-    if not allowed_file(image):
-        return "Image does not satisfy constraints", 415
+    allowed_file(image)
 
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
@@ -108,14 +110,15 @@ def classify():
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
         time_used < time_limit
         and best_guess == label
-        and best_certainty >= certainty_threshold
-    )
+        and best_certainty >= certainty_threshold)
+    has_won = (time_used < time_limit
+               and best_guess == label
+               and best_certainty >= certainty_threshold)
     # End game if player win or loose
     if has_won or time_used >= time_limit:
         # save image in blob storage
@@ -151,35 +154,13 @@ def end_game():
 
     if game.session_num == num_games + 1:
         score = game.play_time
-        date = datetime.date.today()
-        models.insert_into_scores(name, score, date)
+        today = str(date.today())
+        models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
     models.delete_session_from_game(token)
     models.delete_old_games()
     return "OK", 200
-
-
-def allowed_file(image):
-    """
-        Check if image satisfies the constraints of Custom Vision.
-    """
-    if image.filename == "":
-        return False
-
-    # Check if the filename is of PNG type
-    png = image.filename.endswith(".png") or image.filename.endswith(".PNG")
-    # Ensure the file isn't too large
-    too_large = len(image.read()) > 4000000
-    # Ensure the file has correct resolution
-    image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
-    image.seek(0)
-    correct_res = (height >= 256) and (width >= 256)
-    if not png or too_large or not correct_res:
-        return False
-    else:
-        return True
 
 
 @app.route("/viewHighScore")
@@ -196,3 +177,40 @@ def view_high_score():
         "total": top_n_high_scores
     }
     return json.dumps(data), 200
+
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """
+       Captures all exceptions raised. If the Exception is a HTTPException the
+       error message and code is returned to the client. Else the error is
+       logged.
+    """
+    if isinstance(error, excp.HTTPException):
+        # check if 4xx error. This should be returned to user.
+        if error.code >= 400 and error.code < 500:
+            return error
+    else:
+        app.logger.error(error)
+        return "Internal server error", 500
+
+
+def allowed_file(image):
+    """
+        Check if image satisfies the constraints of Custom Vision.
+    """
+    if image.filename == "":
+        raise excp.BadRequest("No image submitted")
+
+    # Check that the file is a png
+    is_png = image.content_type == 'image/png'
+    # Ensure the file isn't too large
+    too_large = len(image.read()) > 4000000
+    # Ensure the file has correct resolution
+    image.seek(0)
+    height, width = Image.open(BytesIO(image.stream.read())).size
+    image.seek(0)
+    correct_res = (height >= 256) and (width >= 256)
+    if not is_png or too_large or not correct_res:
+        raise excp.UnsupportedMediaType("Wrong image format")
+>>>>>>> a37e6b75d654dea53df5cf85c41ba622bce45a7e
