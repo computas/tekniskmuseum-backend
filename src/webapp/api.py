@@ -30,6 +30,7 @@ labels = setup.labels
 time_limit = setup.time_limit
 num_games = setup.num_games
 certainty_threshold = setup.certainty_threshold
+high_score_list_size = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -107,23 +108,17 @@ def classify():
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     best_certainty = certainty[best_guess]
-
     # The player has won if the game is completed within the time limit
-<< << << < HEAD
-   has_won = (
+    has_won = (
         time_used < time_limit
         and best_guess == label
-        and best_certainty >= certainty_threshold
-    )
-== == == =
-   has_won = (time_used < time_limit
+        and best_certainty >= certainty_threshold)
+    has_won = (time_used < time_limit
                and best_guess == label
                and best_certainty >= certainty_threshold)
->>>>>> > script to run tests in actions
-   # End game if player win or loose
-   if has_won or time_used >= time_limit:
+    # End game if player win or loose
+    if has_won or time_used >= time_limit:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
@@ -202,22 +197,3 @@ def view_high_score():
         "total": top_n_high_scores
     }
     return json.jsonify(data), 200
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    app.logger.error('500 error: %s', (request.path))
-    return "500 error"
-
-
-@app.errorhandler(404)
-def not_found(error):
-    print("should log 404")
-    app.logger.error('404 error: %s', (request.path))
-    return "404 error", 404
-
-
-@app.errorhandler(Exception)
-def unhandled_exception(e):
-    app.logger.error('Unhandled Exception: %s', (e))
-    return render_template('500.htm'), 500
