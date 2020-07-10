@@ -69,7 +69,9 @@ done
 
 if [[ $test = true ]]; then
     cd src/
-    if [[ -z "$keystring" ]]; then
+    if [[ ! -z "$keystring" ]]; then
+        echo "yeet! $keystring"
+        exit
         python runTests.py --keys="$keystring"
         exit
     else
