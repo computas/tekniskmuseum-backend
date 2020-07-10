@@ -7,8 +7,8 @@ from webapp import api
 from webapp import models
 import uuid
 import time
-import unittest
 import datetime
+from pytest import raises
 from werkzeug import exceptions as excp
 
 token = uuid.uuid4().hex
@@ -46,28 +46,24 @@ def test_insert_into_scores():
     assert result
 
 
-class test(unittest.TestCase):
+def test_illegal_parameter_games():
     """
-        Class for using unittest.TestCase for asserting exceptions.
+        Check that exception is raised when illegal arguments is passed
+        into games table.
     """
+    with raises(excp.BadRequest):
+        models.insert_into_games(
+            "token", ["label1", "label2", "label3"], 10, "date_time")
 
-    def test_illegal_parameter_games(self):
-        """
-            Check that exception is raised when illegal arguments is passed
-            into games table.
-        """
-        with api.app.app_context():
-            self.assertRaises(excp.BadRequest, models.insert_into_games,
-                              "token", ["label1", "label2", "label3"], 10, "date_time")
 
-    def test_illegal_parameter_scores(self):
-        """
-            Check that exception is raised when illegal arguments is passed
-            into scores table.
-        """
-        with api.app.app_context():
-            self.assertRaises(excp.BadRequest, models.insert_into_scores,
-                              100, "score", "01.01.2020")
+def test_illegal_parameter_scores():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into scores table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_scores(
+            100, "score", "01.01.2020")
 
 
 def test_query_euqals_insert():
