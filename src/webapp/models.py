@@ -3,9 +3,9 @@
     manipulating them.
 """
 
-from flask_sqlalchemy import SQLAlchemy
-from utilities.exceptions import HTTPError
 import datetime
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug import exceptions as excp
 
 
 db = SQLAlchemy()
@@ -70,8 +70,8 @@ def insert_into_games(token, labels, play_time, date):
         except DataBaseException:
             raise DataBaseException("Could not insert into games")
     else:
-        raise AttributeError("Token has to be int, start time has to be float"
-                             + ", labels has to be string and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                             ", labels has to be string and date has to be datetime.date.")
 
 
 def insert_into_scores(name, score, date):
@@ -88,8 +88,8 @@ def insert_into_scores(name, score, date):
         except DataBaseException:
             raise DataBaseException("Could not insert into scores")
     else:
-        raise AttributeError("Name has to be string, score has to be float"
-                             + " and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                             ", labels has to be string and date has to be datetime.date.")
 
 
 def get_record_from_game(token):
@@ -99,7 +99,7 @@ def get_record_from_game(token):
     """
     game = Games.query.get(token)
     if game is None:
-        raise HTTPError("Token invalid or expired", 400)
+        raise excp.BadRequest("Token invalid or expired")
 
     return game
 

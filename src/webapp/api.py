@@ -23,7 +23,7 @@ from flask import Flask
 from flask import request
 from flask import json
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.exceptions import HTTPException
+from werkzeug import exceptions as excp
 
 # Initialization
 app = Flask(__name__)
@@ -47,7 +47,7 @@ if __name__ != "__main__":
 @app.route("/")
 def hello():
     app.logger.info("We're up!")
-    return "Yes, we're up"
+    return "Yes, we're up", 200
 
 
 @app.route("/startGame")
@@ -77,7 +77,7 @@ def get_label():
 
     # Check if game complete
     if game.session_num > num_games:
-        return "Game limit reached", 400
+        raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
@@ -93,12 +93,11 @@ def classify():
     game_state = "Playing"
     # Check if image submitted correctly
     if "image" not in request.files:
-        return "No image submitted", 400
+        raise excp.BadRequest("No image submitted")
 
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
-    if not allowed_file(image):
-        return "Image does not satisfy constraints", 415
+    allowed_file(image):
 
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
@@ -177,12 +176,28 @@ def view_high_score():
     return json.jsonify(data), 200
 
 
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """
+       Captures all exceptions raised. If the Exception is a HTTPException the
+       error message and code is returned to the client. Else the error is
+       logged.
+    """
+    if isinstance(error, HTTPException):
+        # check if 4xx error. This should be returned to user.
+        if error.code >= 400 and error.code < 500:
+            return error
+    else:
+        app.logger.error(error)
+        return "Internal server error", 500
+
+
 def allowed_file(image):
     """
         Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
-        return False
+        raise excp.BadRequest("No image submitted")
 
     # Check that the file is a png
     is_png = image.content_type == 'image/png'
@@ -194,23 +209,4 @@ def allowed_file(image):
     image.seek(0)
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
-        return False
-    else:
-        return True
-
-
-@app.errorhandler(Exception)
-def handle_exception(error):
-    """
-       Captures all exceptions raised. If the Exception is a HTTPError the
-       error message and code is returned to the client. Else the error is
-       logged.
-    """
-    if isinstance(error, HTTPException):
-        # check if 4xx error. This should be returned to user.
-        status_code = error.get_response()._status_code
-        if status_code >= 400 and status_code < 500:
-            return error
-    else:
-        app.logger.error(error)
-        return "Internal server error", 500
+        raise excp.UnsupportedMediaType("Wrong image format")
