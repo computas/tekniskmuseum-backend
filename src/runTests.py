@@ -23,4 +23,4 @@ sys.argv = [sys.argv[0]]
 
 # run pytets
 test_result = pytest.main()
-assert test_result == 1
+assert test_result == 0
