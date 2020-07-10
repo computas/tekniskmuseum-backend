@@ -10,7 +10,7 @@ from datetime import timedelta
 import uuid
 import time
 import unittest
-
+import pdb
 
 token = uuid.uuid4().hex
 labels = "label1, label2, label3"
@@ -90,13 +90,14 @@ def test_get_daily_high_score_sorted():
     """
     # insert random data into db
     with api.app.app_context():
-        for i in range(5)
-        result = models.insert_into_scores(
-            "Test User", 10 + i, datetime.today() - timedelta(days=days_to_subtract))
-        assert result
+        for i in range(5):
+            result = models.insert_into_scores(
+                "Test User", 10 + i, datetime.today() - timedelta(days=i))
+            assert result
 
     with api.app.app_context():
         result = models.get_daily_high_score()
+    pdb.set_trace()
 
     sorting_check_helper(result)
 
