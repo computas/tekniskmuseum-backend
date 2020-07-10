@@ -42,4 +42,5 @@ jobs:
       run: pip install -r requirements.txt
       
     - name: Run tests
-      run: bash startapp.sh --keys='${{ secrets.TEST_SETTINGS }}'
+      shell: bash
+      run: startapp.sh -t --keys='${{ secrets.TEST_SETTINGS }}'
