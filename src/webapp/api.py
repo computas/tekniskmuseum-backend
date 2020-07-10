@@ -12,7 +12,8 @@ import time
 import sys
 import os
 import logging
-import datetime
+from datetime import date
+from datetime import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
@@ -29,9 +30,9 @@ from werkzeug import exceptions as excp
 app = Flask(__name__)
 labels = setup.labels
 time_limit = setup.time_limit
-high_score_list_size = setup.top_n
 num_games = setup.num_games
 certainty_threshold = setup.certainty_threshold
+high_score_list_size = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -57,9 +58,9 @@ def start_game():
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
-    labels_list = random.sample(labels, num_games)
-    date = datetime.datetime.today()
-    models.insert_into_games(token, json.dumps(labels_list), 0.0, date)
+    labels_list = random.choices(labels, k=num_games)
+    today = str(date.today())
+    models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
     # return game data as json object
     data = {
         "token": token,
@@ -108,14 +109,15 @@ def classify():
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
         time_used < time_limit
         and best_guess == label
-        and best_certainty >= certainty_threshold
-    )
+        and best_certainty >= certainty_threshold)
+    has_won = (time_used < time_limit
+               and best_guess == label
+               and best_certainty >= certainty_threshold)
     # End game if player win or loose
     if has_won or time_used >= time_limit:
         # save image in blob storage
@@ -151,8 +153,8 @@ def end_game():
 
     if game.session_num == num_games + 1:
         score = game.play_time
-        date = datetime.date.today()
-        models.insert_into_scores(name, score, date)
+        today = str(date.today())
+        models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
     models.delete_session_from_game(token)
