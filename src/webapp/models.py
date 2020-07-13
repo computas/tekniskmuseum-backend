@@ -61,7 +61,7 @@ def insert_into_games(token, labels, play_time, date):
         Parameters:
         token : random uuid.uuid4().hex
         labels: list of labels
-        play_time : float 
+        play_time : float
         date: datetime.datetime
     """
     if (isinstance(token, str) and isinstance(play_time, float)

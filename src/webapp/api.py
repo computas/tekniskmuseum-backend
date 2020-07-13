@@ -80,6 +80,7 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    #translate
     data = {"label": label}
     return json.jsonify(data), 200
 
@@ -113,9 +114,6 @@ def classify():
         time_used < time_limit
         and best_guess == label
         and best_certainty >= certainty_threshold)
-    has_won = (time_used < time_limit
-               and best_guess == label
-               and best_certainty >= certainty_threshold)
     # End game if player win or loose
     if has_won or time_used >= time_limit:
         # save image in blob storage
@@ -129,6 +127,7 @@ def classify():
         # Update game state to be done
         game_state = "Done"
 
+    # translate
     data = {
         "certainty": certainty,
         "guess": best_guess,
@@ -163,7 +162,7 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and top n of last 24 hours.
+        Read highscore from database. Return top n of all time and all of last 24 hours.
     """
     #read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
