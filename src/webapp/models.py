@@ -3,9 +3,7 @@
     manipulating them.
 """
 
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
+import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
@@ -42,7 +40,7 @@ class Scores(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
-    date = db.Column(db.DateTime)
+    date = db.Column(db.Date)
 
 
 # Functions to manipulate the tables above
@@ -59,9 +57,15 @@ def create_tables(app):
 def insert_into_games(token, labels, play_time, date):
     """
         Insert values into Games table.
+
+        Parameters:
+        token : random uuid.uuid4().hex
+        labels: list of labels
+        play_time : float
+        date: datetime.datetime
     """
     if (isinstance(token, str) and isinstance(play_time, float)
-            and isinstance(labels, str) and isinstance(date, str)):
+            and isinstance(labels, str) and isinstance(date, datetime.datetime)):
         try:
             game = Games(token=token, labels=labels,
                          play_time=play_time, date=date)
@@ -78,9 +82,14 @@ def insert_into_games(token, labels, play_time, date):
 def insert_into_scores(name, score, date):
     """
         Insert values into Scores table.
+
+        Parameters:
+        name: user name, string
+        score: float
+        date: datetime.date
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
-    if isinstance(name, str) and score_int_or_float and isinstance(date, str):
+    if isinstance(name, str) and score_int_or_float and isinstance(date, datetime.date):
         try:
             score = Scores(name=name, score=score, date=date)
             db.session.add(score)
@@ -140,8 +149,8 @@ def delete_old_games():
         Delete records in games older than one hour.
     """
     try:
-        db.session.query(Games).filter(Games.date < (datetime.today()
-                                                     - timedelta(hours=1))).delete()
+        db.session.query(Games).filter(Games.date < (datetime.datetime.today()
+                                                     - datetime.timedelta(hours=1))).delete()
         db.session.commit()
         return True
     except Exception as e:
@@ -175,7 +184,7 @@ def get_daily_high_score():
         Returns list of dictionaries.
     """
     try:
-        today = str(date.today())
+        today = datetime.date.today()
         #filter by today and sort by score
         top_n_list = Scores.query.filter_by(
             date=today).order_by(Scores.score.desc()).all()

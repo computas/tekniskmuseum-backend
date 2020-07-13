@@ -12,10 +12,9 @@ import time
 import sys
 import os
 import logging
-from datetime import date
-from datetime import datetime
-from webapp import storage
+import datetime
 from webapp import models
+from webapp import storage
 from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
@@ -59,7 +58,7 @@ def start_game():
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
     labels = random.sample(LABELS, k=NUM_GAMES)
-    today = str(date.today())
+    today = datetime.datetime.today()
     models.insert_into_games(token, json.dumps(labels), 0.0, today)
     # return game data as json object
     data = {
@@ -82,6 +81,7 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    #translate
     data = {"label": label}
     return json.jsonify(data), 200
 
@@ -115,7 +115,6 @@ def classify():
         time_used < TIME_LIMIT
         and best_guess == label
         and best_certainty >= CERTAINTY_TRESHOLD)
-
     # End game if player win or loose
     if has_won or time_used >= TIME_LIMIT:
         # save image in blob storage
@@ -129,6 +128,7 @@ def classify():
         # Update game state to be done
         game_state = "Done"
 
+    # translate
     data = {
         "certainty": certainty,
         "guess": best_guess,
@@ -151,7 +151,7 @@ def end_game():
 
     if game.session_num == NUM_GAMES + 1:
         score = game.play_time
-        today = str(date.today())
+        today = datetime.date.today()
         models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
@@ -163,7 +163,7 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and top n of last 24 hours.
+        Read highscore from database. Return top n of all time and all of last 24 hours.
     """
     #read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
