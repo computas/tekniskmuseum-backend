@@ -8,7 +8,6 @@ CV_MAX_ITERATIONS = 10
 # can't upload more than 64 images at a time, if more
 CV_MAX_IMAGES = 64
 
-
 # USED BY API
 labels = [
     "ambulance",
@@ -19,12 +18,13 @@ labels = [
     "sun",
     "triangle",
 ]
-time_limit = 22  # time limit for one guess
+time_limit = 20  # time limit for one guess
+top_n = 10  # number of players in overall high score top list
 num_games = 3
-certainty_threshold = 0.05  # certainties from costum vision lower than this -> haswon=False
+# certainties from costum vision lower than this -> haswon=False
+certainty_threshold = 0.5
 
 
-# Config Flask
 class Flask_config:
     """
         Config settings for flask and sqlalchemy should be set here.

@@ -4,12 +4,12 @@ The main entry point off the app is the bash script `startapp.sh`.
 Just runing the script `bash startapp.sh` will launch the app.
 The script accepts the following flags `bash startapp.sh <flag>`:
 
-| Flag          | Result                          |
-|---------------|---------------------------------|
-| -h, --help    | display options                 |
-| -t, --test    | run PEP8 linter and unit tests  |
-| -d, --debug   | run locally with code reloading |
-| -w, --workers | specify number of workers       |
+| Flag          | Result                                            |
+|---------------|---------------------------------------------------|
+| -h, --help    | display options                                   |
+| -t, --test    | run PEP8 linter and unit tests                    |
+| -d, --debug   | run locally with code reloading and test database |
+| -w, --workers | specify number of workers                         |
 
 ### **Development**
 * Clone repository.

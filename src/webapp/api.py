@@ -13,8 +13,8 @@ import sys
 import os
 import logging
 import datetime
-from webapp import storage
 from webapp import models
+from webapp import storage
 from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
@@ -23,13 +23,15 @@ from flask import Flask
 from flask import request
 from flask import json
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug import exceptions as excp
 
-# Initialization
+# Initialization and global variables
 app = Flask(__name__)
-labels = setup.labels
-time_limit = setup.time_limit
-num_games = setup.num_games
-certainty_threshold = setup.certainty_threshold
+LABELS = setup.labels
+TIME_LIMIT = setup.time_limit
+NUM_GAMES = setup.num_games
+CERTAINTY_TRESHOLD = setup.certainty_threshold
+HIGH_SCORE_LIST_SIZE = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -45,7 +47,7 @@ if __name__ != "__main__":
 @app.route("/")
 def hello():
     app.logger.info("We're up!")
-    return "Yes, we're up"
+    return "Yes, we're up", 200
 
 
 @app.route("/startGame")
@@ -55,9 +57,9 @@ def start_game():
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
-    labels_list = random.choices(labels, k=num_games)
-    date = datetime.datetime.today()
-    models.insert_into_games(token, json.dumps(labels_list), -1.0, date)
+    labels = random.sample(LABELS, k=NUM_GAMES)
+    today = datetime.datetime.today()
+    models.insert_into_games(token, json.dumps(labels), 0.0, today)
     # return game data as json object
     data = {
         "token": token,
@@ -74,11 +76,12 @@ def get_label():
     game = models.get_record_from_game(token)
 
     # Check if game complete
-    if game.session_num > num_games:
-        return "Game limit reached", 400
+    if game.session_num > NUM_GAMES:
+        raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    #translate
     data = {"label": label}
     return json.jsonify(data), 200
 
@@ -91,12 +94,11 @@ def classify():
     game_state = "Playing"
     # Check if image submitted correctly
     if "image" not in request.files:
-        return "No image submitted", 400
+        raise excp.BadRequest("No image submitted")
 
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
-    if not allowed_file(image):
-        return "Image does not satisfy constraints", 415
+    allowed_file(image)
 
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
@@ -107,16 +109,14 @@ def classify():
     game = models.get_record_from_game(token)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
-        time_used < time_limit
+        time_used < TIME_LIMIT
         and best_guess == label
-        and best_certainty >= certainty_threshold
-    )
+        and best_certainty >= CERTAINTY_TRESHOLD)
     # End game if player win or loose
-    if has_won or time_used >= time_limit:
+    if has_won or time_used >= TIME_LIMIT:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
@@ -128,6 +128,7 @@ def classify():
         # Update game state to be done
         game_state = "Done"
 
+    # translate
     data = {
         "certainty": certainty,
         "guess": best_guess,
@@ -148,10 +149,10 @@ def end_game():
     name = request.values["name"]
     game = models.get_record_from_game(token)
 
-    if game.session_num == num_games + 1:
+    if game.session_num == NUM_GAMES + 1:
         score = game.play_time
-        date = datetime.date.today()
-        models.insert_into_scores(name, score, date)
+        today = datetime.date.today()
+        models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
     models.delete_session_from_game(token)
@@ -159,15 +160,47 @@ def end_game():
     return "OK", 200
 
 
+@app.route("/viewHighScore")
+def view_high_score():
+    """
+        Read highscore from database. Return top n of all time and all of last 24 hours.
+    """
+    #read top n overall high score
+    top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
+    #read daily high score
+    daily_high_scores = models.get_daily_high_score()
+    data = {
+        "daily": daily_high_scores,
+        "total": top_n_high_scores
+    }
+    return json.jsonify(data), 200
+
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """
+       Captures all exceptions raised. If the Exception is a HTTPException the
+       error message and code is returned to the client. Else the error is
+       logged.
+    """
+    if isinstance(error, excp.HTTPException):
+        # check if 4xx error. This should be returned to user.
+        if error.code >= 400 and error.code < 500:
+            return error
+    else:
+        app.logger.error(error)
+        return "Internal server error", 500
+
+
 def allowed_file(image):
     """
         Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
-        return False
+        raise excp.BadRequest("No image submitted")
 
-    # Check if the filename is of PNG type
-    png = image.filename.endswith(".png") or image.filename.endswith(".PNG")
+    # Check that the file is a png
+    is_png = image.content_type == 'image/png'
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
@@ -175,7 +208,5 @@ def allowed_file(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     correct_res = (height >= 256) and (width >= 256)
-    if not png or too_large or not correct_res:
-        return False
-    else:
-        return True
+    if not is_png or too_large or not correct_res:
+        raise excp.UnsupportedMediaType("Wrong image format")

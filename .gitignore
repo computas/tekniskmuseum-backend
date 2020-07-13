@@ -4,3 +4,5 @@
 *__pycache__*
 config.json
 *.pytest_cache*
+*.pyc
+*.swp

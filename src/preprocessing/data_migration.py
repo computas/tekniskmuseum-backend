@@ -48,7 +48,6 @@ def vector_to_raster(
     """
 
     original_side = 256.0
-
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, side, side)
     ctx = cairo.Context(surface)
     ctx.set_antialias(cairo.ANTIALIAS_BEST)
@@ -69,7 +68,6 @@ def vector_to_raster(
         # clear background
         ctx.set_source_rgb(*bg_color)
         ctx.paint()
-
         intermediate = np.hstack(vector_image)
         bbox = intermediate.max(axis=1)
         offset = ((original_side, original_side) - bbox) / 2.0
@@ -86,7 +84,6 @@ def vector_to_raster(
 
         filepath = f"{dirp}/{key}.png"
         surface.write_to_png(filepath)
-
         upload_to_blob(filepath, key, className, blob_service_client)
         data = surface.get_data()
         raster_image = np.copy(np.asarray(data)[::4])
@@ -96,14 +93,11 @@ def vector_to_raster(
 
 
 def upload_to_blob(path, key, class_name, blob_service_client):
-
     blob_name = f"old/{class_name}/{key}.png"
     print(blob_name)
     blob_client = blob_service_client.get_blob_client(
         Keys.get("CONTAINER_NAME"), blob=blob_name
     )
-
-    return
     with open(path, "rb") as localFile:
         try:
             blob_client.upload_blob(localFile)
@@ -114,7 +108,6 @@ def upload_to_blob(path, key, class_name, blob_service_client):
 
 def get_images_from_class(className, N=100):
     path = f"./preprocessing/data/{className}.ndjson"
-
     lines = []
     with open(path) as f:
         while len(lines) < N:
@@ -123,6 +116,7 @@ def get_images_from_class(className, N=100):
             except StopIteration:
                 break
             lines.append(line)
+
     return lines
 
 
@@ -139,7 +133,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cnames = args.classNames
     imgpath = "./preprocessing/images"
-    # print(connect_str)
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     if not os.path.exists(imgpath):
@@ -150,9 +143,7 @@ if __name__ == "__main__":
 
     for className in cnames:
         dirp = f"{imgpath}/{className}"
-
         container_name = Keys.get("CONTAINER_NAME")
-
         if container_name not in [
             c["name"] for c in blob_service_client.list_containers()
         ]:
@@ -162,10 +153,10 @@ if __name__ == "__main__":
 
         if not os.path.exists(dirp):
             os.makedirs(dirp)
+
         vectors = get_images_from_class(className, N=args.n)
         paths = [v["drawing"] for v in vectors]
         keys = [v["key_id"] for v in vectors]
-
         raster = vector_to_raster(
             paths,
             blob_service_client,
