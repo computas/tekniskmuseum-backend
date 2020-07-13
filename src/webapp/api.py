@@ -27,7 +27,7 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-LABELS = setup.labels
+LABELS = setup.LABELS
 TIME_LIMIT = setup.time_limit
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
@@ -81,8 +81,10 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    #translate
-    data = {"label": label}
+    # translate
+    data = {
+        "label": label
+    }
     return json.jsonify(data), 200
 
 
@@ -114,7 +116,8 @@ def classify():
     has_won = (
         time_used < TIME_LIMIT
         and best_guess == label
-        and best_certainty >= CERTAINTY_TRESHOLD)
+        and best_certainty >= CERTAINTY_TRESHOLD
+    )
     # End game if player win or loose
     if has_won or time_used >= TIME_LIMIT:
         # save image in blob storage
@@ -165,13 +168,13 @@ def view_high_score():
     """
         Read highscore from database. Return top n of all time and all of last 24 hours.
     """
-    #read top n overall high score
+    # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
-    #read daily high score
+    # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
         "daily": daily_high_scores,
-        "total": top_n_high_scores
+        "total": top_n_high_scores,
     }
     return json.jsonify(data), 200
 
@@ -200,7 +203,7 @@ def allowed_file(image):
         raise excp.BadRequest("No image submitted")
 
     # Check that the file is a png
-    is_png = image.content_type == 'image/png'
+    is_png = image.content_type == "image/png"
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution

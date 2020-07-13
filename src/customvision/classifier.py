@@ -23,7 +23,7 @@ from typing import List
 from utilities.keys import Keys
 from utilities import setup
 
-from customvision.labels import LABEL_LIST
+from utilities.setup import LABELS
 
 
 class Classifier:
@@ -269,11 +269,9 @@ def main():
     """
     test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
-    labels = LABEL_LIST
-
     classifier = Classifier()
-    classifier.upload_images(labels)
-    classifier.train(labels)
+    classifier.upload_images(LABELS)
+    classifier.train(LABELS)
 
     # classify image
     # with open(
