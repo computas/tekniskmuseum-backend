@@ -269,8 +269,6 @@ def main():
     """
     test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
-    LABELS
-
     classifier = Classifier()
     classifier.upload_images(LABELS)
     classifier.train(LABELS)
