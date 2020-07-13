@@ -82,7 +82,9 @@ def get_label():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     # translate
-    data = {"label": label}
+    data = {
+        "label": label
+    }
     return json.jsonify(data), 200
 
 
