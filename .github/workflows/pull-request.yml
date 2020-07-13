@@ -43,6 +43,4 @@ jobs:
       
     - name: Run tests
       shell: bash
-      run: |
-       cd src/
-       python runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
+      run: ./startapp.sh --test --keys='${{ secrets.TEST_SETTINGS }}'
