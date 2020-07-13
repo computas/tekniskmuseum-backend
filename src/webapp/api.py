@@ -14,6 +14,7 @@ import os
 import logging
 import datetime
 from webapp import models
+from webapp import storage
 from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
