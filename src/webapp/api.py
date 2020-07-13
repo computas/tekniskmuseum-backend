@@ -12,9 +12,7 @@ import time
 import sys
 import os
 import logging
-from datetime import date
-from datetime import datetime
-from webapp import storage
+import datetime
 from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
@@ -59,7 +57,7 @@ def start_game():
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
     labels_list = random.choices(labels, k=num_games)
-    today = str(date.today())
+    today = datetime.datetime.today()
     models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
     # return game data as json object
     data = {
@@ -153,7 +151,7 @@ def end_game():
 
     if game.session_num == num_games + 1:
         score = game.play_time
-        today = str(date.today())
+        today = datetime.date.today()
         models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
