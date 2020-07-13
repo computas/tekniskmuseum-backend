@@ -58,7 +58,7 @@ def start_game():
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
-    labels_list = random.choices(labels, k=num_games)
+    labels_list = random.sample(labels, num_games)
     today = str(date.today())
     models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
     # return game data as json object
