@@ -4,16 +4,12 @@
 """
 
 from flask_sqlalchemy import SQLAlchemy
-import datetime
-
+from datetime import datetime
+from datetime import timedelta
+from datetime import date
+from werkzeug import exceptions as excp
 
 db = SQLAlchemy()
-
-
-class DataBaseException(HTTPException):
-    """
-        Custom exception for DB errors.
-    """
 
 
 class Games(db.Model):
@@ -69,18 +65,18 @@ def insert_into_games(token, labels, play_time, date):
         Insert values into Games table.
     """
     if (isinstance(token, str) and isinstance(play_time, float)
-            and isinstance(labels, str) and isinstance(date, datetime.date)):
+            and isinstance(labels, str) and isinstance(date, str)):
         try:
             game = Games(token=token, labels=labels,
                          play_time=play_time, date=date)
             db.session.add(game)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException(500, "Cannot connect to database")
+        except Exception as e:
+            raise Exception("Cannot connect to database: " + e)
     else:
-        raise AttributeError("Token has to be int, start time has to be float"
-                             + ", labels has to be string and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def insert_into_scores(name, score, date):
@@ -88,32 +84,32 @@ def insert_into_scores(name, score, date):
         Insert values into Scores table.
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
-    if isinstance(name, str) and score_int_or_float and isinstance(date, datetime.date):
+    if isinstance(name, str) and score_int_or_float and isinstance(date, str):
         try:
             score = Scores(name=name, score=score, date=date)
             db.session.add(score)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into scores")
+        except Exception as e:
+            raise Exception("Could not insert into scores: " + e)
     else:
-        raise AttributeError("Name has to be string, score has to be float"
-                             + " and date has to be datetime.date.")
+        raise excp.BadRequest("Token has to be string, start time has to be float"
+                              ", labels has to be string and date has to be datetime.date.")
 
 
 def insert_into_user(username, email, password):
     """
         Insert values into User table.
     """
-    if (isinstance(username, str) and isinstance(email, str) and
-        isinstance(password, str)):
+    if (isinstance(username, str) and isinstance(email, str)
+       and isinstance(password, str)):
         try:
             user = User(email=email, password=password, username=username)
             db.session.add(user)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into user")  # Custom exception here
+        except Exception as e:
+            raise Exception("Could not insert into user: " + e)
     else:
         raise AttributeError("Username, email and password has to be string")
 
@@ -123,11 +119,11 @@ def get_record_from_game(token):
         Return name, starttime and label of the first record of Games that
         matches the query.
     """
-    try:
-        game = Games.query.filter_by(token=token).first()
-        return game
-    except AttributeError:
-        raise AttributeError("Could not find record for " + token + ".")
+    game = Games.query.get(token)
+    if game is None:
+        raise excp.BadRequest("Token invalid or expired")
+
+    return game
 
 
 def update_game(token, session_num, play_time):
@@ -140,8 +136,8 @@ def update_game(token, session_num, play_time):
         game.play_time = play_time
         db.session.commit()
         return True
-    except Exception:
-        raise Exception("Couldn't update game.")
+    except Exception as e:
+        raise Exception("Couldn't update game: " + e)
 
 
 def delete_session_from_game(token):
@@ -169,9 +165,9 @@ def delete_old_games():
                                                      + datetime.timedelta(hours=1))).delete()
         db.session.commit()
         return True
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        raise Exception("Couldn't delete records.")
+        raise Exception("Couldn't delete records: " + e)
 
 
 def get_daily_high_score():
@@ -181,7 +177,7 @@ def get_daily_high_score():
         Returns list of dictionaries.
     """
     try:
-        today = str(datetime.date.today())
+        today = str(date.today())
         #filter by today and sort by score
         top_n_list = Scores.query.filter_by(
             date=today).order_by(Scores.score.desc()).all()
@@ -232,6 +228,6 @@ def get_user(email):
     """
     user = db.session.query(User).get(email)
     if user is None:
-        raise Exception("Invalid email")  # Custom exception here
-    
+        raise AttributeError("Invalid email")
+
     return user
