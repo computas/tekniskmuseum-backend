@@ -23,7 +23,7 @@ from typing import List
 from utilities.keys import Keys
 from utilities import setup
 
-from customvision.labels import label_list
+from customvision.labels import LABEL_LIST
 
 
 class Classifier:
@@ -149,7 +149,7 @@ class Classifier:
             )
         except Exception as e:
             print(
-                "could not find container with label " + label + " error: ", e,
+                "could not find container with CONTAINER_NAME name error: ", e,
             )
 
         for label in labels:
@@ -269,7 +269,7 @@ def main():
     """
     test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
-    labels = label_list
+    labels = LABEL_LIST
 
     classifier = Classifier()
     classifier.upload_images(labels)

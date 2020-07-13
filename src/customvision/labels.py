@@ -1,4 +1,4 @@
-label_list = [
+LABEL_LIST = [
     "airplane",
     "angel",
     "ant",
