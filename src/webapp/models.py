@@ -26,10 +26,9 @@ class Games(db.Model):
        be String when a long hex is given.
     """
 
-    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    gid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
-    play_time = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime)
 
 
@@ -39,10 +38,27 @@ class Scores(db.Model):
         inserted values match the column values.
     """
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime)
+
+
+class PlayerInGame(db.Model):
+    """
+        Docstring.
+    """
+    pid = db.column(db.NVARCHAR(32), primary_key=True)
+    gid = db.Column(db.Integer, nullable=False)
+
+
+class Players(db.Model):
+    """
+        This is the players model in the database.
+    """
+
+    pid = db.Column(db.NVARCHAR(32), primary_key=True)
+    play_time = db.Column(db.Float, nullable=False)
 
 
 # Functions to manipulate the tables above
