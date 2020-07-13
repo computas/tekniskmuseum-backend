@@ -170,7 +170,10 @@ def view_high_score():
     top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
     # read daily high score
     daily_high_scores = models.get_daily_high_score()
-    data = {"daily": daily_high_scores, "total": top_n_high_scores}
+    data = {
+        "daily": daily_high_scores,
+        "total": top_n_high_scores,
+    }
     return json.jsonify(data), 200
 
 
