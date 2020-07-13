@@ -2,7 +2,7 @@
     Testfunctions for testing functions to manipualte the database. The
     functions is used on an identical test database.
 """
-
+import os
 import uuid
 import time
 from webapp import api
@@ -15,6 +15,8 @@ token = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
+english_word = "swag"
+norwegian_word = "kulhet"
 
 
 def test_create_tables():
@@ -47,6 +49,15 @@ def test_insert_into_scores():
     assert result
 
 
+def test_insert_into_labels():
+    """
+        Check that records exists in Games table after inserting.
+    """
+    with api.app.app_context():
+        result = models.insert_into_labels(english_word, norwegian_word)
+    assert result
+
+
 def test_illegal_parameter_games():
     """
         Check that exception is raised when illegal arguments is passed
@@ -65,6 +76,26 @@ def test_illegal_parameter_scores():
     with raises(excp.BadRequest):
         models.insert_into_scores(
             100, "score", "01.01.2020")
+
+
+def test_illegal_parameter_labels():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into games table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_labels(1, [english_word, norwegian_word])
+
+
+'''
+def test_illegal_parameter_upload_labels():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into labels table.
+    """
+    with raises(excp.BadRequest):
+        models.update_labels("./not/a/file/path.csv")
+'''
 
 
 def test_query_euqals_insert():

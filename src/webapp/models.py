@@ -6,7 +6,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 from werkzeug import exceptions as excp
-
+import os
 db = SQLAlchemy()
 
 
@@ -43,6 +43,17 @@ class Scores(db.Model):
     date = db.Column(db.Date)
 
 
+class Labels(db.Model):
+    """
+        This is the Labels model in the database. It is important that the
+        inserted values match the column values. This tabel is used for
+        - translating english labels into norwgian
+        - keeping track of all possible labels
+    """
+    english = db.Column(db.String(32), primary_key=True)
+    norwegian = db.Column(db.String(32))
+
+
 # Functions to manipulate the tables above
 def create_tables(app):
     """
@@ -64,6 +75,7 @@ def insert_into_games(token, labels, play_time, date):
         play_time : float 
         date: datetime.datetime
     """
+
     if (isinstance(token, str) and isinstance(play_time, float)
             and isinstance(labels, str) and isinstance(date, datetime.datetime)):
         try:
@@ -172,6 +184,10 @@ def clear_table(table):
             Scores.query.delete()
             db.session.commit()
             return True
+        elif table == "Labels":
+            Labels.query.delete()
+            db.session.commit()
+            return True
     except AttributeError:
         db.session.rollback()
         return AttributeError("Table does not exist.")
@@ -238,3 +254,38 @@ def get_size_of_table(table):
     elif table == "Scores":
         rows = db.session.query(Scores).count()
         return rows
+
+
+def update_labels(filepath):
+    """
+        Read file in filepath and upload to database
+    """
+    if os.path.exists(filepath):
+        clear_table("Labels")
+        with open("../utilities/Dict_eng_to_nor.csv") as csvfile:
+            try:
+                readCSV = csv.reader(csvfile, delimiter=',')
+
+                for row in readCSV:
+                    insert_into_labels(row[0], row[1])
+            except AttributeError:
+                raise AttributeError("Could not insert into games")
+
+    else:
+        raise AttributeError("File path not found")
+
+
+def insert_into_labels(english, norwegian):
+    """
+        Insert values into Scores table.
+    """
+    if isinstance(english, str) and isinstance(norwegian, str):
+        try:
+            label_row = Labels(english=english, norwegian=norwegian)
+            db.session.add(label_row)
+            db.session.commit()
+            return True
+        except DataBaseException:
+            raise DataBaseException("Could not insert into label")
+    else:
+        raise excp.BadRequest("English and norwegian must be strings")
