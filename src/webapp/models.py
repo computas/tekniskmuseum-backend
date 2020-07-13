@@ -58,7 +58,7 @@ def insert_into_games(token, labels, play_time, date):
     """
         Insert values into Games table.
 
-        Paramteters:
+        Parameters:
         token : random uuid.uuid4().hex
         labels: list of labels
         play_time : float 
@@ -83,7 +83,7 @@ def insert_into_scores(name, score, date):
     """
         Insert values into Scores table.
 
-        Paramteters:
+        Parameters:
         name: user name, string
         score: float
         date: datetime.date
