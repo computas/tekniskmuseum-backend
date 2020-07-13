@@ -129,7 +129,7 @@ def classify():
         # Update game state to be done
         game_state = "Done"
     
-    elif time_left == 0:
+    elif time_left <= 0:
         game_state = "Done"
     
     if game_state == "Done":
@@ -221,36 +221,39 @@ def authenticate():
     user = models.get_user(email)
 
     if user is None:
-        raise Exception("Invalid user")  # Some custom exception here
+        raise HTTPException("Invalid username or password", 401)  # Some custom exception here
 
     if not check_password_hash(user.password, password)
         raise Exception("Invalid password")  # Some custom exception here
 
+    return "OK", 200
 
-@app.route("/adminPage", methods=["GET"])
+
+@app.route("/adminPage/<action>", methods=["POST"])
 def admin_page():
-    pass
+    if action == "dropTable":
+        @login_required
+        def drop_table():
+            table = request.values["table"]
+            # If table is None all tables is dropped - should this be prevented??
+            models.drop_table(table)
+
+    elif action == "trainML":
+        @login_required
+        def train_ml():
+            pass
+
+    elif action == "clearTrainSet":
+        @login_required
+        def clear_train_set():
+            pass
 
 
-@app.route("/register", methods=["POST"])  # need this?
-def register():
-    email = request.values["email"]
-    password = request.values["password"]
-    username = request.values["username"]
 
-    if validate_user(user, password, username):
-        models.insert_into_user(email, password, username)
-    pass
-
-
-def validate_user(email, password):
-    user = models.get_user(email)
-
-    if user is not None:
-        raise Exception("User already exists")
-    
-    return True
-
-
-def check_secure_password(password):
-    pass
+def add_user(username, email, password):
+    """
+        Add user to user table in db.
+    """
+    # Do we want a cond check_secure_password(password)?
+    hashed_psw = generate_password_hash(password, method="pbkdf2:sha256", salt_length=8)
+    models.insert_into_user(username, email, password)

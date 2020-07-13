@@ -136,14 +136,16 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
+# Unecessary to have a test for this??
 '''
-def test_clear_table():
+def test_drop_table():
     """
         Check that number of rows is zero after clearing both tables.
     """
     with api.app.app_context():
-        models.clear_table("Games")
-        models.clear_table("Scores")
+        models.drop_table("Games")
+        models.drop_table("Scores")
+        models.drop_table("User")
         games_rows = models.get_size_of_table("Games")
         scores_rows = models.get_size_of_table("Scores")
 

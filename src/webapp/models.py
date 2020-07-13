@@ -49,9 +49,8 @@ class User(db.Model):
     """
 
     email = db.Column(db.String(120), primary_key=True)
-    username = db.Column(db.String(64))
-    login = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(64))
+    username = db.Column(db.String(64))
 
 
 # Functions to manipulate the tables above
@@ -102,6 +101,23 @@ def insert_into_scores(name, score, date):
                              + " and date has to be datetime.date.")
 
 
+def insert_into_user(username, email, password):
+    """
+        Insert values into User table.
+    """
+    if (isinstance(username, str) and isinstance(email, str) and
+        isinstance(password, str)):
+        try:
+            user = User(email=email, password=password, username=username)
+            db.session.add(user)
+            db.session.commit()
+            return True
+        except DataBaseException:
+            raise DataBaseException("Could not insert into user")  # Custom exception here
+    else:
+        raise AttributeError("Username, email and password has to be string")
+
+
 def get_record_from_game(token):
     """
         Return name, starttime and label of the first record of Games that
@@ -138,7 +154,7 @@ def delete_session_from_game(token):
         game = Games.query.filter_by(token=token).first()
         db.session.delete(game)
         db.session.commit()
-        return "Record connected to " + token + " deleted."
+        return "Record deleted."
     except AttributeError:
         db.session.rollback()
         raise AttributeError("Couldn't find token.")
@@ -156,25 +172,6 @@ def delete_old_games():
     except Exception:
         db.session.rollback()
         raise Exception("Couldn't delete records.")
-
-
-def clear_table(table):
-    """
-        Clear the table sent as the argument and return a response
-        corresponding to the result of the task.
-    """
-    try:
-        if table == "Games":
-            Games.query.delete()
-            db.session.commit()
-            return True
-        elif table == "Scores":
-            Scores.query.delete()
-            db.session.commit()
-            return True
-    except AttributeError:
-        db.session.rollback()
-        return AttributeError("Table does not exist.")
 
 
 def get_daily_high_score():
@@ -226,18 +223,6 @@ def drop_table(table):
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
-
-
-def get_size_of_table(table):
-    """
-        Return size of table.
-    """
-    if table == "Games":
-        rows = db.session.query(Games).count()
-        return rows
-    elif table == "Scores":
-        rows = db.session.query(Scores).count()
-        return rows
 
 
 # User related functions
