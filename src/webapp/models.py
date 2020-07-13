@@ -3,10 +3,10 @@
     manipulating them.
 """
 
-from flask_sqlalchemy import SQLAlchemy
+from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from datetime import date
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
 db = SQLAlchemy()
@@ -140,13 +140,13 @@ def delete_old_games():
         Delete records in games older than one hour.
     """
     try:
-        db.session.query(Games).filter(Games.date < (datetime.datetime.today()
-                                                     + datetime.timedelta(hours=1))).delete()
+        db.session.query(Games).filter(Games.date < (datetime.today()
+                                                     - timedelta(hours=1))).delete()
         db.session.commit()
         return True
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        raise Exception("Couldn't delete records.")
+        raise Exception("Couldn't clean up old game records:" + str(e))
 
 
 def clear_table(table):
