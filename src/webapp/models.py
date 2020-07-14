@@ -10,13 +10,6 @@ from werkzeug import exceptions as excp
 db = SQLAlchemy()
 
 
-class DataBaseException(Exception):
-    """
-        Custom exception for DB errors.
-    """
-    pass
-
-
 class Games(db.Model):
     """
        This is the Games model in the database. It is important that the
@@ -58,6 +51,7 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
+        db.drop_all()  # Temporary
         db.create_all()
 
     return True
@@ -73,14 +67,15 @@ def insert_into_games(gid, labels, date):
         date: datetime.datetime
     """
     if (isinstance(gid, str)
-            and isinstance(labels, str) and isinstance(date, datetime.datetime)):
+            and isinstance(labels, str)
+            and isinstance(date, datetime.datetime)):
         try:
             game = Games(gid=gid, labels=labels, date=date)
             db.session.add(game)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into games")
+        except Exception as e:
+            raise Exception("Could not insert into games :" + str(e))
     else:
         raise excp.BadRequest("Gid has to be string, labels has to be string "
                               "and date has to be datetime.datetime.")
@@ -96,14 +91,17 @@ def insert_into_scores(name, score, date):
         date: datetime.date
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
-    if isinstance(name, str) and score_int_or_float and isinstance(date, datetime.date):
+
+    if (isinstance(name, str)
+            and score_int_or_float
+            and isinstance(date, datetime.date)):
         try:
             score = Scores(name=name, score=score, date=date)
             db.session.add(score)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into scores")
+        except Exception as e:
+            raise Exception("Could not insert into scores: " + str(e))
     else:
         raise excp.BadRequest("Name has to be string, score can be int or "
                               "float and date has to be datetime.date.")
@@ -118,7 +116,8 @@ def insert_into_player_in_game(token, gid, play_time):
         gid: random uuid.uuid4().hex
         play_time: float
     """
-    if (isinstance(token, str) and isinstance(gid, str)
+    if (isinstance(token, str)
+            and isinstance(gid, str)
             and isinstance(play_time, float)):
         try:
             player_in_game = PlayerInGame(token=token, gid=gid,
@@ -126,8 +125,8 @@ def insert_into_player_in_game(token, gid, play_time):
             db.session.add(player_in_game)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into games")
+        except Exception as e:
+            raise Exception("Could not insert into games: " + str(e))
     else:
         raise excp.BadRequest("Token has to be string, gid has to be string "
                               "and play time has to be float.")
@@ -155,12 +154,13 @@ def get_record_from_player_in_game(token):
     return player_in_game
 
 
+# DELETABLE
 def update_game(gid, session_num, play_time):
     """
         Update game record for the incomming token with the given parameters.
     """
     try:
-        game = Games.query.get(gid=gid)
+        game = Games.query.get(gid)
         game.session_num += 1
         game.play_time = play_time
         db.session.commit()
@@ -182,7 +182,7 @@ def update_game_for_player(gid, token, session_num, play_time):
         db.session.commit()
         return True
     except Exception as e:
-        raise Exception("Could not update: " + e)
+        raise Exception("Could not update: " + str(e))
 
 
 def delete_session_from_game(gid):
@@ -192,14 +192,15 @@ def delete_session_from_game(gid):
         connected to the particular gid, is deleted.
     """
     try:
-        game = Games.query.get(gid=gid)
-        db.session.query(PlayerInGame).filter(gid=gid).delete()
+        game = Games.query.get(gid)
+        db.session.query(PlayerInGame).filter(
+            PlayerInGame.gid == gid).delete()
         db.session.delete(game)
         db.session.commit()
         return "Record deleted."
-    except AttributeError:
+    except AttributeError as e:
         db.session.rollback()
-        raise AttributeError("Couldn't findgid.")
+        raise AttributeError("Couldn't find gid: " + str(e))
 
 
 def delete_old_games():
@@ -207,34 +208,17 @@ def delete_old_games():
         Delete records in games older than one hour.
     """
     try:
-        games = Games.query.filter_by(Games.date < (datetime.datetime.today()
-                                                     - datetime.timedelta(hours=1))).all()
-        db.session.query(PlayerInGame).filter(gid=games.gid).delete()
-        db.session.delete(games)
+        games = db.session.query(Games).filter(Games.date < (
+            datetime.datetime.today() - datetime.timedelta(hours=1))).all()
+        for game in games:
+            db.session.query(PlayerInGame).filter(
+                PlayerInGame.gid == game.gid).delete()
+            db.session.delete(game)
         db.session.commit()
         return True
     except Exception as e:
         db.session.rollback()
-        raise Exception("Couldn't clean up old game records:" + str(e))
-
-
-def clear_table(table):
-    """
-        Clear the table sent as the argument and return a response
-        corresponding to the result of the task.
-    """
-    try:
-        if table == "Games":
-            Games.query.delete()
-            db.session.commit()
-            return True
-        elif table == "Scores":
-            Scores.query.delete()
-            db.session.commit()
-            return True
-    except AttributeError:
-        db.session.rollback()
-        return AttributeError("Table does not exist.")
+        raise Exception("Couldn't clean up old game records: " + str(e))
 
 
 def get_daily_high_score():
@@ -286,15 +270,3 @@ def drop_table(table):
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
-
-
-def get_size_of_table(table):
-    """
-        Return size of table.
-    """
-    if table == "Games":
-        rows = db.session.query(Games).count()
-        return rows
-    elif table == "Scores":
-        rows = db.session.query(Scores).count()
-        return rows

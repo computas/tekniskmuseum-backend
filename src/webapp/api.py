@@ -87,7 +87,7 @@ def get_label():
     # translate
     data = {
         "label": label
-        }
+    }
     return json.jsonify(data), 200
 
 
@@ -168,6 +168,7 @@ def end_game():
     # Clean database for unnecessary data
     models.delete_session_from_game(player_in_game.gid)
     models.delete_old_games()
+    print("Able to delete old games")
     return "OK", 200
 
 
