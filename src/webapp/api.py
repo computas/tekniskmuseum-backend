@@ -27,15 +27,14 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-LABELS = setup.LABELS
 TIME_LIMIT = setup.time_limit
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
 HIGH_SCORE_LIST_SIZE = setup.top_n
-
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
+models.seed_labels(app, "./utilities/dict_eng_to_nor.csv")
 classifier = Classifier()
 
 if __name__ != "__main__":
@@ -58,7 +57,7 @@ def start_game():
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
-    labels = random.sample(LABELS, k=NUM_GAMES)
+    labels = models.get_n_labels(NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_player_in_game(token, game_id, 0.0)
@@ -84,7 +83,6 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    # translate
     data = {
         "label": label
     }
@@ -104,7 +102,6 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
@@ -122,7 +119,6 @@ def classify():
         and best_guess == label
         and best_certainty >= CERTAINTY_TRESHOLD
     )
-
     # End game if player win or loose
     if has_won or time_left <= 0:
         # save image in blob storage
