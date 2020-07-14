@@ -4,9 +4,13 @@
 """
 
 import datetime
+import csv
+import os
+import pdb
+import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
-import os
+
 db = SQLAlchemy()
 
 
@@ -60,6 +64,7 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
+        db.drop_all()
         db.create_all()
 
     return True
@@ -256,23 +261,24 @@ def get_size_of_table(table):
         return rows
 
 
-def update_labels(filepath):
+def seed_labels(app, filepath):
     """
         Read file in filepath and upload to database
     """
-    if os.path.exists(filepath):
-        clear_table("Labels")
-        with open("../utilities/Dict_eng_to_nor.csv") as csvfile:
-            try:
-                readCSV = csv.reader(csvfile, delimiter=',')
+    with app.app_context():
+        if os.path.exists(filepath):
+            clear_table("Labels")
+            with open(filepath) as csvfile:
+                try:
+                    readCSV = csv.reader(csvfile, delimiter=',')
 
-                for row in readCSV:
-                    insert_into_labels(row[0], row[1])
-            except AttributeError:
-                raise AttributeError("Could not insert into games")
+                    for row in readCSV:
+                        insert_into_labels(row[0], row[1])
+                except AttributeError:
+                    raise AttributeError("Could not insert into games")
 
-    else:
-        raise AttributeError("File path not found")
+        else:
+            raise AttributeError("File path not found")
 
 
 def insert_into_labels(english, norwegian):
@@ -289,3 +295,30 @@ def insert_into_labels(english, norwegian):
             raise DataBaseException("Could not insert into label")
     else:
         raise excp.BadRequest("English and norwegian must be strings")
+
+
+def get_n_labels(n):
+    """
+        Reads all rows from database and chooses 3 random labels in a list
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        english_labels = [label.english for label in labels]
+        return random.sample(english_labels, n)
+
+    except AttributeError:
+        print("Could not read " + str(n) + " random rows from Labels table")
+        return AttributeError("Could not read Labels table")
+
+
+def to_norwegian(english_label):
+    """
+        Reads the labels tabel and return the norwegian translation of the english word
+    """
+    try:
+        norwegian_word = game = Labels.query.get(english_label)
+        return norwegian_word
+
+    except AttributeError:
+        return AttributeError("Could not find translation in Labels table")

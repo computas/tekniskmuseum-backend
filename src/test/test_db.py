@@ -10,6 +10,7 @@ from webapp import models
 import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
+import pdb
 
 token = uuid.uuid4().hex
 labels = "label1, label2, label3"
@@ -169,6 +170,13 @@ def test_get_top_n_high_score_list_structure():
     for player in result:
         assert "score" in player
         assert "name" in player
+
+
+def test_get_n_labels():
+    with api.app.app_context():
+        result = models.get_n_labels(3)
+    pdb.set_trace()
+    assert result
 
 
 '''
