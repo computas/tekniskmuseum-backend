@@ -158,7 +158,8 @@ def end_game():
     token = request.values["token"]
     name = request.values["name"]
     score = request.values["score"]
-    game = models.get_record_from_game(token)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
     if game.session_num != NUM_GAMES + 1:
         return excp.BadRequest("Game not finished")
@@ -167,7 +168,7 @@ def end_game():
     models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
-    models.delete_session_from_game(player_in_game.game_id)
+    models.delete_session_from_game(player.game_id)
     models.delete_old_games()
     return "OK", 200
 
