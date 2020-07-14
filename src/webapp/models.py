@@ -238,7 +238,7 @@ def get_daily_high_score():
         return new
 
     except AttributeError as e:
-        return AttributeError("Could not read daily highscore from database"
+        raise AttributeError("Could not read daily highscore from database"
                               + str(e))
 
 
