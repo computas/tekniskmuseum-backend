@@ -272,11 +272,10 @@ def get_top_n_high_score_list(top_n):
         new = [{"name": player.name, "score": player.score}
                for player in top_n_list]
         return new
-      
+
     except AttributeError as e:
         raise AttributeError(
             "Could not read top high score from database: " + str(e))
-
 
 
 def drop_table(table):
