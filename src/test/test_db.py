@@ -12,7 +12,7 @@ from pytest import raises
 from werkzeug import exceptions as excp
 
 token = uuid.uuid4().hex
-gid = uuid.uuid4().hex
+game_id = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 11.0
 start_time = time.time()
@@ -33,7 +33,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            gid, labels, today)
+            game_id, labels, today)
 
     assert result
 
@@ -55,7 +55,7 @@ def test_insert_into_player_in_game():
     """
     with api.app.app_context():
         result = models.insert_into_player_in_game(
-            token, gid, play_time)
+            token, game_id, play_time)
 
     assert result
 
@@ -95,7 +95,7 @@ def test_query_euqals_insert_games():
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(gid)
+        result = models.get_record_from_game(game_id)
 
     assert result.labels == labels
     # Datetime assertion can't be done due to millisec differents
@@ -108,7 +108,7 @@ def test_query_equals_insert_player_in_game():
     with api.app.app_context():
         result = models.get_record_from_player_in_game(token)
 
-    assert result.gid == gid
+    assert result.game_id == game_id
     assert result.play_time == play_time
 
 

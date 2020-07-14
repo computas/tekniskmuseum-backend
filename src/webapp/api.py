@@ -56,12 +56,12 @@ def start_game():
         Starts a new game by providing the client with a unique token.
     """
     # start a game and insert it into the games table
-    gid = uuid.uuid4().hex
+    game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
     labels = random.sample(LABELS, k=NUM_GAMES)
     today = datetime.datetime.today()
-    models.insert_into_games(gid, json.dumps(labels), today)
-    models.insert_into_player_in_game(token, gid, 0.0)
+    models.insert_into_games(game_id, json.dumps(labels), today)
+    models.insert_into_player_in_game(token, game_id, 0.0)
     # return game data as json object
     data = {
         "token": token,
@@ -76,7 +76,7 @@ def get_label():
     """
     token = request.values["token"]
     player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.gid)
+    game = models.get_record_from_game(player_in_game.game_id)
 
     # Check if game complete
     if game.session_num > NUM_GAMES:
@@ -112,7 +112,7 @@ def classify():
     time_left = float(request.values["time"])
     # Get label for game session
     player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.gid)
+    game = models.get_record_from_game(player_in_game.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     best_certainty = certainty[best_guess]
@@ -133,7 +133,7 @@ def classify():
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player_in_game.gid, token, session_num, cum_time
+            player_in_game.game_id, token, session_num, cum_time
         )
         # Update game state to be done
         game_state = "Done"
@@ -158,7 +158,7 @@ def end_game():
     token = request.values["token"]
     name = request.values["name"]
     player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.gid)
+    game = models.get_record_from_game(player_in_game.game_id)
 
     if game.session_num == NUM_GAMES + 1:
         score = player_in_game.play_time
@@ -166,7 +166,7 @@ def end_game():
         models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
-    models.delete_session_from_game(player_in_game.gid)
+    models.delete_session_from_game(player_in_game.game_id)
     models.delete_old_games()
     print("Able to delete old games")
     return "OK", 200

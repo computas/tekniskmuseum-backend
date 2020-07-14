@@ -239,6 +239,7 @@ def test_view_highscore(client):
     if response["total"][0] is None:
         # write to database to make sure there is something to read
         write_to_db()
+
     assert(isinstance(response, dict))
     assert(isinstance(response["daily"], list))
     assert(isinstance(response["total"], list))
