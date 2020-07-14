@@ -200,9 +200,3 @@ def test_get_n_labels():
         result = models.get_n_labels(3)
 
     assert result
-
-
-def test_to_norwegian():
-    """
-        Test to_norwegian() function
-    """

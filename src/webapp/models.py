@@ -65,7 +65,6 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
-        # db.drop_all()  # Temporary
         db.create_all()
 
     return True

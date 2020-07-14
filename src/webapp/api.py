@@ -36,7 +36,7 @@ LABELS = setup.LABELS
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
-models.seed_labels(app, "./utilities/Dict_eng_to_nor.csv")
+models.seed_labels(app, "./utilities/dict_eng_to_nor.csv")
 classifier = Classifier()
 
 if __name__ != "__main__":
