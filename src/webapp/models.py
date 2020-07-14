@@ -148,16 +148,15 @@ def get_iteration_name():
     """
 
     iteration = Iteration.query.filter_by().first()
-
     assert iteration.iteration_name is not None
-
     return iteration.iteration_name
 
 
 def update_iteration_name(new_name):
+    """
+        updates the one only iteration_name to new_name
+    """
     iteration = Iteration.query.filter_by().first()
-
-    # assert iteration.iteration_name is not None
     if iteration is None:
         iteration = Iteration(iteration_name=new_name)
         db.session.add(iteration)
@@ -165,7 +164,6 @@ def update_iteration_name(new_name):
         iteration.iteration_name = new_name
 
     db.session.commit()
-
     return new_name
 
 
