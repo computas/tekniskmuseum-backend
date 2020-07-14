@@ -13,9 +13,11 @@ from werkzeug import exceptions as excp
 import pdb
 
 token = uuid.uuid4().hex
+game_id = uuid.uuid4().hex
 labels = "label1, label2, label3"
-play_time = 21.0
+play_time = 11.0
 start_time = time.time()
+today = datetime.datetime.today()
 
 
 def test_create_tables():
@@ -32,7 +34,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            token, labels, play_time, datetime.datetime.today())
+            game_id, labels, today)
 
     assert result
 
@@ -43,7 +45,18 @@ def test_insert_into_scores():
     """
     with api.app.app_context():
         result = models.insert_into_scores(
-            "Test User", 500, datetime.date.today())
+            "Test User", 500, today)
+
+    assert result
+
+
+def test_insert_into_player_in_game():
+    """
+        Check that record exists in PlayerInGame table after inserting.
+    """
+    with api.app.app_context():
+        result = models.insert_into_player_in_game(
+            token, game_id, play_time)
 
     assert result
 
@@ -65,7 +78,7 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            "token", ["label1", "label2", "label3"], 10, "date_time")
+            10, ["label1", "label2", "label3"], "date_time")
 
 
 def test_illegal_parameter_scores():
@@ -88,28 +101,36 @@ def test_illegal_parameter_labels():
             1, [str(uuid.uuid4().hex), str(uuid.uuid4().hex)])
 
 
-'''
-def test_illegal_parameter_upload_labels():
+def test_illegal_parameter_player_in_game():
     """
         Check that exception is raised when illegal arguments is passed
-        into labels table.
+        into player in game table.
     """
     with raises(excp.BadRequest):
-        models.update_labels("./not/a/file/path.csv")
-'''
+        models.insert_into_player_in_game(
+            100, 200, 11)
 
 
-def test_query_euqals_insert():
+def test_query_euqals_insert_games():
     """
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(token)
+        result = models.get_record_from_game(game_id)
 
-    assert result.token == token
     assert result.labels == labels
-    assert result.play_time == play_time
     # Datetime assertion can't be done due to millisec differents
+
+
+def test_query_equals_insert_player_in_game():
+    """
+        Check that inserted record is the same as record catched by query.
+    """
+    with api.app.app_context():
+        result = models.get_record_from_player_in_game(token)
+
+    assert result.game_id == game_id
+    assert result.play_time == play_time
 
 
 def test_get_daily_high_score_sorted():
@@ -179,19 +200,3 @@ def test_get_n_labels():
         print("inne i test")
         pdb.set_trace()
     assert result
-
-
-'''
-def test_clear_table():
-    """
-        Check that number of rows is zero after clearing both tables.
-    """
-    with api.app.app_context():
-        models.clear_table("Games")
-        models.clear_table("Scores")
-        games_rows = models.get_size_of_table("Games")
-        scores_rows = models.get_size_of_table("Scores")
-
-    assert games_rows == 0
-    assert scores_rows == 0
-'''
