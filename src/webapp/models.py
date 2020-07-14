@@ -252,9 +252,9 @@ def get_daily_high_score():
                for player in top_n_list]
         return new
 
-    except AttributeError:
-        print("Could not read daily highscore from database")
-        return AttributeError("Could not read daily highscore from database")
+    except AttributeError as e:
+        raise AttributeError(
+            "Could not read daily highscore from database:" + str(e))
 
 
 def get_top_n_high_score_list(top_n):
@@ -274,9 +274,9 @@ def get_top_n_high_score_list(top_n):
                for player in top_n_list]
         return new
 
-    except AttributeError:
-        print("Could not read top " + str(top_n) + " high score from database")
-        return AttributeError("Table does not exist.")
+    except AttributeError as e:
+        raise AttributeError("Could not read top "
+                             + str(e) + " high score from database")
 
 
 def drop_table(table):
@@ -333,13 +333,11 @@ def get_n_labels(n):
         # read all english labels in database
         labels = Labels.query.all()
         english_labels = [str(label.english) for label in labels]
-        print("LABELS:", english_labels)
         random_list = random.sample(english_labels, n)
         return random_list
 
-    except AttributeError:
-        print("Could not read " + str(n) + " random rows from Labels table")
-        return AttributeError("Could not read Labels table")
+    except Exception as e:
+        return Exception("Could not read " + str(n) + " random rows from Labels table")
 
 
 def to_norwegian(english_label):

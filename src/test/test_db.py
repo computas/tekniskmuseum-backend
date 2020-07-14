@@ -60,16 +60,6 @@ def test_insert_into_player_in_game():
     assert result
 
 
-def test_insert_into_labels():
-    """
-        Check that records exists in Games table after inserting.
-    """
-    with api.app.app_context():
-        result = models.insert_into_labels(
-            str(uuid.uuid4().hex), str(uuid.uuid4().hex))
-    assert result
-
-
 def test_illegal_parameter_games():
     """
         Check that exception is raised when illegal arguments is passed

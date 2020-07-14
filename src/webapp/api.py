@@ -32,7 +32,6 @@ TIME_LIMIT = setup.time_limit
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
 HIGH_SCORE_LIST_SIZE = setup.top_n
-LABELS = setup.LABELS
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
@@ -59,10 +58,7 @@ def start_game():
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
-    labels = random.sample(LABELS, k=NUM_GAMES)
-    print("in start game")
     labels = models.get_n_labels(NUM_GAMES)
-
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_player_in_game(token, game_id, 0.0)
@@ -87,7 +83,6 @@ def get_label():
         raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
-    print("in get label")
     label = labels[game.session_num - 1]
     data = {
         "label": label
