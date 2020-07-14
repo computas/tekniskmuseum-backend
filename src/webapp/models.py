@@ -24,7 +24,7 @@ class Games(db.Model):
        be String when a long hex is given.
     """
 
-    gid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    gid = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
     date = db.Column(db.DateTime)
@@ -44,18 +44,11 @@ class Scores(db.Model):
 
 class PlayerInGame(db.Model):
     """
-        Docstring.
+        Table for attributes connected to a player in the game. gid is a
+        foreign key to the game table.
     """
-    pid = db.column(db.NVARCHAR(32), primary_key=True)
-    gid = db.Column(db.Integer, nullable=False)
-
-
-class Players(db.Model):
-    """
-        This is the players model in the database.
-    """
-
-    pid = db.Column(db.NVARCHAR(32), primary_key=True)
+    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    gid = db.Column(db.NVARCHAR(32), nullable=False)
     play_time = db.Column(db.Float, nullable=False)
 
 
@@ -70,29 +63,27 @@ def create_tables(app):
     return True
 
 
-def insert_into_games(token, labels, play_time, date):
+def insert_into_games(gid, labels, date):
     """
         Insert values into Games table.
 
         Parameters:
-        token : random uuid.uuid4().hex
+        gid : random uuid.uuid4().hex
         labels: list of labels
-        play_time : float
         date: datetime.datetime
     """
-    if (isinstance(token, str) and isinstance(play_time, float)
+    if (isinstance(gid, str)
             and isinstance(labels, str) and isinstance(date, datetime.datetime)):
         try:
-            game = Games(token=token, labels=labels,
-                         play_time=play_time, date=date)
+            game = Games(gid=gid, labels=labels, date=date)
             db.session.add(game)
             db.session.commit()
             return True
         except DataBaseException:
             raise DataBaseException("Could not insert into games")
     else:
-        raise excp.BadRequest("Token has to be string, start time has to be float"
-                              ", labels has to be string and date has to be datetime.date.")
+        raise excp.BadRequest("Gid has to be string, labels has to be string "
+                              "and date has to be datetime.datetime.")
 
 
 def insert_into_scores(name, score, date):
@@ -114,28 +105,62 @@ def insert_into_scores(name, score, date):
         except DataBaseException:
             raise DataBaseException("Could not insert into scores")
     else:
-        raise excp.BadRequest("Token has to be string, start time has to be float"
-                              ", labels has to be string and date has to be datetime.date.")
+        raise excp.BadRequest("Name has to be string, score can be int or "
+                              "float and date has to be datetime.date.")
 
 
-def get_record_from_game(token):
+def insert_into_player_in_game(token, gid, play_time):
     """
-        Return name, starttime and label of the first record of Games that
-        matches the query.
+        Insert values into PlayerInGame table.
+
+        Parameters:
+        token: random uuid.uuid4().hex
+        gid: random uuid.uuid4().hex
+        play_time: float
     """
-    game = Games.query.get(token)
+    if (isinstance(token, str) and isinstance(gid, str)
+            and isinstance(play_time, float)):
+        try:
+            player_in_game = PlayerInGame(token=token, gid=gid,
+                                          play_time=play_time)
+            db.session.add(player_in_game)
+            db.session.commit()
+            return True
+        except DataBaseException:
+            raise DataBaseException("Could not insert into games")
+    else:
+        raise excp.BadRequest("Token has to be string, gid has to be string "
+                              "and play time has to be float.")
+
+
+def get_record_from_game(gid):
+    """
+        Return the game record with the corresponding gid.
+    """
+    game = Games.query.get(gid)
     if game is None:
-        raise excp.BadRequest("Token invalid or expired")
+        raise excp.BadRequest("Gid invalid or expired")
 
     return game
 
 
-def update_game(token, session_num, play_time):
+def get_record_from_player_in_game(token):
+    """
+        Return the player in game record with the corresponding token.
+    """
+    player_in_game = PlayerInGame.query.get(token)
+    if player_in_game is None:
+        raise excp.BadRequest("Token invalid or expired")
+
+    return player_in_game
+
+
+def update_game(gid, session_num, play_time):
     """
         Update game record for the incomming token with the given parameters.
     """
     try:
-        game = Games.query.filter_by(token=token).first()
+        game = Games.query.get(gid=gid)
         game.session_num += 1
         game.play_time = play_time
         db.session.commit()
@@ -144,20 +169,37 @@ def update_game(token, session_num, play_time):
         raise Exception("Couldn't update game.")
 
 
-def delete_session_from_game(token):
+# ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
+def update_game_for_player(gid, token, session_num, play_time):
     """
-        To avoid unecessary data in the database this function is called by
-        the api after a session is finished. All records in games table,
-        connected to the particular token, is deleted.
+        Docstring.
     """
     try:
-        game = Games.query.filter_by(token=token).first()
+        game = Games.query.get(gid)
+        game.session_num += 1
+        player_in_game = PlayerInGame.query.get(token)
+        player_in_game.play_time = play_time
+        db.session.commit()
+        return True
+    except Exception as e:
+        raise Exception("Could not update: " + e)
+
+
+def delete_session_from_game(gid):
+    """
+        To avoid unecessary data in the database this function is called by
+        the api after a session is finished. The record in games table,
+        connected to the particular gid, is deleted.
+    """
+    try:
+        game = Games.query.get(gid=gid)
+        db.session.query(PlayerInGame).filter(gid=gid).delete()
         db.session.delete(game)
         db.session.commit()
-        return "Record connected to " + token + " deleted."
+        return "Record deleted."
     except AttributeError:
         db.session.rollback()
-        raise AttributeError("Couldn't find token.")
+        raise AttributeError("Couldn't findgid.")
 
 
 def delete_old_games():
@@ -165,8 +207,10 @@ def delete_old_games():
         Delete records in games older than one hour.
     """
     try:
-        db.session.query(Games).filter(Games.date < (datetime.datetime.today()
-                                                     - datetime.timedelta(hours=1))).delete()
+        games = Games.query.filter_by(Games.date < (datetime.datetime.today()
+                                                     - datetime.timedelta(hours=1))).all()
+        db.session.query(PlayerInGame).filter(gid=games.gid).delete()
+        db.session.delete(games)
         db.session.commit()
         return True
     except Exception as e:

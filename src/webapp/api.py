@@ -13,8 +13,8 @@ import sys
 import os
 import logging
 import datetime
-from webapp import models
 from webapp import storage
+from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
@@ -56,10 +56,12 @@ def start_game():
         Starts a new game by providing the client with a unique token.
     """
     # start a game and insert it into the games table
+    gid = uuid.uuid4().hex
     token = uuid.uuid4().hex
     labels = random.sample(LABELS, k=NUM_GAMES)
     today = datetime.datetime.today()
-    models.insert_into_games(token, json.dumps(labels), 0.0, today)
+    models.insert_into_games(gid, json.dumps(labels), today)
+    models.insert_into_player_in_game(token, gid, 0.0)
     # return game data as json object
     data = {
         "token": token,
@@ -73,7 +75,8 @@ def get_label():
         Provides the client with a new word.
     """
     token = request.values["token"]
-    game = models.get_record_from_game(token)
+    player_in_game = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player_in_game.gid)
 
     # Check if game complete
     if game.session_num > NUM_GAMES:
@@ -84,7 +87,7 @@ def get_label():
     # translate
     data = {
         "label": label
-    }
+        }
     return json.jsonify(data), 200
 
 
@@ -106,28 +109,32 @@ def classify():
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
-    time_used = float(request.values["time"])
+    time_left = float(request.values["time"])
     # Get label for game session
-    game = models.get_record_from_game(token)
+    player_in_game = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player_in_game.gid)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
-        time_used < TIME_LIMIT
+        time_left > 0
         and best_guess == label
         and best_certainty >= CERTAINTY_TRESHOLD
     )
+
     # End game if player win or loose
-    if has_won or time_used >= TIME_LIMIT:
+    if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
-        cum_time = game.play_time + time_used
+        cum_time = player_in_game.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
-        models.update_game(token, session_num, cum_time)
+        models.update_game_for_player(
+            player_in_game.gid, token, session_num, cum_time
+        )
         # Update game state to be done
         game_state = "Done"
 
@@ -150,15 +157,16 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
-    game = models.get_record_from_game(token)
+    player_in_game = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player_in_game.gid)
 
     if game.session_num == NUM_GAMES + 1:
-        score = game.play_time
+        score = player_in_game.play_time
         today = datetime.date.today()
         models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
-    models.delete_session_from_game(token)
+    models.delete_session_from_game(player_in_game.gid)
     models.delete_old_games()
     return "OK", 200
 
@@ -166,7 +174,8 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and all of last 24 hours.
+        Read highscore from database. Return top n of all time and all of
+        last 24 hours.
     """
     # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
