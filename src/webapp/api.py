@@ -74,8 +74,8 @@ def get_label():
         Provides the client with a new word.
     """
     token = request.values["token"]
-    player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.game_id)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
     # Check if game complete
     if game.session_num > NUM_GAMES:
@@ -108,8 +108,8 @@ def classify():
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.game_id)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     best_certainty = certainty[best_guess]
@@ -124,12 +124,12 @@ def classify():
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
-        cum_time = player_in_game.play_time + time_left
+        cum_time = player.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player_in_game.game_id, token, session_num, cum_time
+            player.game_id, token, session_num, cum_time
         )
         # Update game state to be done
         game_state = "Done"
