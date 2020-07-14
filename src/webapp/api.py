@@ -27,14 +27,12 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-TIME_LIMIT = setup.time_limit
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
 HIGH_SCORE_LIST_SIZE = setup.top_n
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
-models.seed_labels(app, "./utilities/dict_eng_to_nor.csv")
 classifier = Classifier()
 
 if __name__ != "__main__":
