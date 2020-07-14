@@ -289,7 +289,8 @@ def drop_table(table):
 
 def seed_labels(app, filepath):
     """
-        Read file in filepath and upload to database
+        Read file in filepath and upload to database. This function is used to update labels in database. 
+        Ideally it should be callable from the admin page.
     """
     with app.app_context():
         if os.path.exists(filepath):
@@ -346,8 +347,8 @@ def to_norwegian(english_label):
         Reads the labels tabel and return the norwegian translation of the english word
     """
     try:
-        norwegian_word = Labels.query.get(english_label)
-        return norwegian_word
+        query = Labels.query.get(english_label)
+        return str(query.norwegian)
 
     except AttributeError as e:
         return AttributeError("Could not find translation in Labels table: " + str(e))
