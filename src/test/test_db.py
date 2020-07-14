@@ -2,7 +2,7 @@
     Testfunctions for testing functions to manipualte the database. The
     functions is used on an identical test database.
 """
-
+import os
 import uuid
 import time
 from webapp import api
@@ -78,6 +78,16 @@ def test_illegal_parameter_scores():
     with raises(excp.BadRequest):
         models.insert_into_scores(
             100, "score", "01.01.2020")
+
+
+def test_illegal_parameter_labels():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into games table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_labels(
+            1, None)
 
 
 def test_illegal_parameter_player_in_game():
@@ -170,3 +180,13 @@ def test_get_top_n_high_score_list_structure():
     for player in result:
         assert "score" in player
         assert "name" in player
+
+
+def test_get_n_labels():
+    """
+        Test get_n_labels
+    """
+    with api.app.app_context():
+        result = models.get_n_labels(3)
+
+    assert result
