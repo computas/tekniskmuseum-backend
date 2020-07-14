@@ -150,10 +150,10 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
+    score = request.values["score"]
     game = models.get_record_from_game(token)
 
     if game.session_num == NUM_GAMES + 1:
-        score = game.play_time
         today = datetime.date.today()
         models.insert_into_scores(name, score, today)
 
