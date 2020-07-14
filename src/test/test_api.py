@@ -223,6 +223,7 @@ def construct_path(dir_list):
 
     return path
 
+
 '''
 def test_view_highscore(client):
     """
@@ -230,7 +231,7 @@ def test_view_highscore(client):
         {"daily":[{"name":"mari","score":83}],
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
-    
+
     # get response
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
