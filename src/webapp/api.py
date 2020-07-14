@@ -168,7 +168,6 @@ def end_game():
     # Clean database for unnecessary data
     models.delete_session_from_game(player_in_game.game_id)
     models.delete_old_games()
-    print("Able to delete old games")
     return "OK", 200
 
 
