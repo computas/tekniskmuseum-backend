@@ -2,8 +2,10 @@
     Classes for describing tables in the database and additional functions for
     manipulating them.
 """
-
 import datetime
+import csv
+import os
+import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
@@ -29,10 +31,9 @@ class Games(db.Model):
        be String when a long hex is given.
     """
 
-    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    game_id = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
-    play_time = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime)
 
 
@@ -42,10 +43,33 @@ class Scores(db.Model):
         inserted values match the column values.
     """
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
+
+
+class Labels(db.Model):
+    """
+        This is the Labels model in the database. It is important that the
+        inserted values match the column values. This tabel is used for
+        - translating english labels into norwgian
+        - keeping track of all possible labels
+    """
+
+    english = db.Column(db.String(32), primary_key=True)
+    norwegian = db.Column(db.String(32))
+
+
+class PlayerInGame(db.Model):
+    """
+        Table for attributes connected to a player in the game. game_id is a
+        foreign key to the game table.
+    """
+
+    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    game_id = db.Column(db.NVARCHAR(32), nullable=False)
+    play_time = db.Column(db.Float, nullable=False)
 
 
 # Functions to manipulate the tables above
@@ -59,35 +83,32 @@ def create_tables(app):
     return True
 
 
-def insert_into_games(token, labels, play_time, date):
+def insert_into_games(game_id, labels, date):
     """
         Insert values into Games table.
 
         Parameters:
-        token : random uuid.uuid4().hex
+        game_id : random uuid.uuid4().hex
         labels: list of labels
-        play_time : float
         date: datetime.datetime
     """
     if (
-        isinstance(token, str)
-        and isinstance(play_time, float)
+        isinstance(game_id, str)
         and isinstance(labels, str)
         and isinstance(date, datetime.datetime)
     ):
+
         try:
-            game = Games(
-                token=token, labels=labels, play_time=play_time, date=date
-            )
+            game = Games(game_id=game_id, labels=labels, date=date)
             db.session.add(game)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into games")
+        except Exception as e:
+            raise Exception("Could not insert into games :" + str(e))
     else:
         raise excp.BadRequest(
-            "Token has to be string, start time has to be float"
-            ", labels has to be string and date has to be datetime.date."
+            "game_id has to be string, labels has to be string "
+            "and date has to be datetime.datetime."
         )
 
 
@@ -101,6 +122,7 @@ def insert_into_scores(name, score, date):
         date: datetime.date
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
+
     if (
         isinstance(name, str)
         and score_int_or_float
@@ -111,12 +133,12 @@ def insert_into_scores(name, score, date):
             db.session.add(score)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into scores")
+        except Exception as e:
+            raise Exception("Could not insert into scores: " + str(e))
     else:
         raise excp.BadRequest(
-            "Token has to be string, start time has to be float"
-            ", labels has to be string and date has to be datetime.date."
+            "Name has to be string, score can be int or "
+            "float and date has to be datetime.date."
         )
 
 
@@ -147,24 +169,65 @@ def update_iteration_name(new_name):
     return new_name
 
 
-def get_record_from_game(token):
+def insert_into_player_in_game(token, game_id, play_time):
     """
-        Return name, starttime and label of the first record of Games that
-        matches the query.
+        Insert values into PlayerInGame table.
+
+        Parameters:
+        token: random uuid.uuid4().hex
+        game_id: random uuid.uuid4().hex
+        play_time: float
     """
-    game = Games.query.get(token)
+    if (
+        isinstance(token, str)
+        and isinstance(game_id, str)
+        and isinstance(play_time, float)
+    ):
+        try:
+            player_in_game = PlayerInGame(
+                token=token, game_id=game_id, play_time=play_time
+            )
+            db.session.add(player_in_game)
+            db.session.commit()
+            return True
+        except Exception as e:
+            raise Exception("Could not insert into games: " + str(e))
+    else:
+        raise excp.BadRequest(
+            "Token has to be string, game_id has to be string "
+            "and play time has to be float."
+        )
+
+
+def get_record_from_game(game_id):
+    """
+        Return the game record with the corresponding game_id.
+    """
+    game = Games.query.get(game_id)
     if game is None:
-        raise excp.BadRequest("Token invalid or expired")
+        raise excp.BadRequest("game_id invalid or expired")
 
     return game
 
 
-def update_game(token, session_num, play_time):
+def get_record_from_player_in_game(token):
+    """
+        Return the player in game record with the corresponding token.
+    """
+    player_in_game = PlayerInGame.query.get(token)
+    if player_in_game is None:
+        raise excp.BadRequest("Token invalid or expired")
+
+    return player_in_game
+
+
+# DELETABLE
+def update_game(game_id, session_num, play_time):
     """
         Update game record for the incomming token with the given parameters.
     """
     try:
-        game = Games.query.filter_by(token=token).first()
+        game = Games.query.get(game_id)
         game.session_num += 1
         game.play_time = play_time
         db.session.commit()
@@ -173,20 +236,39 @@ def update_game(token, session_num, play_time):
         raise Exception("Couldn't update game.")
 
 
-def delete_session_from_game(token):
+# ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
+def update_game_for_player(game_id, token, session_num, play_time):
     """
-        To avoid unecessary data in the database this function is called by
-        the api after a session is finished. All records in games table,
-        connected to the particular token, is deleted.
+        Docstring.
     """
     try:
-        game = Games.query.filter_by(token=token).first()
+        game = Games.query.get(game_id)
+        game.session_num += 1
+        player_in_game = PlayerInGame.query.get(token)
+        player_in_game.play_time = play_time
+        db.session.commit()
+        return True
+    except Exception as e:
+        raise Exception("Could not update game for player: " + str(e))
+
+
+def delete_session_from_game(game_id):
+    """
+        To avoid unecessary data in the database this function is called by
+        the api after a session is finished. The record in games table,
+        connected to the particular game_id, is deleted.
+    """
+    try:
+        game = Games.query.get(game_id)
+        db.session.query(PlayerInGame).filter(
+            PlayerInGame.game_id == game_id
+        ).delete()
         db.session.delete(game)
         db.session.commit()
-        return "Record connected to " + token + " deleted."
-    except AttributeError:
+        return "Record deleted."
+    except AttributeError as e:
         db.session.rollback()
-        raise AttributeError("Couldn't find token.")
+        raise AttributeError("Couldn't find game_id: " + str(e))
 
 
 def delete_old_games():
@@ -194,34 +276,25 @@ def delete_old_games():
         Delete records in games older than one hour.
     """
     try:
-        db.session.query(Games).filter(
-            Games.date
-            < (datetime.datetime.today() - datetime.timedelta(hours=1))
-        ).delete()
+        games = (
+            db.session.query(Games)
+            .filter(
+                Games.date
+                < (datetime.datetime.today() - datetime.timedelta(hours=1))
+            )
+            .all()
+        )
+        for game in games:
+            db.session.query(PlayerInGame).filter(
+                PlayerInGame.game_id == game.game_id
+            ).delete()
+            db.session.delete(game)
+
         db.session.commit()
         return True
     except Exception as e:
         db.session.rollback()
-        raise Exception("Couldn't clean up old game records:" + str(e))
-
-
-def clear_table(table):
-    """
-        Clear the table sent as the argument and return a response
-        corresponding to the result of the task.
-    """
-    try:
-        if table == "Games":
-            Games.query.delete()
-            db.session.commit()
-            return True
-        elif table == "Scores":
-            Scores.query.delete()
-            db.session.commit()
-            return True
-    except AttributeError:
-        db.session.rollback()
-        return AttributeError("Table does not exist.")
+        raise Exception("Couldn't clean up old game records: " + str(e))
 
 
 def get_daily_high_score():
@@ -245,9 +318,10 @@ def get_daily_high_score():
         ]
         return new
 
-    except AttributeError:
-        print("Could not read daily highscore from database")
-        return AttributeError("Could not read daily highscore from database")
+    except AttributeError as e:
+        raise AttributeError(
+            "Could not read daily highscore from database: " + str(e)
+        )
 
 
 def get_top_n_high_score_list(top_n):
@@ -270,9 +344,10 @@ def get_top_n_high_score_list(top_n):
         ]
         return new
 
-    except AttributeError:
-        print("Could not read top " + str(top_n) + " high score from database")
-        return AttributeError("Table does not exist.")
+    except AttributeError as e:
+        raise AttributeError(
+            "Could not read top high score from database: " + str(e)
+        )
 
 
 def drop_table(table):
@@ -283,13 +358,72 @@ def drop_table(table):
     db.drop_all(bind=table)
 
 
-def get_size_of_table(table):
+def seed_labels(app, filepath):
     """
-        Return size of table.
+        Read file in filepath and upload to database
     """
-    if table == "Games":
-        rows = db.session.query(Games).count()
-        return rows
-    elif table == "Scores":
-        rows = db.session.query(Scores).count()
-        return rows
+    with app.app_context():
+        if os.path.exists(filepath):
+            # clear table
+            Labels.query.delete()
+            db.session.commit()
+            with open(filepath) as csvfile:
+                try:
+                    readCSV = csv.reader(csvfile, delimiter=",")
+
+                    for row in readCSV:
+                        insert_into_labels(row[0], row[1])
+                except AttributeError as e:
+                    raise AttributeError(
+                        "Could not insert into games: " + str(e)
+                    )
+
+        else:
+            raise AttributeError("File path not found")
+
+
+def insert_into_labels(english, norwegian):
+    """
+        Insert values into Scores table.
+    """
+    if isinstance(english, str) and isinstance(norwegian, str):
+        try:
+            label_row = Labels(english=english, norwegian=norwegian)
+            db.session.add(label_row)
+            db.session.commit()
+            return True
+        except Exception as e:
+            raise Exception("Could not insert into label: " + str(e))
+    else:
+        raise excp.BadRequest("English and norwegian must be strings")
+
+
+def get_n_labels(n):
+    """
+        Reads all rows from database and chooses 3 random labels in a list
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        english_labels = [str(label.english) for label in labels]
+        random_list = random.sample(english_labels, n)
+        return random_list
+
+    except Exception as e:
+        return Exception(
+            "Could not read " + str(e) + " random rows from Labels table"
+        )
+
+
+def to_norwegian(english_label):
+    """
+        Reads the labels tabel and return the norwegian translation of the english word
+    """
+    try:
+        norwegian_word = Labels.query.get(english_label)
+        return norwegian_word
+
+    except AttributeError as e:
+        return AttributeError(
+            "Could not find translation in Labels table: " + str(e)
+        )

@@ -117,7 +117,8 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
-        self.iteration_name = models.get_iteration_name()
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img
         )
