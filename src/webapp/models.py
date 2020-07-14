@@ -320,8 +320,8 @@ def insert_into_labels(english, norwegian):
             db.session.add(label_row)
             db.session.commit()
             return True
-        except DataBaseException:
-            raise DataBaseException("Could not insert into label")
+        except Exception as e:
+            raise Exception("Could not insert into label: " + str(e))
     else:
         raise excp.BadRequest("English and norwegian must be strings")
 
