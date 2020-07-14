@@ -337,7 +337,7 @@ def get_n_labels(n):
         return random_list
 
     except Exception as e:
-        return Exception("Could not read " + str(n) + " random rows from Labels table")
+        return Exception("Could not read " + str(e) + " random rows from Labels table")
 
 
 def to_norwegian(english_label):
