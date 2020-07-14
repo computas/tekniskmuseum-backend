@@ -15,6 +15,7 @@ import logging
 import datetime
 import pdb
 from webapp import models
+from webapp import storage
 from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
@@ -25,13 +26,13 @@ from flask import json
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
-# Initialization
+# Initialization and global variables
 app = Flask(__name__)
-labels = setup.labels
-time_limit = setup.time_limit
-num_games = setup.num_games
-certainty_threshold = setup.certainty_threshold
-high_score_list_size = setup.top_n
+LABELS = setup.LABELS
+TIME_LIMIT = setup.time_limit
+NUM_GAMES = setup.num_games
+CERTAINTY_TRESHOLD = setup.certainty_threshold
+HIGH_SCORE_LIST_SIZE = setup.top_n
 
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
@@ -57,9 +58,9 @@ def start_game():
     """
     # start a game and insert it into the games table
     token = uuid.uuid4().hex
-    labels_list = random.choices(labels, k=num_games)
+    labels = random.sample(LABELS, k=NUM_GAMES)
     today = datetime.datetime.today()
-    models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
+    models.insert_into_games(token, json.dumps(labels), 0.0, today)
     # return game data as json object
     data = {
         "token": token,
@@ -76,12 +77,15 @@ def get_label():
     game = models.get_record_from_game(token)
 
     # Check if game complete
-    if game.session_num > num_games:
+    if game.session_num > NUM_GAMES:
         raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    data = {"label": label}
+    # translate
+    data = {
+        "label": label
+    }
     return json.jsonify(data), 200
 
 
@@ -111,14 +115,12 @@ def classify():
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
-        time_used < time_limit
+        time_used < TIME_LIMIT
         and best_guess == label
-        and best_certainty >= certainty_threshold)
-    has_won = (time_used < time_limit
-               and best_guess == label
-               and best_certainty >= certainty_threshold)
+        and best_certainty >= CERTAINTY_TRESHOLD
+    )
     # End game if player win or loose
-    if has_won or time_used >= time_limit:
+    if has_won or time_used >= TIME_LIMIT:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
@@ -130,6 +132,7 @@ def classify():
         # Update game state to be done
         game_state = "Done"
 
+    # translate
     data = {
         "certainty": certainty,
         "guess": best_guess,
@@ -150,7 +153,7 @@ def end_game():
     name = request.values["name"]
     game = models.get_record_from_game(token)
 
-    if game.session_num == num_games + 1:
+    if game.session_num == NUM_GAMES + 1:
         score = game.play_time
         today = datetime.date.today()
         models.insert_into_scores(name, score, today)
@@ -164,15 +167,15 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and top n of last 24 hours.
+        Read highscore from database. Return top n of all time and all of last 24 hours.
     """
-    #read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
-    #read daily high score
+    # read top n overall high score
+    top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
+    # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
         "daily": daily_high_scores,
-        "total": top_n_high_scores
+        "total": top_n_high_scores,
     }
     #pdb.set_trace()
     return json.jsonify(data), 200
@@ -202,7 +205,7 @@ def allowed_file(image):
         raise excp.BadRequest("No image submitted")
 
     # Check that the file is a png
-    is_png = image.content_type == 'image/png'
+    is_png = image.content_type == "image/png"
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution

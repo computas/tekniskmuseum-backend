@@ -3,8 +3,8 @@
     manipulating them.
 """
 
-from flask_sqlalchemy import SQLAlchemy
 import datetime
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 import os
 db = SQLAlchemy()
@@ -72,7 +72,7 @@ def insert_into_games(token, labels, play_time, date):
         Parameters:
         token : random uuid.uuid4().hex
         labels: list of labels
-        play_time : float 
+        play_time : float
         date: datetime.datetime
     """
 
@@ -162,12 +162,12 @@ def delete_old_games():
     """
     try:
         db.session.query(Games).filter(Games.date < (datetime.datetime.today()
-                                                     + datetime.timedelta(hours=1))).delete()
+                                                     - datetime.timedelta(hours=1))).delete()
         db.session.commit()
         return True
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        raise Exception("Couldn't delete records.")
+        raise Exception("Couldn't clean up old game records:" + str(e))
 
 
 def clear_table(table):
