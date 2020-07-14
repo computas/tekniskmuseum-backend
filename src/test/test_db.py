@@ -174,8 +174,10 @@ def test_get_top_n_high_score_list_structure():
 
 def test_get_n_labels():
     with api.app.app_context():
+        print("inne i test")
         result = models.get_n_labels(3)
-    pdb.set_trace()
+        print("inne i test")
+        pdb.set_trace()
     assert result
 
 

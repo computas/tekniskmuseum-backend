@@ -64,7 +64,6 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
-        db.drop_all()
         db.create_all()
 
     return True
@@ -304,8 +303,11 @@ def get_n_labels(n):
     try:
         # read all english labels in database
         labels = Labels.query.all()
-        english_labels = [label.english for label in labels]
-        return random.sample(english_labels, n)
+        english_labels = [str(label.english) for label in labels]
+        print("LABELS:", english_labels)
+        pdb.set_trace()
+        random_list = random.sample(english_labels, n)
+        return random_list
 
     except AttributeError:
         print("Could not read " + str(n) + " random rows from Labels table")
@@ -317,7 +319,7 @@ def to_norwegian(english_label):
         Reads the labels tabel and return the norwegian translation of the english word
     """
     try:
-        norwegian_word = game = Labels.query.get(english_label)
+        norwegian_word = Labels.query.get(english_label)
         return norwegian_word
 
     except AttributeError:
