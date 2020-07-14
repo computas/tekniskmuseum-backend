@@ -349,5 +349,5 @@ def to_norwegian(english_label):
         norwegian_word = Labels.query.get(english_label)
         return norwegian_word
 
-    except AttributeError:
-        return AttributeError("Could not find translation in Labels table")
+    except AttributeError as e:
+        return AttributeError("Could not find translation in Labels table: " + str(e))
