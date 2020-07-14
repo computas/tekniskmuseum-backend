@@ -2,7 +2,6 @@
     Classes for describing tables in the database and additional functions for
     manipulating them.
 """
-
 import datetime
 import csv
 import os
@@ -196,7 +195,7 @@ def update_game_for_player(game_id, token, session_num, play_time):
         db.session.commit()
         return True
     except Exception as e:
-        raise Exception("Could not update: " + str(e))
+        raise Exception("Could not update game for player: " + str(e))
 
 
 def delete_session_from_game(game_id):
