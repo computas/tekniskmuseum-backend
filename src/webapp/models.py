@@ -2,7 +2,6 @@
     Classes for describing tables in the database and additional functions for
     manipulating them.
 """
-
 import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
@@ -182,7 +181,7 @@ def update_game_for_player(game_id, token, session_num, play_time):
         db.session.commit()
         return True
     except Exception as e:
-        raise Exception("Could not update: " + str(e))
+        raise Exception("Could not update game for player: " + str(e))
 
 
 def delete_session_from_game(game_id):
@@ -238,9 +237,9 @@ def get_daily_high_score():
                for player in top_n_list]
         return new
 
-    except AttributeError:
-        print("Could not read daily highscore from database")
-        return AttributeError("Could not read daily highscore from database")
+    except AttributeError as e:
+        return AttributeError("Could not read daily highscore from database"
+                              + str(e))
 
 
 def get_top_n_high_score_list(top_n):
@@ -261,8 +260,7 @@ def get_top_n_high_score_list(top_n):
         return new
 
     except AttributeError:
-        print("Could not read top " + str(top_n) + " high score from database")
-        return AttributeError("Table does not exist.")
+        raise AttributeError("Table does not exist.")
 
 
 def drop_table(table):

@@ -4,6 +4,7 @@
 import os
 import uuid
 import sys
+from webapp import api
 from azure.storage.blob import BlobClient
 from utilities.keys import Keys
 import logging
@@ -27,7 +28,7 @@ def save_image(image, label):
         )
         blob.upload_blob(image)
     except Exception as e:
-        print(e)
+        api.app.logger.error(e)
     url = base_url + "/" + container_name + "/" + file_name
 
     logging.info(url)
