@@ -254,7 +254,7 @@ def get_daily_high_score():
 
     except AttributeError as e:
         raise AttributeError(
-            "Could not read daily highscore from database:" + str(e))
+            "Could not read daily highscore from database: " + str(e))
 
 
 def get_top_n_high_score_list(top_n):
@@ -275,8 +275,8 @@ def get_top_n_high_score_list(top_n):
         return new
 
     except AttributeError as e:
-        raise AttributeError("Could not read top "
-                             + str(e) + " high score from database")
+        raise AttributeError(
+            "Could not read top high score from database: " + str(e))
 
 
 def drop_table(table):
@@ -302,8 +302,9 @@ def seed_labels(app, filepath):
 
                     for row in readCSV:
                         insert_into_labels(row[0], row[1])
-                except AttributeError:
-                    raise AttributeError("Could not insert into games")
+                except AttributeError as e:
+                    raise AttributeError(
+                        "Could not insert into games: " + str(e))
 
         else:
             raise AttributeError("File path not found")
@@ -337,7 +338,7 @@ def get_n_labels(n):
         return random_list
 
     except Exception as e:
-        return Exception("Could not read " + str(n) + " random rows from Labels table")
+        return Exception("Could not read " + str(e) + " random rows from Labels table")
 
 
 def to_norwegian(english_label):
