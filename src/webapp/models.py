@@ -6,7 +6,6 @@
 import datetime
 import csv
 import os
-import pdb
 import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
@@ -66,7 +65,7 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
-        db.drop_all()  # Temporary
+        # db.drop_all()  # Temporary
         db.create_all()
 
     return True
@@ -295,7 +294,9 @@ def seed_labels(app, filepath):
     """
     with app.app_context():
         if os.path.exists(filepath):
-            clear_table("Labels")
+            # clear table
+            Labels.query.delete()
+            db.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=',')
@@ -334,7 +335,6 @@ def get_n_labels(n):
         labels = Labels.query.all()
         english_labels = [str(label.english) for label in labels]
         print("LABELS:", english_labels)
-        pdb.set_trace()
         random_list = random.sample(english_labels, n)
         return random_list
 

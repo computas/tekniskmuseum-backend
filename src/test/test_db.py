@@ -10,7 +10,6 @@ from webapp import models
 import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
-import pdb
 
 token = uuid.uuid4().hex
 game_id = uuid.uuid4().hex
@@ -98,7 +97,7 @@ def test_illegal_parameter_labels():
     """
     with raises(excp.BadRequest):
         models.insert_into_labels(
-            1, [str(uuid.uuid4().hex), str(uuid.uuid4().hex)])
+            1, None)
 
 
 def test_illegal_parameter_player_in_game():
@@ -195,8 +194,6 @@ def test_get_top_n_high_score_list_structure():
 
 def test_get_n_labels():
     with api.app.app_context():
-        print("inne i test")
         result = models.get_n_labels(3)
-        print("inne i test")
-        pdb.set_trace()
+
     assert result
