@@ -48,7 +48,6 @@ def test_start_game_correct(client):
     """
     res = client.get("/startGame", data=dict())
     # Ensure that the returned dictionary contains a token
-    print(f"res {res.data}")
     assert(b"token" in res.data)
 
 
