@@ -60,7 +60,6 @@ LABELS = [
     "wristwatch",
 ]
 
-time_limit = 20  # time limit for one guess
 top_n = 10  # number of players in overall high score top list
 num_games = 3
 # certainties from costum vision lower than this -> haswon=False
