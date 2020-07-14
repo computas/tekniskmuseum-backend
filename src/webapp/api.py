@@ -159,16 +159,18 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
-    player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.game_id)
+    score = request.values["score"]
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
-    if game.session_num == NUM_GAMES + 1:
-        score = player_in_game.play_time
-        today = datetime.date.today()
-        models.insert_into_scores(name, score, today)
+    if game.session_num != NUM_GAMES + 1:
+        return excp.BadRequest("Game not finished")
+
+    today = datetime.date.today()
+    models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
-    models.delete_session_from_game(player_in_game.game_id)
+    models.delete_session_from_game(player.game_id)
     models.delete_old_games()
     return "OK", 200
 
