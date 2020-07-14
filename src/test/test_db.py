@@ -31,7 +31,8 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            token, labels, play_time, datetime.datetime.today())
+            token, labels, play_time, datetime.datetime.today()
+        )
 
     assert result
 
@@ -42,7 +43,8 @@ def test_insert_into_scores():
     """
     with api.app.app_context():
         result = models.insert_into_scores(
-            "Test User", 500, datetime.date.today())
+            "Test User", 500, datetime.date.today()
+        )
 
     assert result
 
@@ -54,7 +56,8 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            "token", ["label1", "label2", "label3"], 10, "date_time")
+            "token", ["label1", "label2", "label3"], 10, "date_time"
+        )
 
 
 def test_illegal_parameter_scores():
@@ -63,8 +66,7 @@ def test_illegal_parameter_scores():
         into scores table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_scores(
-            100, "score", "01.01.2020")
+        models.insert_into_scores(100, "score", "01.01.2020")
 
 
 def test_query_euqals_insert():
@@ -88,7 +90,10 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
+                "Test User",
+                10 + i,
+                datetime.date.today() - datetime.timedelta(days=i),
+            )
             assert result
 
     with api.app.app_context():
@@ -138,6 +143,13 @@ def test_get_top_n_high_score_list_structure():
     for player in result:
         assert "score" in player
         assert "name" in player
+
+
+def test_get_iteration_name():
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert isinstance(iteration_name, str)
 
 
 '''
