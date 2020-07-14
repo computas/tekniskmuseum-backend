@@ -13,6 +13,7 @@ import sys
 import os
 import logging
 import datetime
+import pdb
 from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
@@ -173,6 +174,7 @@ def view_high_score():
         "daily": daily_high_scores,
         "total": top_n_high_scores
     }
+    #pdb.set_trace()
     return json.jsonify(data), 200
 
 

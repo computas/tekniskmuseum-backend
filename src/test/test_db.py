@@ -15,8 +15,6 @@ token = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
-english_word = "swag"
-norwegian_word = "kulhet"
 
 
 def test_create_tables():
@@ -54,7 +52,8 @@ def test_insert_into_labels():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_labels(english_word, norwegian_word)
+        result = models.insert_into_labels(
+            str(uuid.uuid4().hex), str(uuid.uuid4().hex))
     assert result
 
 
@@ -84,7 +83,8 @@ def test_illegal_parameter_labels():
         into games table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_labels(1, [english_word, norwegian_word])
+        models.insert_into_labels(
+            1, [str(uuid.uuid4().hex), str(uuid.uuid4().hex)])
 
 
 '''

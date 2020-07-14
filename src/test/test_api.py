@@ -5,8 +5,11 @@ import json
 import pytest
 import werkzeug
 import tempfile
+import datetime
 from pytest import raises
 from webapp import api
+from webapp import models
+from test import test_db
 from test import config as cfg
 from werkzeug import exceptions as excp
 
@@ -229,6 +232,8 @@ def test_view_highscore(client):
         {"daily":[{"name":"mari","score":83}],
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
+    # write to database to make sure there is something to read
+    write_to_db()
     # get response
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
@@ -238,3 +243,11 @@ def test_view_highscore(client):
     assert(isinstance(response["total"], list))
     assert(isinstance(response["daily"][0], dict))
     assert(isinstance(response["total"][0], dict))
+
+
+def write_to_db():
+    with api.app.app_context():
+        for i in range(5):
+            result = models.insert_into_scores(
+                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
+            assert result
