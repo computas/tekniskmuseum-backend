@@ -23,6 +23,8 @@ from typing import List
 from utilities.keys import Keys
 from utilities import setup
 
+from utilities.setup import LABELS
+
 
 class Classifier:
     """
@@ -31,6 +33,7 @@ class Classifier:
             - upload_images() / reads image URLs from Blob Storage and uploads to Custom Vision
             - train() / trains a model
     """
+
     def __init__(self) -> None:
         """
             Reads configuration file
@@ -138,8 +141,17 @@ class Classifier:
             None
         """
         url_list = []
-        existing_tags = self.trainer.get_tags(self.project_id)
-        # create list of URLs to be uploaded
+        existing_tags = list(self.trainer.get_tags(self.project_id))
+
+        try:
+            container = self.blob_service_client.get_container_client(
+                Keys.get("CONTAINER_NAME")
+            )
+        except Exception as e:
+            print(
+                "could not find container with CONTAINER_NAME name error: ", e,
+            )
+
         for label in labels:
             # check if input has correct type
             if not isinstance(label, str):
@@ -157,27 +169,21 @@ class Classifier:
             else:
                 tag = tag[0]
 
-            try:
-                container = self.blob_service_client.get_container_client(
-                    Keys.get("CONTAINER_NAME")
-                )
-            except Exception as e:
-                print(
-                    "could not find container with label "
-                    + label
-                    + " error: ",
-                    e,
-                )
+            blob_prefix = f"old/{label}/"
+            blob_list = container.list_blobs(name_starts_with=blob_prefix)
 
-            for blob in container.list_blobs():
+            if not blob_list:
+                raise AttributeError("no images for this label")
+
+            for blob in blob_list:
+                # create list of URLs to be uploaded
                 blob_name = blob.name
-                blob_prefix = f"old/{label}"
-                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
 
-                if blob_name.startswith(blob_prefix):
-                    url_list.append(
-                        ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
-                    )
+                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
+                # print(Keys.get("CONTAINER_NAME"))
+                url_list.append(
+                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
+                )
 
         # upload URLs in chunks of 64
         for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
@@ -261,11 +267,11 @@ def main():
         -no more than two projects created in Azure Custom Vision
         -no more than 10 iterations done in one projectS
     """
-    test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-    labels = ["barn"]
+    test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
+
     classifier = Classifier()
-    classifier.upload_images(labels)
-    classifier.train(labels)
+    classifier.upload_images(LABELS)
+    classifier.train(LABELS)
 
     # classify image
     # with open(

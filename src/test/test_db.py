@@ -7,8 +7,7 @@ import uuid
 import time
 from webapp import api
 from webapp import models
-from datetime import timedelta
-from datetime import date
+import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
 
@@ -16,7 +15,6 @@ token = uuid.uuid4().hex
 labels = "label1, label2, label3"
 play_time = 21.0
 start_time = time.time()
-date = date.today()
 
 
 def test_create_tables():
@@ -32,7 +30,8 @@ def test_insert_into_games():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(token, labels, play_time, str(date))
+        result = models.insert_into_games(
+            token, labels, play_time, datetime.datetime.today())
 
     assert result
 
@@ -42,7 +41,8 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500, str(date))
+        result = models.insert_into_scores(
+            "Test User", 500, datetime.date.today())
 
     assert result
 
@@ -88,7 +88,7 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, str(date - timedelta(days=i)))
+                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
             assert result
 
     with api.app.app_context():
@@ -101,7 +101,7 @@ def test_get_top_n_high_score_list_sorted():
         Check that total high score list is sorted.
     """
     with api.app.app_context():
-        result = models.get_daily_high_score()
+        result = models.get_top_n_high_score_list(10)
 
     sorting_check_helper(result)
 
