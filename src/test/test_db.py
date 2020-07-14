@@ -193,7 +193,16 @@ def test_get_top_n_high_score_list_structure():
 
 
 def test_get_n_labels():
+    """
+        Test get_n_labels
+    """
     with api.app.app_context():
         result = models.get_n_labels(3)
 
     assert result
+
+
+def test_to_norwegian():
+    """
+        Test to_norwegian() function
+    """
