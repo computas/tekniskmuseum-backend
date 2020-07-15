@@ -187,16 +187,6 @@ def test_get_iteration_name():
     assert isinstance(iteration_name, str)
 
 
-def test_clear_table():
-    """
-        Test get_n_labels
-    """
-    with api.app.app_context():
-        result = models.get_n_labels(3)
-
-    assert result
-
-
 def test_get_n_labels_correct_size():
     """
         Test that get_n_labels return lists of correct sizes
@@ -205,8 +195,6 @@ def test_get_n_labels_correct_size():
         for i in range(5):
             result = models.get_n_labels(i)
             assert len(result) == i
-
-    assert result
 
 
 def test_get_n_labels_bad_reqeust():

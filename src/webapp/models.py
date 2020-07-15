@@ -351,8 +351,7 @@ def drop_table(table):
 
 def seed_labels(app, filepath):
     """
-        Read file in filepath and upload to database. This function is used to update labels in database.
-        Ideally it should be callable from the admin page.
+        Function for updating labels in database.
     """
     with app.app_context():
         if os.path.exists(filepath):
@@ -402,8 +401,7 @@ def get_n_labels(n):
         return random_list
 
     except Exception as e:
-        raise Exception("Could not read " + str(e)
-                        + " random rows from Labels table")
+        raise Exception("Could not read Labels table: " + str(e))
 
 
 def to_norwegian(english_label):
