@@ -12,6 +12,7 @@ import time
 import sys
 import os
 import logging
+import json
 import datetime
 from webapp import storage
 from webapp import models
@@ -21,7 +22,6 @@ from io import BytesIO
 from PIL import Image
 from flask import Flask
 from flask import request
-from flask import json
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
@@ -63,7 +63,7 @@ def start_game():
     data = {
         "token": token,
     }
-    return json.jsonify(data), 200
+    return json.dumps(data), 200
 
 
 @app.route("/getLabel", methods=["POST"])
@@ -84,7 +84,7 @@ def get_label():
     data = {
         "label": label
     }
-    return json.jsonify(data), 200
+    return json.dumps(data), 200
 
 
 @app.route("/classify", methods=["POST"])
@@ -141,7 +141,7 @@ def classify():
         "gameState": game_state,
     }
 
-    return json.jsonify(data), 200
+    return json.dumps(data), 200
 
 
 @app.route("/endGame", methods=["POST"])
@@ -181,7 +181,7 @@ def view_high_score():
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
-    return json.jsonify(data), 200
+    return json.dumps(data), 200
 
 
 @app.errorhandler(Exception)
