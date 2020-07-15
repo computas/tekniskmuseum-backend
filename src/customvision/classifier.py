@@ -24,7 +24,6 @@ from utilities.keys import Keys
 from utilities import setup
 from webapp import models
 from webapp import api
-from utilities.setup import LABELS
 
 
 class Classifier:
@@ -136,7 +135,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -291,8 +290,11 @@ def main():
         result, best_guess = classifier.predict_image(f)
         print(f"png result:\n{result}")
 
-    classifier.upload_images(LABELS)
-    classifier.train(LABELS)
+    with api.app.app_context():
+        labels = models.get_all_labels()
+
+    classifier.upload_images(labels)
+    classifier.train(labels)
 
 
 if __name__ == "__main__":
