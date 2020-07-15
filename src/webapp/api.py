@@ -150,12 +150,12 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
-    score = request.values["score"]
+    score = float(request.values["score"])
     player = models.get_record_from_player_in_game(token)
     game = models.get_record_from_game(player.game_id)
 
     if game.session_num != NUM_GAMES + 1:
-        return excp.BadRequest("Game not finished")
+        raise excp.BadRequest("Game not finished")
 
     today = datetime.date.today()
     models.insert_into_scores(name, score, today)
