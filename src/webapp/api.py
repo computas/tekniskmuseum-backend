@@ -81,9 +81,7 @@ def get_label():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     norwegian_label = models.to_norwegian(label)
-    data = {
-        "label": norwegian_label
-    }
+    data = {"label": norwegian_label}
     return json.dumps(data), 200
 
 
@@ -100,7 +98,7 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-    best_guess, certainty = classifier.predict_image(image)
+    certainty, best_guess = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
