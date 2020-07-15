@@ -5,7 +5,6 @@
         - start_game(): starts a game
         - submit_answer(): takes an image, returns the prediction and time used by user
 """
-
 import uuid
 import random
 import time
@@ -15,7 +14,7 @@ import logging
 import datetime
 from webapp import storage
 from webapp import models
-from utilities import setup
+from utilities.setup import NUM_GAMES, CERTAINTY_THRESHOLD, TOP_N
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -27,9 +26,6 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-NUM_GAMES = setup.num_games
-CERTAINTY_TRESHOLD = setup.certainty_threshold
-HIGH_SCORE_LIST_SIZE = setup.top_n
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
