@@ -23,7 +23,7 @@ def test_create_tables():
     """
         Check that the tables exists.
     """
-    result = models.create_tables(api.APP)
+    result = models.create_tables(api.app)
     assert result
 
 
@@ -31,7 +31,7 @@ def test_insert_into_games():
     """
         Check that records exists in Games table after inserting.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.insert_into_games(
             Test_values.GAME_ID, cfg.LABELS, Test_values.TODAY
         )
@@ -43,7 +43,7 @@ def test_insert_into_scores():
     """
         Check that records exists in Scores table after inserting.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.insert_into_scores(
             "Test User", 500, Test_values.TODAY
         )
@@ -55,7 +55,7 @@ def test_insert_into_player_in_game():
     """
         Check that record exists in PlayerInGame table after inserting.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.insert_into_player_in_game(
             Test_values.TOKEN, Test_values.GAME_ID, cfg.PLAY_TIME
         )
@@ -105,7 +105,7 @@ def test_query_euqals_insert_games():
     """
         Check that inserted record is the same as record catched by query.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_record_from_game(Test_values.GAME_ID)
 
     assert result.labels == cfg.LABELS
@@ -116,7 +116,7 @@ def test_query_equals_insert_player_in_game():
     """
         Check that inserted record is the same as record catched by query.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_record_from_player_in_game(Test_values.TOKEN)
 
     assert result.game_id == Test_values.GAME_ID
@@ -128,7 +128,7 @@ def test_get_daily_high_score_sorted():
         Check that daily high score list is sorted.
     """
     # insert random data into db
-    with api.APP.app_context():
+    with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
                 "Test User",
@@ -137,7 +137,7 @@ def test_get_daily_high_score_sorted():
             )
             assert result
 
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_daily_high_score()
     sorting_check_helper(result)
 
@@ -146,7 +146,7 @@ def test_get_top_n_high_score_list_sorted():
     """
         Check that total high score list is sorted.
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_top_n_high_score_list(10)
 
     sorting_check_helper(result)
@@ -166,7 +166,7 @@ def test_get_daily_high_score_structure():
     """
         Check that highscore data has correct attributes: score and name
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_daily_high_score()
 
     for player in result:
@@ -178,7 +178,7 @@ def test_get_top_n_high_score_list_structure():
     """
         Check that highscore data has correct attributes: score and name
     """
-    with api.APP.app_context():
+    with api.app.app_context():
         result = models.get_top_n_high_score_list(10)
 
     for player in result:
@@ -187,7 +187,7 @@ def test_get_top_n_high_score_list_structure():
 
 
 def test_get_iteration_name():
-    with api.APP.app_context():
+    with api.app.app_context():
         iteration_name = models.get_iteration_name()
 
     assert isinstance(iteration_name, str)

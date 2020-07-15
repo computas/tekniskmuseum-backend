@@ -9,11 +9,12 @@ import sys
 import pytest
 import argparse
 
+
 # parse cli arguments
-PARSER = argparse.ArgumentParser(description='get key string')
-PARSER.add_argument('--keys', action='store', type=str,
+parser = argparse.ArgumentParser(description='get key string')
+parser.add_argument('--keys', action='store', type=str,
                     help='The text to parse.')
-ARGUMENTS = PARSER.parse_args()
+ARGUMENTS = parser.parse_args()
 # export keys
 KEYLIST = json.loads(ARGUMENTS.keys)
 for keydict in KEYLIST:

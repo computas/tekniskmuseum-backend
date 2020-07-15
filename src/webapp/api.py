@@ -28,25 +28,25 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
 # Initialization and global variables
-APP = Flask(__name__)
-APP.config.from_object("utilities.setup.Flask_config")
-models.DB.init_app(APP)
-models.create_tables(APP)
-CLASSIFIER = Classifier()
+app = Flask(__name__)
+app.config.from_object("utilities.setup.Flask_config")
+models.db.init_app(app)
+models.create_tables(app)
+classifier = Classifier()
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
-    APP.logger.handlers = gunicorn_logger.handlers
-    APP.logger.setLevel(gunicorn_logger.level)
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 
 
-@APP.route("/")
+@app.route("/")
 def hello():
-    APP.logger.info("We're up!")
+    app.logger.info("We're up!")
     return "Yes, we're up", 200
 
 
-@APP.route("/startGame")
+@app.route("/startGame")
 def start_game():
     """
         Starts a new game by providing the client with a unique token.
@@ -65,7 +65,7 @@ def start_game():
     return json.jsonify(data), 200
 
 
-@APP.route("/getLabel", methods=["POST"])
+@app.route("/getLabel", methods=["POST"])
 def get_label():
     """
         Provides the client with a new word.
@@ -86,7 +86,7 @@ def get_label():
     return json.jsonify(data), 200
 
 
-@APP.route("/classify", methods=["POST"])
+@app.route("/classify", methods=["POST"])
 def classify():
     """
         Classify endpoint for continious guesses.
@@ -99,7 +99,7 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-    best_guess, certainty = CLASSIFIER.predict_image(image)
+    best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
@@ -143,7 +143,7 @@ def classify():
     return json.jsonify(data), 200
 
 
-@APP.route("/endGame", methods=["POST"])
+@app.route("/endGame", methods=["POST"])
 def end_game():
     """
         Endpoint for ending game consisting of a few sessions.
@@ -166,7 +166,7 @@ def end_game():
     return "OK", 200
 
 
-@APP.route("/viewHighScore")
+@app.route("/viewHighScore")
 def view_high_score():
     """
         Read highscore from database. Return top n of all time and all of
@@ -183,7 +183,7 @@ def view_high_score():
     return json.jsonify(data), 200
 
 
-@APP.errorhandler(Exception)
+@app.errorhandler(Exception)
 def handle_exception(error):
     """
        Captures all exceptions raised. If the Exception is a HTTPException the
@@ -195,7 +195,7 @@ def handle_exception(error):
         if error.code >= 400 and error.code < 500:
             return error
     else:
-        APP.logger.error(error)
+        app.logger.error(error)
         return "Internal server error", 500
 
 

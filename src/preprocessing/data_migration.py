@@ -14,17 +14,17 @@ from utilities.keys import Keys
 
 
 CONNECT_STR = Keys.get("BLOB_CONNECTION_STRING")
-PARSER = argparse.ArgumentParser(
+parser = argparse.ArgumentParser(
     description="convert .ndjson into .png and upload to azure blobstore"
 )
-PARSER.add_argument(
+parser.add_argument(
     "classNames",
     metavar="names",
     type=str,
     nargs="+",
     help="names of the classes that you want to convert",
 )
-PARSER.add_argument(
+parser.add_argument(
     "-n", type=int, default=50, help="how many images of each class"
 )
 
@@ -140,7 +140,7 @@ def main():
     """
         Main function of the script.
     """
-    args = PARSER.parse_args()
+    args = parser.parse_args()
     cnames = args.classNames
     imgpath = "./preprocessing/images"
     blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
