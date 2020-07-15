@@ -17,6 +17,7 @@ labels = "label1, label2, label3"
 play_time = 11.0
 start_time = time.time()
 today = datetime.datetime.today()
+CV_ITERATION_NAME_LENGTH = 36
 
 
 def test_create_tables():
@@ -180,11 +181,24 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
-def test_get_iteration_name():
+def test_get_iteration_name_is_string():
+    """
+        Tests if it's possible to get an iteration name from the database and the type is str
+    """
     with api.app.app_context():
         iteration_name = models.get_iteration_name()
 
     assert isinstance(iteration_name, str)
+
+
+def test_get_iteration_name_length():
+    """
+        Test if the result returned has specified length
+    """
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert len(iteration_name) == CV_ITERATION_NAME_LENGTH
 
 
 '''
