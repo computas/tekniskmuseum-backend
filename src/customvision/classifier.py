@@ -277,8 +277,13 @@ def main():
     test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
     classifier = Classifier()
-    classifier.upload_images(LABELS)
-    classifier.train(LABELS)
+
+    with api.app.app_context():
+        best_guess, result = classifier.predict_image_url(test_url)
+        print(f"best guess: {best_guess} url result {result}")
+
+        classifier.upload_images(LABELS)
+        classifier.train(LABELS)
 
     # classify image
     # with open(
@@ -289,8 +294,6 @@ def main():
     # result = classifier.predict_image(f)
     # print(f"png result {result}")
     # classify image with URL reference
-    best_guess, result = classifier.predict_image_url(test_url)
-    print(f"best guess: {best_guess} url result {result}")
 
 
 if __name__ == "__main__":
