@@ -416,7 +416,7 @@ def get_all_labels():
     try:
         # read all english labels in database
         labels = Labels.query.all()
-        return labels
+        return [str(label.english) for label in labels]
 
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
@@ -434,4 +434,3 @@ def to_norwegian(english_label):
         raise AttributeError(
             "Could not find translation in Labels table: " + str(e)
         )
-

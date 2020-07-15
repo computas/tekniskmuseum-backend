@@ -251,7 +251,7 @@ def test_db_cv_consistent():
         test if the db and cv has same labels
     """
     with api.app.app_context():
-        labels = models.get_n_labels(48)
+        labels = models.get_all_labels()
 
     cv_labels = LABELS
     for label in labels:
