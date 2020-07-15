@@ -80,14 +80,8 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-<<<<<<< HEAD
-    data = {"label": label}
-=======
     norwegian_label = models.to_norwegian(label)
-    data = {
-        "label": norwegian_label
-    }
->>>>>>> 8b5916d8c3f44b934d5754d53fe03e2ffb9175e6
+    data = {"label": norwegian_label}
     return json.dumps(data), 200
 
 
