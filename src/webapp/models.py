@@ -351,7 +351,7 @@ def drop_table(table):
 
 def seed_labels(app, filepath):
     """
-        Read file in filepath and upload to database. This function is used to update labels in database. 
+        Read file in filepath and upload to database. This function is used to update labels in database.
         Ideally it should be callable from the admin page.
     """
     with app.app_context():
