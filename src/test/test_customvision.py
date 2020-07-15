@@ -35,7 +35,7 @@ def test_best_guess_is_string(classifier):
     path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(path, cfg.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
-        best_guess, probabilitites = classifier.predict_image(fh)
+        probabilities, best_guess = classifier.predict_image(fh)
         assert type(best_guess) is str
 
 
@@ -46,8 +46,8 @@ def test_probabilities_format(classifier):
     path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(path, cfg.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
-        best_guess, probabilitites = classifier.predict_image(fh)
-        assert type(probabilitites) is dict
-        for k, v in probabilitites.items():
+        probabilities, best_guess = classifier.predict_image(fh)
+        assert type(probabilities) is dict
+        for k, v in probabilities.items():
             assert type(k) is str
             assert type(v) is float
