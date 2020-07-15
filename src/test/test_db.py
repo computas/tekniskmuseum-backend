@@ -254,8 +254,8 @@ def test_db_cv_consistent():
         labels = models.get_n_labels(48)
 
     cv_labels = LABELS
-    for l in labels:
-        assert l in (cv_labels)
+    for label in labels:
+        assert label in (cv_labels)
 
-    for l in cv_labels:
-        assert l in labels
+    for label in cv_labels:
+        assert label in labels
