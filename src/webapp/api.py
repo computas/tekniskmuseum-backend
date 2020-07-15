@@ -27,12 +27,9 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-LABELS = setup.LABELS
-TIME_LIMIT = setup.time_limit
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
 HIGH_SCORE_LIST_SIZE = setup.top_n
-
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
@@ -58,7 +55,7 @@ def start_game():
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
-    labels = random.sample(LABELS, k=NUM_GAMES)
+    labels = models.get_n_labels(NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_player_in_game(token, game_id, 0.0)
@@ -75,8 +72,8 @@ def get_label():
         Provides the client with a new word.
     """
     token = request.values["token"]
-    player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.game_id)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
     # Check if game complete
     if game.session_num > NUM_GAMES:
@@ -84,7 +81,6 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    # translate
     data = {
         "label": label
     }
@@ -104,15 +100,14 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player_in_game = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player_in_game.game_id)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     best_certainty = certainty[best_guess]
@@ -122,18 +117,17 @@ def classify():
         and best_guess == label
         and best_certainty >= CERTAINTY_TRESHOLD
     )
-
     # End game if player win or loose
     if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
-        cum_time = player_in_game.play_time + time_left
+        cum_time = player.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player_in_game.game_id, token, session_num, cum_time
+            player.game_id, token, session_num, cum_time
         )
         # Update game state to be done
         game_state = "Done"

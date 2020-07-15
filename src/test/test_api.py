@@ -1,13 +1,15 @@
 import os
 import io
 import sys
-import json
+from flask import json
 import pytest
 import werkzeug
 import tempfile
-from webapp import models
+import datetime
 from pytest import raises
 from webapp import api
+from webapp import models
+from test import test_db
 from test import config as cfg
 from werkzeug import exceptions as excp
 
@@ -99,7 +101,8 @@ def test_classify_correct(client):
     time = 0
     # Need to start a new game to get a token we can submit
     res1 = client.get("/startGame")
-    response = json.loads(res1.data.decode("utf-8"))
+    res1 = res1.data.decode("utf-8")
+    response = json.loads(res1)
     token = response["token"]
     # submit answer with parameters and retrieve results
     res = classify_helper(
@@ -201,8 +204,7 @@ def classify_helper(client, data_path, image, time, token, user):
     answer = {
         "image": (img_string, image),
         "token": token,
-        "time": time,
-        "name": user
+        "time": time
     }
     res = client.post(
         "/classify", content_type="multipart/form-data", data=answer)
@@ -224,31 +226,19 @@ def construct_path(dir_list):
     return path
 
 
-'''
 def test_view_highscore(client):
     """
         Test if highscore data is strucutred correctly, example of format:
         {"daily":[{"name":"mari","score":83}],
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
-
     # get response
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
     #check that data structure is correct
-    if response["total"][0] is None:
-        # write to database to make sure there is something to read
-        write_to_db()
-
-    assert(isinstance(response, dict))
-    assert(isinstance(response["daily"], list))
-    assert(isinstance(response["total"], list))
-    assert(isinstance(response["daily"][0], dict))
-    assert(isinstance(response["total"][0], dict))
-def write_to_db():
-    with api.app.app_context():
-        for i in range(5):
-            result = models.insert_into_scores(
-                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
-            assert result
-'''
+    if not response["total"][0] is None:
+        assert(isinstance(response, dict))
+        assert(isinstance(response["daily"], list))
+        assert(isinstance(response["total"], list))
+        assert(isinstance(response["daily"][0], dict))
+        assert(isinstance(response["total"][0], dict))

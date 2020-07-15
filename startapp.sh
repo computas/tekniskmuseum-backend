@@ -74,7 +74,13 @@ if [[ $test = true ]]; then
         exit
     else
         printHeadline 'PEP8 linting'
-        flake8 && printHeadline green 'no linting errors'
+        flake8 
+        # check if linting is successfull
+        if [[ $? -eq 0 ]]; then
+            printHeadline green 'no linting errors'
+        else
+            printHeadline red 'linting failed'
+        fi
         python -m pytest
         exit
     fi
