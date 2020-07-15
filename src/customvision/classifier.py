@@ -93,7 +93,8 @@ class Classifier:
             img_url: Image URL
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
@@ -117,7 +118,8 @@ class Classifier:
             img_url: .png file
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
