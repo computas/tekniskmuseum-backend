@@ -1,4 +1,5 @@
 # **Teknisk Museum Back-End**
+_This repository contains source code and documentation for an API. It communicates through HTTP requests and serves as a backend for the project at Teknisk Museum. The API is concerned with single player mechanics, and doesn't use Websockets (like the multiplayer API), as synchronization between players isn't an issue in single player gameplay._
 ## **Usage**
 The main entry point off the app is the bash script `startapp.sh`.
 Just runing the script `bash startapp.sh` will launch the app.

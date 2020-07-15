@@ -8,7 +8,6 @@ import os
 import sys
 import pytest
 import argparse
-import pdb
 
 # parse cli arguments
 parser = argparse.ArgumentParser(description='get key string')
