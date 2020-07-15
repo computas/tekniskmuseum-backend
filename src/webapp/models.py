@@ -355,20 +355,17 @@ def seed_labels(app, filepath):
     """
     with app.app_context():
         if os.path.exists(filepath):
-            # clear table
-            Labels.query.delete()
-            db.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=",")
-
                     for row in readCSV:
-                        insert_into_labels(row[0], row[1])
+                        # Insert label into Labels table if not present
+                        if Labels.query.get(row[0]) is None:
+                            insert_into_labels(row[0], row[1])
                 except AttributeError as e:
                     raise AttributeError(
-                        "Could not insert into games: " + str(e)
+                        "Could not insert into Labels table: " + str(e)
                     )
-
         else:
             raise AttributeError("File path not found")
 
@@ -384,7 +381,7 @@ def insert_into_labels(english, norwegian):
             db.session.commit()
             return True
         except Exception as e:
-            raise Exception("Could not insert into label: " + str(e))
+            raise Exception("Could not insert into Labels table: " + str(e))
     else:
         raise excp.BadRequest("English and norwegian must be strings")
 
