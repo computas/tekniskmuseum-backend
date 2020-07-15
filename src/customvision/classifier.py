@@ -24,7 +24,6 @@ from utilities.keys import Keys
 from utilities import setup
 from webapp import models
 from webapp import api
-from utilities.setup import LABELS
 
 
 class Classifier:

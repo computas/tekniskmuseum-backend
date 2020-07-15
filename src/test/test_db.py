@@ -11,7 +11,6 @@ from webapp import models
 from pytest import raises
 from werkzeug import exceptions as excp
 from test import config as cfg
-from utilities.setup import LABELS
 
 
 class TestValues:
@@ -244,18 +243,3 @@ def test_get_iteration_name_length():
         iteration_name = models.get_iteration_name()
 
     assert len(iteration_name) == TestValues.CV_ITERATION_NAME_LENGTH
-
-
-def test_db_cv_consistent():
-    """
-        test if the db and cv has same labels
-    """
-    with api.app.app_context():
-        labels = models.get_all_labels()
-
-    cv_labels = LABELS
-    for label in labels:
-        assert label in (cv_labels)
-
-    for label in cv_labels:
-        assert label in labels

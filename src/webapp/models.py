@@ -396,7 +396,7 @@ def insert_into_labels(english, norwegian):
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses 3 random labels in a list
+        Reads all rows from database and chooses n random labels in a list
     """
     try:
         # read all english labels in database
@@ -411,7 +411,7 @@ def get_n_labels(n):
 
 def get_all_labels():
     """
-        Reads all rows from database and chooses 3 random labels in a list
+        Reads all labels from database
     """
     try:
         # read all english labels in database
