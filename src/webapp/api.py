@@ -13,8 +13,7 @@ import sys
 import os
 import logging
 import json
-from datetime import date
-from datetime import datetime
+import datetime
 from webapp import storage
 from webapp import models
 from utilities import setup
@@ -26,14 +25,11 @@ from flask import request
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
-# Initialization
+# Initialization and global variables
 app = Flask(__name__)
-labels = setup.labels
-time_limit = setup.time_limit
-num_games = setup.num_games
-certainty_threshold = setup.certainty_threshold
-high_score_list_size = setup.top_n
-
+NUM_GAMES = setup.num_games
+CERTAINTY_TRESHOLD = setup.certainty_threshold
+HIGH_SCORE_LIST_SIZE = setup.top_n
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
@@ -57,10 +53,12 @@ def start_game():
         Starts a new game by providing the client with a unique token.
     """
     # start a game and insert it into the games table
+    game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
-    labels_list = random.choices(labels, k=num_games)
-    today = str(date.today())
-    models.insert_into_games(token, json.dumps(labels_list), 0.0, today)
+    labels = models.get_n_labels(NUM_GAMES)
+    today = datetime.datetime.today()
+    models.insert_into_games(game_id, json.dumps(labels), today)
+    models.insert_into_player_in_game(token, game_id, 0.0)
     # return game data as json object
     data = {
         "token": token,
@@ -74,15 +72,18 @@ def get_label():
         Provides the client with a new word.
     """
     token = request.values["token"]
-    game = models.get_record_from_game(token)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
     # Check if game complete
-    if game.session_num > num_games:
+    if game.session_num > NUM_GAMES:
         raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    data = {"label": label}
+    data = {
+        "label": label
+    }
     return json.dumps(data), 200
 
 
@@ -99,38 +100,39 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-
     best_guess, certainty = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
-    time_used = float(request.values["time"])
+    time_left = float(request.values["time"])
     # Get label for game session
-    game = models.get_record_from_game(token)
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
-        time_used < time_limit
+        time_left > 0
         and best_guess == label
-        and best_certainty >= certainty_threshold)
-    has_won = (time_used < time_limit
-               and best_guess == label
-               and best_certainty >= certainty_threshold)
+        and best_certainty >= CERTAINTY_TRESHOLD
+    )
     # End game if player win or loose
-    if has_won or time_used >= time_limit:
+    if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
         # Get cumulative time
-        cum_time = game.play_time + time_used
+        cum_time = player.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
-        models.update_game(token, session_num, cum_time)
+        models.update_game_for_player(
+            player.game_id, token, session_num, cum_time
+        )
         # Update game state to be done
         game_state = "Done"
 
+    # translate
     data = {
         "certainty": certainty,
         "guess": best_guess,
@@ -149,15 +151,18 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
-    game = models.get_record_from_game(token)
+    score = request.values["score"]
+    player = models.get_record_from_player_in_game(token)
+    game = models.get_record_from_game(player.game_id)
 
-    if game.session_num == num_games + 1:
-        score = game.play_time
-        today = str(date.today())
-        models.insert_into_scores(name, score, today)
+    if game.session_num != NUM_GAMES + 1:
+        return excp.BadRequest("Game not finished")
+
+    today = datetime.date.today()
+    models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
-    models.delete_session_from_game(token)
+    models.delete_session_from_game(player.game_id)
     models.delete_old_games()
     return "OK", 200
 
@@ -165,15 +170,16 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and top n of last 24 hours.
+        Read highscore from database. Return top n of all time and all of
+        last 24 hours.
     """
-    #read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(high_score_list_size)
-    #read daily high score
+    # read top n overall high score
+    top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
+    # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
         "daily": daily_high_scores,
-        "total": top_n_high_scores
+        "total": top_n_high_scores,
     }
     return json.dumps(data), 200
 
@@ -202,7 +208,7 @@ def allowed_file(image):
         raise excp.BadRequest("No image submitted")
 
     # Check that the file is a png
-    is_png = image.content_type == 'image/png'
+    is_png = image.content_type == "image/png"
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution

@@ -2,21 +2,21 @@
     Testfunctions for testing functions to manipualte the database. The
     functions is used on an identical test database.
 """
-
+import os
 import uuid
 import time
 from webapp import api
 from webapp import models
-from datetime import timedelta
-from datetime import date
+import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
 
 token = uuid.uuid4().hex
+game_id = uuid.uuid4().hex
 labels = "label1, label2, label3"
-play_time = 21.0
+play_time = 11.0
 start_time = time.time()
-date = date.today()
+today = datetime.datetime.today()
 
 
 def test_create_tables():
@@ -32,7 +32,7 @@ def test_insert_into_games():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(token, labels, play_time, str(date))
+        result = models.insert_into_games(game_id, labels, today)
 
     assert result
 
@@ -42,7 +42,17 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500, str(date))
+        result = models.insert_into_scores("Test User", 500, today)
+
+    assert result
+
+
+def test_insert_into_player_in_game():
+    """
+        Check that record exists in PlayerInGame table after inserting.
+    """
+    with api.app.app_context():
+        result = models.insert_into_player_in_game(token, game_id, play_time)
 
     assert result
 
@@ -54,7 +64,8 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            "token", ["label1", "label2", "label3"], 10, "date_time")
+            10, ["label1", "label2", "label3"], "date_time"
+        )
 
 
 def test_illegal_parameter_scores():
@@ -63,21 +74,47 @@ def test_illegal_parameter_scores():
         into scores table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_scores(
-            100, "score", "01.01.2020")
+        models.insert_into_scores(100, "score", "01.01.2020")
 
 
-def test_query_euqals_insert():
+def test_illegal_parameter_labels():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into games table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_labels(1, None)
+
+
+def test_illegal_parameter_player_in_game():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into player in game table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_player_in_game(100, 200, 11)
+
+
+def test_query_euqals_insert_games():
     """
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(token)
+        result = models.get_record_from_game(game_id)
 
-    assert result.token == token
     assert result.labels == labels
-    assert result.play_time == play_time
     # Datetime assertion can't be done due to millisec differents
+
+
+def test_query_equals_insert_player_in_game():
+    """
+        Check that inserted record is the same as record catched by query.
+    """
+    with api.app.app_context():
+        result = models.get_record_from_player_in_game(token)
+
+    assert result.game_id == game_id
+    assert result.play_time == play_time
 
 
 def test_get_daily_high_score_sorted():
@@ -88,7 +125,10 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, str(date - timedelta(days=i)))
+                "Test User",
+                10 + i,
+                datetime.date.today() - datetime.timedelta(days=i),
+            )
             assert result
 
     with api.app.app_context():
@@ -101,7 +141,7 @@ def test_get_top_n_high_score_list_sorted():
         Check that total high score list is sorted.
     """
     with api.app.app_context():
-        result = models.get_daily_high_score()
+        result = models.get_top_n_high_score_list(10)
 
     sorting_check_helper(result)
 
@@ -140,17 +180,20 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
+def test_get_iteration_name():
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert isinstance(iteration_name, str)
+
+
 '''
 def test_clear_table():
     """
-        Check that number of rows is zero after clearing both tables.
+        Test get_n_labels
     """
     with api.app.app_context():
-        models.clear_table("Games")
-        models.clear_table("Scores")
-        games_rows = models.get_size_of_table("Games")
-        scores_rows = models.get_size_of_table("Scores")
+        result = models.get_n_labels(3)
 
-    assert games_rows == 0
-    assert scores_rows == 0
+    assert result
 '''

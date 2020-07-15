@@ -60,6 +60,8 @@ while [[ "$#" -gt 0 ]]; do
                             shift ;;
         -w=* | --workers=*) nworkers="${1#*=}";
                             shift ;;
+        --keys=*)           keystring="${1#*=}";
+                            shift ;;
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
     esac
@@ -67,10 +69,21 @@ done
 
 if [[ $test = true ]]; then
     cd src/
-    printHeadline 'PEP8 linting'
-    flake8 && printHeadline green 'no linting errors'
-    python -m pytest
-    exit
+    if [[ ! -z "$keystring" ]]; then
+        python runTests.py --keys="$keystring"
+        exit
+    else
+        printHeadline 'PEP8 linting'
+        flake8 
+        # check if linting is successfull
+        if [[ $? -eq 0 ]]; then
+            printHeadline green 'no linting errors'
+        else
+            printHeadline red 'linting failed'
+        fi
+        python -m pytest
+        exit
+    fi
 elif [[ $help = true ]]; then
     echo "$usage"
     exit
@@ -94,13 +107,11 @@ if [[ $debug = true ]]; then
     export DEBUG=true
     printline
     gunicorn --reload $default_settings
+elif [[ $IS_PRODUCTION = true ]]; then
+    gunicorn --bind=0.0.0.0 --log-file=$logfile $default_settings
+    echo "Logs written to: $logfile"
 else
-    if [[ $IS_PRODUCTION = true ]]; then
-        gunicorn --bind=0.0.0.0 --log-file=$logfile $default_settings
-        echo "Logs written to: $logfile"
-    else
-        printline
-        gunicorn --bind=0.0.0.0 $default_settings
-    fi
+    printline
+    gunicorn --bind=0.0.0.0 $default_settings
 fi
 printline
