@@ -32,8 +32,7 @@ def test_insert_into_games():
         Check that records exists in Games table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_games(
-            game_id, labels, today)
+        result = models.insert_into_games(game_id, labels, today)
 
     assert result
 
@@ -43,8 +42,7 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores(
-            "Test User", 500, today)
+        result = models.insert_into_scores("Test User", 500, today)
 
     assert result
 
@@ -54,8 +52,7 @@ def test_insert_into_player_in_game():
         Check that record exists in PlayerInGame table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_player_in_game(
-            token, game_id, play_time)
+        result = models.insert_into_player_in_game(token, game_id, play_time)
 
     assert result
 
@@ -67,7 +64,8 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            10, ["label1", "label2", "label3"], "date_time")
+            10, ["label1", "label2", "label3"], "date_time"
+        )
 
 
 def test_illegal_parameter_scores():
@@ -76,8 +74,7 @@ def test_illegal_parameter_scores():
         into scores table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_scores(
-            100, "score", "01.01.2020")
+        models.insert_into_scores(100, "score", "01.01.2020")
 
 
 def test_illegal_parameter_labels():
@@ -86,8 +83,7 @@ def test_illegal_parameter_labels():
         into games table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_labels(
-            1, None)
+        models.insert_into_labels(1, None)
 
 
 def test_illegal_parameter_player_in_game():
@@ -96,8 +92,7 @@ def test_illegal_parameter_player_in_game():
         into player in game table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_player_in_game(
-            100, 200, 11)
+        models.insert_into_player_in_game(100, 200, 11)
 
 
 def test_query_euqals_insert_games():
@@ -130,7 +125,10 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
+                "Test User",
+                10 + i,
+                datetime.date.today() - datetime.timedelta(days=i),
+            )
             assert result
 
     with api.app.app_context():
@@ -182,7 +180,14 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
-def test_get_n_labels():
+def test_get_iteration_name():
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert isinstance(iteration_name, str)
+
+
+def test_clear_table():
     """
         Test get_n_labels
     """
