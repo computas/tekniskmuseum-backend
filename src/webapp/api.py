@@ -80,8 +80,9 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    norwegian_label = models.to_norwegian(label)
     data = {
-        "label": label
+        "label": norwegian_label
     }
     return json.dumps(data), 200
 
@@ -89,7 +90,7 @@ def get_label():
 @app.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continious guesses.
+        Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly

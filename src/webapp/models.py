@@ -351,7 +351,7 @@ def drop_table(table):
 
 def seed_labels(app, filepath):
     """
-        Read file in filepath and upload to database
+        Function for updating labels in database.
     """
     with app.app_context():
         if os.path.exists(filepath):
@@ -401,9 +401,7 @@ def get_n_labels(n):
         return random_list
 
     except Exception as e:
-        return Exception(
-            "Could not read " + str(e) + " random rows from Labels table"
-        )
+        raise Exception("Could not read Labels table: " + str(e))
 
 
 def to_norwegian(english_label):
@@ -411,10 +409,9 @@ def to_norwegian(english_label):
         Reads the labels tabel and return the norwegian translation of the english word
     """
     try:
-        norwegian_word = Labels.query.get(english_label)
-        return norwegian_word
+        query = Labels.query.get(english_label)
+        return str(query.norwegian)
 
     except AttributeError as e:
-        return AttributeError(
-            "Could not find translation in Labels table: " + str(e)
-        )
+        raise AttributeError(
+            "Could not find translation in Labels table: " + str(e))
