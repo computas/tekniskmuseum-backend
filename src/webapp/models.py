@@ -12,6 +12,7 @@ from werkzeug import exceptions as excp
 
 db = SQLAlchemy()
 
+
 class Iteration(db.Model):
     """
         Model for storing the currently used iteration of the ML model.
@@ -100,7 +101,7 @@ def insert_into_games(game_id, labels, date):
         raise excp.BadRequest(
             "game_id has to be string, labels has to be string "
             "and date has to be datetime.datetime."
-            )
+        )
 
 
 def insert_into_scores(name, score, date):
