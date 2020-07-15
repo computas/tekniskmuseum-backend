@@ -22,6 +22,8 @@ from typing import Dict
 from typing import List
 from utilities.keys import Keys
 from utilities import setup
+from webapp import models
+from webapp import api
 
 from utilities.setup import LABELS
 
@@ -80,6 +82,8 @@ class Classifier:
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
         self.iteration_name = puplished_iterations[-1].publish_name
+        with api.app.app_context():
+            models.update_iteration_name(self.iteration_name)
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -91,6 +95,7 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
+        self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
         )
@@ -112,6 +117,8 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img
         )
@@ -257,7 +264,7 @@ class Classifier:
             iteration_name,
             self.prediction_resource_id,
         )
-        self.iteration_name = iteration_name
+        self.iteration_name = models.update_iteration_name(iteration_name)
 
 
 def main():
