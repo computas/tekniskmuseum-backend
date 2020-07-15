@@ -40,7 +40,7 @@ def vector_to_raster(
     fg_color=(0, 0, 0),
     dirp="",
     keys=[],
-    ):
+):
     """
         padding and line_diameter are relative to the original 256x256 image.
     """
@@ -157,9 +157,7 @@ def main():
         if container_name not in [
             c["name"] for c in blob_service_client.list_containers()
         ]:
-            container_client = blob_service_client.create_container(
-                container_name
-            )
+            blob_service_client.create_container(container_name)
 
         if not os.path.exists(dirp):
             os.makedirs(dirp)
@@ -167,7 +165,7 @@ def main():
         vectors = get_images_from_class(className, N=args.n)
         paths = [v["drawing"] for v in vectors]
         keys = [v["key_id"] for v in vectors]
-        raster = vector_to_raster(
+        vector_to_raster(
             paths,
             blob_service_client,
             side=256,

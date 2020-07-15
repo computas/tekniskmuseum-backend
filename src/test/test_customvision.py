@@ -18,7 +18,7 @@ def test_prediction_image_does_not_crash(classifier):
     """
         assert classifier is able to get a predicition without crashing.
     """
-    path = construct_path(cfg.api_path_data)
+    path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(path, cfg.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
         try:
@@ -32,7 +32,7 @@ def test_best_guess_is_string(classifier):
     """
         Test that the best guess from the classifier is a string.
     """
-    path = construct_path(cfg.api_path_data)
+    path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(path, cfg.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
         best_guess, probabilitites = classifier.predict_image(fh)
@@ -43,7 +43,7 @@ def test_probabilities_format(classifier):
     """
         Test that the probability items are of the correct type.
     """
-    path = construct_path(cfg.api_path_data)
+    path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(path, cfg.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
         best_guess, probabilitites = classifier.predict_image(fh)
