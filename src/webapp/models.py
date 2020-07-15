@@ -2,6 +2,7 @@
     Classes for describing tables in the database and additional functions for
     manipulating them.
 """
+
 import datetime
 import csv
 import os
@@ -12,15 +13,10 @@ from werkzeug import exceptions as excp
 DB = SQLAlchemy()
 
 
-class DataBaseException(Exception):
-    """
-        Custom exception for DB errors.
-    """
-
-    pass
-
-
 class Iteration(DB.Model):
+    """
+        Model for storing the currently used iteration of the ML model.
+    """
     iteration_name = DB.Column(DB.String(64), primary_key=True)
 
 
@@ -30,7 +26,6 @@ class Games(DB.Model):
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
-
     game_id = DB.Column(DB.NVARCHAR(32), primary_key=True)
     session_num = DB.Column(DB.Integer, default=1)
     labels = DB.Column(DB.String(64))
@@ -42,11 +37,20 @@ class Scores(DB.Model):
         This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
-
     score_id = DB.Column(DB.Integer, primary_key=True, autoincrement=True)
     name = DB.Column(DB.String(32))
     score = DB.Column(DB.Integer, nullable=False)
     date = DB.Column(DB.Date)
+
+
+class PlayerInGame(DB.Model):
+    """
+        Table for attributes connected to a player in the game. game_id is a
+        foreign key to the game table.
+    """
+    token = DB.Column(DB.NVARCHAR(32), primary_key=True)
+    game_id = DB.Column(DB.NVARCHAR(32), nullable=False)
+    play_time = DB.Column(DB.Float, nullable=False)
 
 
 class Labels(DB.Model):
@@ -56,20 +60,8 @@ class Labels(DB.Model):
         - translating english labels into norwgian
         - keeping track of all possible labels
     """
-
     english = DB.Column(DB.String(32), primary_key=True)
     norwegian = DB.Column(DB.String(32))
-
-
-class PlayerInGame(DB.Model):
-    """
-        Table for attributes connected to a player in the game. game_id is a
-        foreign key to the game table.
-    """
-
-    token = DB.Column(DB.NVARCHAR(32), primary_key=True)
-    game_id = DB.Column(DB.NVARCHAR(32), nullable=False)
-    play_time = DB.Column(DB.Float, nullable=False)
 
 
 # Functions to manipulate the tables above
@@ -237,7 +229,8 @@ def update_game(game_id, session_num, play_time):
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
 def update_game_for_player(game_id, token, session_num, play_time):
     """
-        Docstring.
+        Update game and player_in_game record for the incomming game_id and
+        token with the given parameters.
     """
     try:
         game = Games.query.get(game_id)
