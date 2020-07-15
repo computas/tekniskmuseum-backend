@@ -5,9 +5,9 @@
 import os
 import uuid
 import time
+import datetime
 from webapp import api
 from webapp import models
-import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
 from test import config as cfg
