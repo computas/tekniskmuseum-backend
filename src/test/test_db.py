@@ -13,10 +13,11 @@ from werkzeug import exceptions as excp
 from test import config as cfg
 
 
-class Test_values():
+class TestValues:
     TOKEN = uuid.uuid4().hex
     GAME_ID = uuid.uuid4().hex
     TODAY = datetime.datetime.today()
+    CV_ITERATION_NAME_LENGTH = 36
 
 
 def test_create_tables():
@@ -33,7 +34,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            Test_values.GAME_ID, cfg.LABELS, Test_values.TODAY
+            TestValues.GAME_ID, cfg.LABELS, TestValues.TODAY
         )
 
     assert result
@@ -44,9 +45,7 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores(
-            "Test User", 500, Test_values.TODAY
-        )
+        result = models.insert_into_scores("Test User", 500, TestValues.TODAY)
 
     assert result
 
@@ -57,7 +56,7 @@ def test_insert_into_player_in_game():
     """
     with api.app.app_context():
         result = models.insert_into_player_in_game(
-            Test_values.TOKEN, Test_values.GAME_ID, cfg.PLAY_TIME
+            TestValues.TOKEN, TestValues.GAME_ID, cfg.PLAY_TIME
         )
 
     assert result
@@ -106,7 +105,7 @@ def test_query_euqals_insert_games():
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(Test_values.GAME_ID)
+        result = models.get_record_from_game(TestValues.GAME_ID)
 
     assert result.labels == cfg.LABELS
     # Datetime assertion can't be done due to millisec differents
@@ -117,9 +116,9 @@ def test_query_equals_insert_player_in_game():
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_player_in_game(Test_values.TOKEN)
+        result = models.get_record_from_player_in_game(TestValues.TOKEN)
 
-    assert result.game_id == Test_values.GAME_ID
+    assert result.game_id == TestValues.GAME_ID
     assert result.play_time == cfg.PLAY_TIME
 
 
@@ -186,7 +185,10 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
-def test_get_iteration_name():
+def test_get_iteration_name_is_string():
+    """
+        Tests if it's possible to get an iteration name from the database and the type is str
+    """
     with api.app.app_context():
         iteration_name = models.get_iteration_name()
 
@@ -231,3 +233,13 @@ def test_to_norwegian_illegal_parameter():
     """
     with raises(Exception):
         models.get_n_labels("this word is not in the database")
+
+
+def test_get_iteration_name_length():
+    """
+        Test if the result returned has specified length
+    """
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert len(iteration_name) == TestValues.CV_ITERATION_NAME_LENGTH
