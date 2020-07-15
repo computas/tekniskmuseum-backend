@@ -86,7 +86,7 @@ def test_classify_wrong_image(client):
     token, user = "", ""
     # Submit answer with the given parameters and get results
     res = classify_helper(
-        client, cfg.api_path_data, cfg.api_image1, time, token, user
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE1, time, token, user
     )
     assert b"415 Unsupported Media Type" in res.data
 
@@ -106,7 +106,7 @@ def test_classify_correct(client):
     token = response["token"]
     # submit answer with parameters and retrieve results
     res = classify_helper(
-        client, cfg.api_path_data, cfg.api_image4, time, token, name
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE4, time, token, name
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
@@ -126,7 +126,7 @@ def test_allowedFile_small_resolution():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(cfg.api_image1, False, "image/png")
+        allowed_file_helper(cfg.API_IMAGE1, False, "image/png")
 
 
 def test_allowedFile_too_large_file():
@@ -137,7 +137,7 @@ def test_allowedFile_too_large_file():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(cfg.api_image2, False, "image/png")
+        allowed_file_helper(cfg.API_IMAGE2, False, "image/png")
 
 
 def test_allowedFile_wrong_format():
@@ -148,7 +148,7 @@ def test_allowedFile_wrong_format():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(cfg.api_image3, False, "image/jpeg")
+        allowed_file_helper(cfg.API_IMAGE3, False, "image/jpeg")
 
 
 def test_allowedFile_correct():
@@ -158,7 +158,7 @@ def test_allowedFile_correct():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'true'.
-    allowed_file_helper(cfg.api_image4, True, "image/png")
+    allowed_file_helper(cfg.API_IMAGE4, True, "image/png")
 
 
 def allowed_file_helper(filename, expected_result, content_type):
@@ -166,7 +166,7 @@ def allowed_file_helper(filename, expected_result, content_type):
         Helper function for the allowedFile function tests.
     """
     # Construct path to the directory with the images
-    dir_path = construct_path(cfg.api_path_data)
+    dir_path = construct_path(cfg.API_PATH_DATA)
     # The path is only valid if the program runs from the src directory
     path = os.path.join(dir_path, filename)
     with open(path, "rb") as f:
