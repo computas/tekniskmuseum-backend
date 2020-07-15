@@ -17,6 +17,7 @@ class Iteration(db.Model):
     """
         Model for storing the currently used iteration of the ML model.
     """
+
     iteration_name = db.Column(db.String(64), primary_key=True)
 
 
@@ -26,6 +27,7 @@ class Games(db.Model):
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
+
     game_id = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
@@ -37,6 +39,7 @@ class Scores(db.Model):
         This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
+
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
@@ -48,6 +51,7 @@ class PlayerInGame(db.Model):
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
+
     token = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
     play_time = db.Column(db.Float, nullable=False)
@@ -60,6 +64,7 @@ class Labels(db.Model):
         - translating english labels into norwgian
         - keeping track of all possible labels
     """
+
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
 
@@ -404,6 +409,19 @@ def get_n_labels(n):
         raise Exception("Could not read Labels table: " + str(e))
 
 
+def get_all_labels():
+    """
+        Reads all rows from database and chooses 3 random labels in a list
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        return labels
+
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
+
+
 def to_norwegian(english_label):
     """
         Reads the labels tabel and return the norwegian translation of the english word
@@ -414,4 +432,6 @@ def to_norwegian(english_label):
 
     except AttributeError as e:
         raise AttributeError(
-            "Could not find translation in Labels table: " + str(e))
+            "Could not find translation in Labels table: " + str(e)
+        )
+
