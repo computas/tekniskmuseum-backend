@@ -9,7 +9,7 @@ import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
 
-db = SQLAlchemy()
+DB = SQLAlchemy()
 
 
 class DataBaseException(Exception):
@@ -20,36 +20,36 @@ class DataBaseException(Exception):
     pass
 
 
-class Iteration(db.Model):
-    iteration_name = db.Column(db.String(64), primary_key=True)
+class Iteration(DB.Model):
+    iteration_name = DB.Column(DB.String(64), primary_key=True)
 
 
-class Games(db.Model):
+class Games(DB.Model):
     """
        This is the Games model in the database. It is important that the
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
 
-    game_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    session_num = db.Column(db.Integer, default=1)
-    labels = db.Column(db.String(64))
-    date = db.Column(db.DateTime)
+    game_id = DB.Column(DB.NVARCHAR(32), primary_key=True)
+    session_num = DB.Column(DB.Integer, default=1)
+    labels = DB.Column(DB.String(64))
+    date = DB.Column(DB.DateTime)
 
 
-class Scores(db.Model):
+class Scores(DB.Model):
     """
         This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
 
-    score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(32))
-    score = db.Column(db.Integer, nullable=False)
-    date = db.Column(db.Date)
+    score_id = DB.Column(DB.Integer, primary_key=True, autoincrement=True)
+    name = DB.Column(DB.String(32))
+    score = DB.Column(DB.Integer, nullable=False)
+    date = DB.Column(DB.Date)
 
 
-class Labels(db.Model):
+class Labels(DB.Model):
     """
         This is the Labels model in the database. It is important that the
         inserted values match the column values. This tabel is used for
@@ -57,19 +57,19 @@ class Labels(db.Model):
         - keeping track of all possible labels
     """
 
-    english = db.Column(db.String(32), primary_key=True)
-    norwegian = db.Column(db.String(32))
+    english = DB.Column(DB.String(32), primary_key=True)
+    norwegian = DB.Column(DB.String(32))
 
 
-class PlayerInGame(db.Model):
+class PlayerInGame(DB.Model):
     """
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
 
-    token = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), nullable=False)
-    play_time = db.Column(db.Float, nullable=False)
+    token = DB.Column(DB.NVARCHAR(32), primary_key=True)
+    game_id = DB.Column(DB.NVARCHAR(32), nullable=False)
+    play_time = DB.Column(DB.Float, nullable=False)
 
 
 # Functions to manipulate the tables above
@@ -78,7 +78,7 @@ def create_tables(app):
         The tables will be created if they do not already exist.
     """
     with app.app_context():
-        db.create_all()
+        DB.create_all()
 
     return True
 
@@ -100,8 +100,8 @@ def insert_into_games(game_id, labels, date):
 
         try:
             game = Games(game_id=game_id, labels=labels, date=date)
-            db.session.add(game)
-            db.session.commit()
+            DB.session.add(game)
+            DB.session.commit()
             return True
         except Exception as e:
             raise Exception("Could not insert into games :" + str(e))
@@ -130,8 +130,8 @@ def insert_into_scores(name, score, date):
     ):
         try:
             score = Scores(name=name, score=score, date=date)
-            db.session.add(score)
-            db.session.commit()
+            DB.session.add(score)
+            DB.session.commit()
             return True
         except Exception as e:
             raise Exception("Could not insert into scores: " + str(e))
@@ -159,11 +159,11 @@ def update_iteration_name(new_name):
     iteration = Iteration.query.filter_by().first()
     if iteration is None:
         iteration = Iteration(iteration_name=new_name)
-        db.session.add(iteration)
+        DB.session.add(iteration)
     else:
         iteration.iteration_name = new_name
 
-    db.session.commit()
+    DB.session.commit()
     return new_name
 
 
@@ -185,8 +185,8 @@ def insert_into_player_in_game(token, game_id, play_time):
             player_in_game = PlayerInGame(
                 token=token, game_id=game_id, play_time=play_time
             )
-            db.session.add(player_in_game)
-            db.session.commit()
+            DB.session.add(player_in_game)
+            DB.session.commit()
             return True
         except Exception as e:
             raise Exception("Could not insert into games: " + str(e))
@@ -228,7 +228,7 @@ def update_game(game_id, session_num, play_time):
         game = Games.query.get(game_id)
         game.session_num += 1
         game.play_time = play_time
-        db.session.commit()
+        DB.session.commit()
         return True
     except Exception:
         raise Exception("Couldn't update game.")
@@ -244,7 +244,7 @@ def update_game_for_player(game_id, token, session_num, play_time):
         game.session_num += 1
         player_in_game = PlayerInGame.query.get(token)
         player_in_game.play_time = play_time
-        db.session.commit()
+        DB.session.commit()
         return True
     except Exception as e:
         raise Exception("Could not update game for player: " + str(e))
@@ -258,14 +258,14 @@ def delete_session_from_game(game_id):
     """
     try:
         game = Games.query.get(game_id)
-        db.session.query(PlayerInGame).filter(
+        DB.session.query(PlayerInGame).filter(
             PlayerInGame.game_id == game_id
         ).delete()
-        db.session.delete(game)
-        db.session.commit()
+        DB.session.delete(game)
+        DB.session.commit()
         return "Record deleted."
     except AttributeError as e:
-        db.session.rollback()
+        DB.session.rollback()
         raise AttributeError("Couldn't find game_id: " + str(e))
 
 
@@ -275,7 +275,7 @@ def delete_old_games():
     """
     try:
         games = (
-            db.session.query(Games)
+            DB.session.query(Games)
             .filter(
                 Games.date
                 < (datetime.datetime.today() - datetime.timedelta(hours=1))
@@ -283,15 +283,15 @@ def delete_old_games():
             .all()
         )
         for game in games:
-            db.session.query(PlayerInGame).filter(
+            DB.session.query(PlayerInGame).filter(
                 PlayerInGame.game_id == game.game_id
             ).delete()
-            db.session.delete(game)
+            DB.session.delete(game)
 
-        db.session.commit()
+        DB.session.commit()
         return True
     except Exception as e:
-        db.session.rollback()
+        DB.session.rollback()
         raise Exception("Couldn't clean up old game records: " + str(e))
 
 
@@ -353,7 +353,7 @@ def drop_table(table):
         Function for dropping a table, or all.
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
-    db.drop_all(bind=table)
+    DB.drop_all(bind=table)
 
 
 def seed_labels(app, filepath):
@@ -364,7 +364,7 @@ def seed_labels(app, filepath):
         if os.path.exists(filepath):
             # clear table
             Labels.query.delete()
-            db.session.commit()
+            DB.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=",")
@@ -387,8 +387,8 @@ def insert_into_labels(english, norwegian):
     if isinstance(english, str) and isinstance(norwegian, str):
         try:
             label_row = Labels(english=english, norwegian=norwegian)
-            db.session.add(label_row)
-            db.session.commit()
+            DB.session.add(label_row)
+            DB.session.commit()
             return True
         except Exception as e:
             raise Exception("Could not insert into label: " + str(e))
