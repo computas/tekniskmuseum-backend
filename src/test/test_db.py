@@ -232,7 +232,7 @@ def test_to_norwegian_illegal_parameter():
         Test that to_norwegian raises exeption if input word is not found
     """
     with raises(Exception):
-        models.get_n_labels("this word is not in the database")
+        models.to_norwegian("this word is not in the database")
 
 
 def test_get_iteration_name_length():
