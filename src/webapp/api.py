@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 """
     API with endpoints runned by Flask. Contains three endpoints:
-        - hello(): return a dummy string
-        - start_game(): starts a game
-        - submit_answer(): takes an image, returns the prediction and time used by user
+        / : Responds if the API is up
+        /startGame : Provide client with unique token used for identification
+        /getLabel : Provide client with a new word
+        /classify : Classify an image
+        /endGame : Signal from client that the game is finished
+        /viewHighScore : Provide clien with the highscore from the game
 """
-
 import uuid
 import random
 import time
@@ -16,7 +18,7 @@ import json
 import datetime
 from webapp import storage
 from webapp import models
-from utilities import setup
+from utilities.setup import NUM_GAMES, CERTAINTY_THRESHOLD, TOP_N
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -27,9 +29,6 @@ from werkzeug import exceptions as excp
 
 # Initialization and global variables
 app = Flask(__name__)
-NUM_GAMES = setup.num_games
-CERTAINTY_TRESHOLD = setup.certainty_threshold
-HIGH_SCORE_LIST_SIZE = setup.top_n
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
@@ -90,7 +89,7 @@ def get_label():
 @app.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoit for continious guesses.
+        Classify endpoint for continious guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -115,7 +114,7 @@ def classify():
     has_won = (
         time_left > 0
         and best_guess == label
-        and best_certainty >= CERTAINTY_TRESHOLD
+        and best_certainty >= CERTAINTY_THRESHOLD
     )
     # End game if player win or loose
     if has_won or time_left <= 0:
@@ -174,7 +173,7 @@ def view_high_score():
         last 24 hours.
     """
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(HIGH_SCORE_LIST_SIZE)
+    top_n_high_scores = models.get_top_n_high_score_list(TOP_N)
     # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
