@@ -80,14 +80,21 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+<<<<<<< HEAD
     data = {"label": label}
+=======
+    norwegian_label = models.to_norwegian(label)
+    data = {
+        "label": norwegian_label
+    }
+>>>>>>> 8b5916d8c3f44b934d5754d53fe03e2ffb9175e6
     return json.dumps(data), 200
 
 
 @app.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continious guesses.
+        Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -148,12 +155,12 @@ def end_game():
     """
     token = request.values["token"]
     name = request.values["name"]
-    score = request.values["score"]
+    score = float(request.values["score"])
     player = models.get_record_from_player_in_game(token)
     game = models.get_record_from_game(player.game_id)
 
     if game.session_num != NUM_GAMES + 1:
-        return excp.BadRequest("Game not finished")
+        raise excp.BadRequest("Game not finished")
 
     today = datetime.date.today()
     models.insert_into_scores(name, score, today)

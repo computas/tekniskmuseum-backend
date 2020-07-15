@@ -195,6 +195,46 @@ def test_get_iteration_name_is_string():
     assert isinstance(iteration_name, str)
 
 
+def test_get_n_labels_correct_size():
+    """
+        Test that get_n_labels return lists of correct sizes
+    """
+    with api.app.app_context():
+        for i in range(5):
+            result = models.get_n_labels(i)
+            assert len(result) == i
+
+
+def test_get_n_labels_bad_reqeust():
+    """
+        Test that get_n_labels raises exeption if n is larger than number of labels
+    """
+    with raises(Exception):
+        models.get_n_labels(10000)
+
+
+def test_to_norwegian_correct_translation():
+    """
+        Test that to_norwegian translates words correctly
+    """
+    english_words = ["mermaid", "axe", "airplane"]
+    norwgian_words = ["havfrue", "øks", "fly"]
+
+    with api.app.app_context():
+        for i in range(0, len(english_words)):
+            translation = models.to_norwegian(english_words[i])
+            print(translation)
+            assert (translation == norwgian_words[i])
+
+
+def test_to_norwegian_illegal_parameter():
+    """
+        Test that to_norwegian raises exeption if input word is not found
+    """
+    with raises(Exception):
+        models.get_n_labels("this word is not in the database")
+
+
 def test_get_iteration_name_length():
     """
         Test if the result returned has specified length
