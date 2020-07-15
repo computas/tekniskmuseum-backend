@@ -1,7 +1,6 @@
 import pytest
 import os
 from customvision.classifier import Classifier
-
 from test.test_api import construct_path
 from test import config as cfg
 

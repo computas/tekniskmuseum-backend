@@ -24,7 +24,6 @@ from utilities.keys import Keys
 from utilities import setup
 from webapp import models
 from webapp import api
-
 from utilities.setup import LABELS
 
 
@@ -137,7 +136,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List) -> None:
         """

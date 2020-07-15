@@ -5,9 +5,9 @@
 import os
 import uuid
 import time
+import datetime
 from webapp import api
 from webapp import models
-import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
 from test import config as cfg
@@ -233,7 +233,7 @@ def test_to_norwegian_illegal_parameter():
         Test that to_norwegian raises exeption if input word is not found
     """
     with raises(Exception):
-        models.get_n_labels("this word is not in the database")
+        models.to_norwegian("this word is not in the database")
 
 
 def test_get_iteration_name_length():
