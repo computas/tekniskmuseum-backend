@@ -2,12 +2,16 @@ import sys
 import os
 from utilities.keys import Keys
 
-# USED BY CUSTOM VISION
+# number of players in overall high score top list
+TOP_N = 10
+# Total number of games
+NUM_GAMES = 3
+# certainties from costum vision lower than this -> haswon=False
+CERTAINTY_THRESHOLD = 0.5
 # custom vision can't have more than 10 iterations at a time, if more classifier.py will delete the oldest iteration
 CV_MAX_ITERATIONS = 10
 # can't upload more than 64 images at a time, if more
 CV_MAX_IMAGES = 64
-
 # USED BY API
 LABELS = [
     "airplane",
@@ -59,12 +63,6 @@ LABELS = [
     "wheel",
     "wristwatch",
 ]
-
-time_limit = 20  # time limit for one guess
-top_n = 10  # number of players in overall high score top list
-num_games = 3
-# certainties from costum vision lower than this -> haswon=False
-certainty_threshold = 0.5
 
 
 class Flask_config:

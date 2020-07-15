@@ -22,7 +22,8 @@ from typing import Dict
 from typing import List
 from utilities.keys import Keys
 from utilities import setup
-
+from webapp import models
+from webapp import api
 from utilities.setup import LABELS
 
 
@@ -80,6 +81,8 @@ class Classifier:
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
         self.iteration_name = puplished_iterations[-1].publish_name
+        with api.app.app_context():
+            models.update_iteration_name(self.iteration_name)
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -89,13 +92,17 @@ class Classifier:
             img_url: Image URL
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
         )
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
+
         return pred_kv, best_guess
 
     def predict_image(self, img) -> Dict[str, float]:
@@ -110,8 +117,11 @@ class Classifier:
             img_url: .png file
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img
         )
@@ -119,14 +129,14 @@ class Classifier:
         img.seek(0)
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
-        return best_guess, pred_kv
+        return pred_kv, best_guess
 
     def __chunks(self, lst, n):
         """
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -257,7 +267,8 @@ class Classifier:
             iteration_name,
             self.prediction_resource_id,
         )
-        self.iteration_name = iteration_name
+        with api.app.app_context():
+            self.iteration_name = models.update_iteration_name(iteration_name)
 
 
 def main():
@@ -270,20 +281,18 @@ def main():
     test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
     classifier = Classifier()
-    classifier.upload_images(LABELS)
-    classifier.train(LABELS)
+
+    # classify image with URL reference
+    result, best_guess = classifier.predict_image_url(test_url)
+    print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
-    # with open(
-    #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
-    # ) as f:
-    #     pass
+    with open("../data/cv_testfile.png", "rb") as f:
+        result, best_guess = classifier.predict_image(f)
+        print(f"png result:\n{result}")
 
-    # result = classifier.predict_image(f)
-    # print(f"png result {result}")
-    # classify image with URL reference
-    best_guess, result = classifier.predict_image_url(test_url)
-    print(f"best guess: {best_guess} url result {result}")
+    classifier.upload_images(LABELS)
+    classifier.train(LABELS)
 
 
 if __name__ == "__main__":

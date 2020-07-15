@@ -1,13 +1,12 @@
 """
     Imports secrets from GitHub Secrets or config.json.
 """
-
 import os
 import json
 
-environ = os.environ
-if "IS_PRODUCTION" in environ:
-    keys = environ
+ENVIRON = os.environ
+if "IS_PRODUCTION" in ENVIRON:
+    keys = ENVIRON
     isProduction = True
 elif os.path.isfile("./config.json"):
     with open("./config.json") as configFile:

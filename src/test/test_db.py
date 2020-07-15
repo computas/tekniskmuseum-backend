@@ -2,19 +2,22 @@
     Testfunctions for testing functions to manipualte the database. The
     functions is used on an identical test database.
 """
-
+import os
 import uuid
 import time
+import datetime
 from webapp import api
 from webapp import models
-import datetime
 from pytest import raises
 from werkzeug import exceptions as excp
+from test import config as cfg
 
-token = uuid.uuid4().hex
-labels = "label1, label2, label3"
-play_time = 21.0
-start_time = time.time()
+
+class TestValues:
+    TOKEN = uuid.uuid4().hex
+    GAME_ID = uuid.uuid4().hex
+    TODAY = datetime.datetime.today()
+    CV_ITERATION_NAME_LENGTH = 36
 
 
 def test_create_tables():
@@ -31,7 +34,8 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            token, labels, play_time, datetime.datetime.today())
+            TestValues.GAME_ID, cfg.LABELS, TestValues.TODAY
+        )
 
     assert result
 
@@ -41,8 +45,19 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores(
-            "Test User", 500, datetime.date.today())
+        result = models.insert_into_scores("Test User", 500, TestValues.TODAY)
+
+    assert result
+
+
+def test_insert_into_player_in_game():
+    """
+        Check that record exists in PlayerInGame table after inserting.
+    """
+    with api.app.app_context():
+        result = models.insert_into_player_in_game(
+            TestValues.TOKEN, TestValues.GAME_ID, cfg.PLAY_TIME
+        )
 
     assert result
 
@@ -54,7 +69,8 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            "token", ["label1", "label2", "label3"], 10, "date_time")
+            10, ["label1", "label2", "label3"], "date_time"
+        )
 
 
 def test_illegal_parameter_scores():
@@ -63,21 +79,47 @@ def test_illegal_parameter_scores():
         into scores table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_scores(
-            100, "score", "01.01.2020")
+        models.insert_into_scores(100, "score", "01.01.2020")
 
 
-def test_query_euqals_insert():
+def test_illegal_parameter_labels():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into games table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_labels(1, None)
+
+
+def test_illegal_parameter_player_in_game():
+    """
+        Check that exception is raised when illegal arguments is passed
+        into player in game table.
+    """
+    with raises(excp.BadRequest):
+        models.insert_into_player_in_game(100, 200, 11)
+
+
+def test_query_euqals_insert_games():
     """
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(token)
+        result = models.get_record_from_game(TestValues.GAME_ID)
 
-    assert result.token == token
-    assert result.labels == labels
-    assert result.play_time == play_time
+    assert result.labels == cfg.LABELS
     # Datetime assertion can't be done due to millisec differents
+
+
+def test_query_equals_insert_player_in_game():
+    """
+        Check that inserted record is the same as record catched by query.
+    """
+    with api.app.app_context():
+        result = models.get_record_from_player_in_game(TestValues.TOKEN)
+
+    assert result.game_id == TestValues.GAME_ID
+    assert result.play_time == cfg.PLAY_TIME
 
 
 def test_get_daily_high_score_sorted():
@@ -88,7 +130,10 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User", 10 + i, datetime.date.today() - datetime.timedelta(days=i))
+                "Test User",
+                10 + i,
+                datetime.date.today() - datetime.timedelta(days=i),
+            )
             assert result
 
     with api.app.app_context():
@@ -140,17 +185,61 @@ def test_get_top_n_high_score_list_structure():
         assert "name" in player
 
 
-'''
-def test_clear_table():
+def test_get_iteration_name_is_string():
     """
-        Check that number of rows is zero after clearing both tables.
+        Tests if it's possible to get an iteration name from the database and the type is str
     """
     with api.app.app_context():
-        models.clear_table("Games")
-        models.clear_table("Scores")
-        games_rows = models.get_size_of_table("Games")
-        scores_rows = models.get_size_of_table("Scores")
+        iteration_name = models.get_iteration_name()
 
-    assert games_rows == 0
-    assert scores_rows == 0
-'''
+    assert isinstance(iteration_name, str)
+
+
+def test_get_n_labels_correct_size():
+    """
+        Test that get_n_labels return lists of correct sizes
+    """
+    with api.app.app_context():
+        for i in range(5):
+            result = models.get_n_labels(i)
+            assert len(result) == i
+
+
+def test_get_n_labels_bad_reqeust():
+    """
+        Test that get_n_labels raises exeption if n is larger than number of labels
+    """
+    with raises(Exception):
+        models.get_n_labels(10000)
+
+
+def test_to_norwegian_correct_translation():
+    """
+        Test that to_norwegian translates words correctly
+    """
+    english_words = ["mermaid", "axe", "airplane"]
+    norwgian_words = ["havfrue", "øks", "fly"]
+
+    with api.app.app_context():
+        for i in range(0, len(english_words)):
+            translation = models.to_norwegian(english_words[i])
+            print(translation)
+            assert (translation == norwgian_words[i])
+
+
+def test_to_norwegian_illegal_parameter():
+    """
+        Test that to_norwegian raises exeption if input word is not found
+    """
+    with raises(Exception):
+        models.to_norwegian("this word is not in the database")
+
+
+def test_get_iteration_name_length():
+    """
+        Test if the result returned has specified length
+    """
+    with api.app.app_context():
+        iteration_name = models.get_iteration_name()
+
+    assert len(iteration_name) == TestValues.CV_ITERATION_NAME_LENGTH
