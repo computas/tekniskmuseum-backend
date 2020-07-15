@@ -82,7 +82,7 @@ class Classifier:
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
         self.iteration_name = puplished_iterations[-1].publish_name
-        with api.app.app_context():
+        with api.APP.app_context():
             models.update_iteration_name(self.iteration_name)
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
@@ -117,7 +117,7 @@ class Classifier:
             Returns:
             prediction (dict[str,float]): labels and assosiated probabilities
         """
-        with api.app.app_context():
+        with api.APP.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image(
             self.project_id, self.iteration_name, img

@@ -195,7 +195,7 @@ def handle_exception(error):
         if error.code >= 400 and error.code < 500:
             return error
     else:
-        app.logger.error(error)
+        APP.logger.error(error)
         return "Internal server error", 500
 
 

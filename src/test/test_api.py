@@ -19,8 +19,8 @@ def client():
     """
         Pytest fixture which configures application for testing.
     """
-    api.app.config["TESTING"] = True
-    with api.app.test_client() as client:
+    api.APP.config["TESTING"] = True
+    with api.APP.test_client() as client:
         yield client
 
 

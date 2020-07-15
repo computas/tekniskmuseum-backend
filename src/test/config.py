@@ -11,3 +11,7 @@ CV_TEST_IMAGE = "cv_testfile.png"
 # Contains in-order sequence to the directory with images used to test
 # the allowedFile function
 API_PATH_DATA = ["..", "data"]
+# Name of the labels for the DB tests
+LABELS = "label1, label2, label3"
+# How long the test games last
+PLAY_TIME = 11.0
