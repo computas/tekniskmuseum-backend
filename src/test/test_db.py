@@ -192,9 +192,29 @@ def test_get_n_labels():
     assert result
 
 
-def test_to_norwegian():
+def test_get_n_labels_correct_size():
     """
-        Test to_norwegian
+        Test that get_n_labels return lists of correct sizes
+    """
+    with api.app.app_context():
+        for i in range(5):
+            result = models.get_n_labels(i)
+            assert len(result) == i
+
+    assert result
+
+
+def test_get_n_labels_bad_reqeust():
+    """
+        Test that get_n_labels raises exeption if n is larger than number of labels
+    """
+    with raises(Exception):
+        models.get_n_labels(10000)
+
+
+def test_to_norwegian_correct_translation():
+    """
+        Test that to_norwegian translates words correctly
     """
     english_words = ["mermaid", "axe", "airplane"]
     norwgian_words = ["havfrue", "øks", "fly"]
@@ -204,3 +224,11 @@ def test_to_norwegian():
             translation = models.to_norwegian(english_words[i])
             print(translation)
             assert (translation == norwgian_words[i])
+
+
+def test_to_norwegian_illegal_parameter():
+    """
+        Test that to_norwegian raises exeption if input word is not found
+    """
+    with raises(Exception):
+        models.get_n_labels("this word is not in the database")
