@@ -4,10 +4,10 @@
 import os
 import uuid
 import sys
+import logging
 from webapp import api
 from azure.storage.blob import BlobClient
 from utilities.keys import Keys
-import logging
 
 
 def save_image(image, label):

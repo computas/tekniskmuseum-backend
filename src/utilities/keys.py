@@ -1,7 +1,6 @@
 """
     Imports secrets from GitHub Secrets or config.json.
 """
-
 import os
 import json
 
