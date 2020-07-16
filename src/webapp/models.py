@@ -17,6 +17,7 @@ class Iteration(db.Model):
     """
         Model for storing the currently used iteration of the ML model.
     """
+
     iteration_name = db.Column(db.String(64), primary_key=True)
 
 
@@ -26,6 +27,7 @@ class Games(db.Model):
        inserted values match the column values. Token column value cannot
        be String when a long hex is given.
     """
+
     game_id = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
@@ -37,6 +39,7 @@ class Scores(db.Model):
         This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
+
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
@@ -48,6 +51,7 @@ class PlayerInGame(db.Model):
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
+
     token = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
     state = db.Column(db.String(32))
@@ -60,6 +64,7 @@ class Labels(db.Model):
         - translating english labels into norwgian
         - keeping track of all possible labels
     """
+
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
 
@@ -354,20 +359,17 @@ def seed_labels(app, filepath):
     """
     with app.app_context():
         if os.path.exists(filepath):
-            # clear table
-            Labels.query.delete()
-            db.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=",")
-
                     for row in readCSV:
-                        insert_into_labels(row[0], row[1])
+                        # Insert label into Labels table if not present
+                        if Labels.query.get(row[0]) is None:
+                            insert_into_labels(row[0], row[1])
                 except AttributeError as e:
                     raise AttributeError(
-                        "Could not insert into games: " + str(e)
+                        "Could not insert into Labels table: " + str(e)
                     )
-
         else:
             raise AttributeError("File path not found")
 
@@ -383,14 +385,14 @@ def insert_into_labels(english, norwegian):
             db.session.commit()
             return True
         except Exception as e:
-            raise Exception("Could not insert into label: " + str(e))
+            raise Exception("Could not insert into Labels table: " + str(e))
     else:
         raise excp.BadRequest("English and norwegian must be strings")
 
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses 3 random labels in a list
+        Reads all rows from database and chooses n random labels in a list
     """
     try:
         # read all english labels in database
@@ -398,6 +400,19 @@ def get_n_labels(n):
         english_labels = [str(label.english) for label in labels]
         random_list = random.sample(english_labels, n)
         return random_list
+
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
+
+
+def get_all_labels():
+    """
+        Reads all labels from database
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        return [str(label.english) for label in labels]
 
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
@@ -413,4 +428,5 @@ def to_norwegian(english_label):
 
     except AttributeError as e:
         raise AttributeError(
-            "Could not find translation in Labels table: " + str(e))
+            "Could not find translation in Labels table: " + str(e)
+        )

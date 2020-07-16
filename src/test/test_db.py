@@ -224,7 +224,7 @@ def test_to_norwegian_correct_translation():
         for i in range(0, len(english_words)):
             translation = models.to_norwegian(english_words[i])
             print(translation)
-            assert (translation == norwgian_words[i])
+            assert translation == norwgian_words[i]
 
 
 def test_to_norwegian_illegal_parameter():
