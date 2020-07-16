@@ -54,7 +54,7 @@ class PlayerInGame(db.Model):
 
     token = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
-    play_time = db.Column(db.Float, nullable=False)
+    state = db.Column(db.String(32))
 
 
 class Labels(db.Model):
@@ -164,23 +164,23 @@ def update_iteration_name(new_name):
     return new_name
 
 
-def insert_into_player_in_game(token, game_id, play_time):
+def insert_into_player_in_game(token, game_id, state):
     """
         Insert values into PlayerInGame table.
 
         Parameters:
         token: random uuid.uuid4().hex
         game_id: random uuid.uuid4().hex
-        play_time: float
+        state: string
     """
     if (
         isinstance(token, str)
         and isinstance(game_id, str)
-        and isinstance(play_time, float)
+        and isinstance(state, str)
     ):
         try:
             player_in_game = PlayerInGame(
-                token=token, game_id=game_id, play_time=play_time
+                token=token, game_id=game_id, state=state
             )
             db.session.add(player_in_game)
             db.session.commit()
@@ -189,8 +189,7 @@ def insert_into_player_in_game(token, game_id, play_time):
             raise Exception("Could not insert into games: " + str(e))
     else:
         raise excp.BadRequest(
-            "Token has to be string, game_id has to be string "
-            "and play time has to be float."
+            "All params has to be string."
         )
 
 
@@ -232,7 +231,7 @@ def update_game(game_id, session_num, play_time):
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
-def update_game_for_player(game_id, token, session_num, play_time):
+def update_game_for_player(game_id, token, session_num, state):
     """
         Update game and player_in_game record for the incomming game_id and
         token with the given parameters.
@@ -241,7 +240,7 @@ def update_game_for_player(game_id, token, session_num, play_time):
         game = Games.query.get(game_id)
         game.session_num += 1
         player_in_game = PlayerInGame.query.get(token)
-        player_in_game.play_time = play_time
+        player_in_game.state = state
         db.session.commit()
         return True
     except Exception as e:
