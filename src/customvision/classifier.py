@@ -135,7 +135,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List) -> None:
         """
@@ -268,6 +268,16 @@ class Classifier:
         )
         with api.app.app_context():
             self.iteration_name = models.update_iteration_name(iteration_name)
+
+    def delete_all_images(self) -> None:
+        """
+            Function for deleting uploaded images in Customv Vision.
+        """
+        try:
+            self.trainer.delete_images(
+                self.project_id, all_images=True, all_iterations=True)
+        except Exception as e:
+            raise Exception("Could not delete all images: " + str(e))
 
 
 def main():
