@@ -430,3 +430,14 @@ def to_norwegian(english_label):
         raise AttributeError(
             "Could not find translation in Labels table: " + str(e)
         )
+
+
+def get_translation_dict():
+    """
+        Reads all labels from database and create dictionary
+    """
+    try:
+        labels = Labels.query.all()
+        return dict([(str(label.english), str(label.norwegian)) for label in labels])
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))

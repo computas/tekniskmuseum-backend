@@ -128,16 +128,17 @@ def classify():
         )
         # Update game state to be done
         game_state = "Done"
-
-    # translate
+    # translate labels into norwegian
+    translation = models.get_translation_dict()
+    certainty_translated = dict([(translation[label], probability)
+                                 for label, probability in certainty.items()])
     data = {
-        "certainty": certainty,
-        "guess": best_guess,
-        "correctLabel": label,
+        "certainty": certainty_translated,
+        "guess": translation[best_guess],
+        "correctLabel": translation[label],
         "hasWon": has_won,
         "gameState": game_state,
     }
-
     return json.dumps(data), 200
 
 

@@ -236,7 +236,7 @@ def test_view_highscore(client):
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
     #check that data structure is correct
-    if not response["total"][0] is None:
+    if len(response["total"][0]) > 0:
         assert(isinstance(response, dict))
         assert(isinstance(response["daily"], list))
         assert(isinstance(response["total"], list))
