@@ -57,7 +57,7 @@ def start_game():
     labels = models.get_n_labels(NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
-    models.insert_into_player_in_game(token, game_id, 0.0)
+    models.insert_into_player_in_game(token, game_id, "Playing")
     # return game data as json object
     data = {
         "token": token,
@@ -119,13 +119,11 @@ def classify():
     if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
-        # Get cumulative time
-        cum_time = player.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player.game_id, token, session_num, cum_time
+            player.game_id, token, session_num, "Done"
         )
         # Update game state to be done
         game_state = "Done"
