@@ -14,4 +14,4 @@ API_PATH_DATA = ["..", "data"]
 # Name of the labels for the DB tests
 LABELS = "label1, label2, label3"
 # How long the test games last
-PLAY_TIME = 11.0
+STATE = "playing"
