@@ -26,6 +26,7 @@ from flask import Flask
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
+import PIL
 
 # Initialization and global variables
 app = Flask(__name__)
@@ -108,6 +109,12 @@ def classify():
     game = models.get_record_from_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    # Check if the image hasn't been drawn on
+    bytes_img = Image.open(BytesIO(image.stream.read()))
+    if white_image(bytes_img):
+        return white_image_data(label, time_left)
+
+    certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
@@ -212,6 +219,36 @@ def allowed_file(image):
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+def white_image(image):
+    """
+        Check if the image provided is completely white.
+    """
+    if not PIL.ImageChops.invert(image).getbbox():
+        return True
+    else:
+        return False
+
+
+def white_image_data(label, time_left):
+    """
+        Generate the json data to be returned to the client when a completely
+        white image has been submitted for classification.
+    """
+    if time_left <= 0:
+        game_state = "Done"
+    else:
+        game_state = "Playing"
+
+    data = {
+        "certainty": 1.0,
+        "guess": "",
+        "correctLabel": label,
+        "hasWon": False,
+        "gameState": game_state,
+    }
+    return json.dumps(data), 200
 
 
 def get_image_resolution(image):
