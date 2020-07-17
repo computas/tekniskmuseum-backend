@@ -116,6 +116,44 @@ def test_classify_white_image_data(client):
     assert("gameState" in data)
 
 
+def test_classify_white_image_done(client):
+    """
+        Ensure that the API returns the correct json data when an image
+        consisting of only white pixels is submitted.
+    """
+    time = 0
+    user = ""
+    # Need to start a new game to get a token we can submit
+    res1 = client.get("/startGame")
+    res1 = res1.data.decode("utf-8")
+    response = json.loads(res1)
+    token = response["token"]
+    res = classify_helper(
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
+    )
+    data = json.loads(res.data.decode("utf-8"))
+    assert(data["gameState"] == "Done")
+
+
+def test_classify_white_image_not_done(client):
+    """
+        Ensure that the API returns the correct json data when an image
+        consisting of only white pixels is submitted.
+    """
+    time = 1
+    user = ""
+    # Need to start a new game to get a token we can submit
+    res1 = client.get("/startGame")
+    res1 = res1.data.decode("utf-8")
+    response = json.loads(res1)
+    token = response["token"]
+    res = classify_helper(
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
+    )
+    data = json.loads(res.data.decode("utf-8"))
+    assert(data["gameState"] == "Playing")
+
+
 def test_classify_correct(client):
     """
         Ensure that the API returns no errors when the image submitted in the
@@ -141,7 +179,7 @@ def test_classify_correct(client):
     assert("hasWon" in data)
     # Check if 200 is returned
     assert(res.status_code == 200)
-
+'''
 
 def test_allowedFile_small_resolution():
     """
