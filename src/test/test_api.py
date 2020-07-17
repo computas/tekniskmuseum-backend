@@ -289,7 +289,13 @@ def test_white_image_data_playing():
         Test if the white_image_data function returns the correct data and
         that state is "playing" when time_left parameter is larger than zero.
     """
-    pass
+    label = ""
+    data, code = api.white_image_data(label, 1)
+    json_data = json.loads(data)
+    assert(json_data["gameState"] == "Playing")
+    assert(json_data["guess"] == label)
+    assert(json_data["hasWon"] == False)
+    assert(json_data["certainty"] == 1.0)
 
 
 def test_white_image_data_done():
@@ -297,4 +303,10 @@ def test_white_image_data_done():
         Test if the white_image_data function returns the correct data and
         that state is "done" when time_left parameter is zero.
     """
-    pass
+    label = ""
+    data, code = api.white_image_data(label, 0)
+    json_data = json.loads(data)
+    assert(json_data["gameState"] == "Done")
+    assert(json_data["guess"] == label)
+    assert(json_data["hasWon"] == False)
+    assert(json_data["certainty"] == 1.0)
