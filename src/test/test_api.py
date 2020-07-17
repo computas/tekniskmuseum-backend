@@ -92,6 +92,30 @@ def test_classify_wrong_image(client):
     assert b"415 Unsupported Media Type" in res.data
 
 
+def test_classify_white_image_data(client):
+    """
+        Ensure that the API returns the correct json data when an image
+        consisting of only white pixels is submitted.
+    """
+    time = 0
+    user = ""
+    # Need to start a new game to get a token we can submit
+    res1 = client.get("/startGame")
+    res1 = res1.data.decode("utf-8")
+    response = json.loads(res1)
+    token = response["token"]
+    res = classify_helper(
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
+    )
+    assert(res.status == "200 OK")
+    data = json.loads(res.data.decode("utf-8"))
+    assert("certainty" in data)
+    assert("guess" in data)
+    assert("correctLabel" in data)
+    assert("hasWon" in data)
+    assert("gameState" in data)
+
+
 def test_classify_correct(client):
     """
         Ensure that the API returns no errors when the image submitted in the
