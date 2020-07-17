@@ -32,6 +32,7 @@ app = Flask(__name__)
 app.config.from_object("utilities.setup.Flask_config")
 models.db.init_app(app)
 models.create_tables(app)
+models.seed_labels(app, "./dict_eng_to_nor.csv")
 classifier = Classifier()
 
 if __name__ != "__main__":
@@ -57,7 +58,7 @@ def start_game():
     labels = models.get_n_labels(NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
-    models.insert_into_player_in_game(token, game_id, 0.0)
+    models.insert_into_player_in_game(token, game_id, "Playing")
     # return game data as json object
     data = {
         "token": token,
@@ -119,26 +120,25 @@ def classify():
     if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
-        # Get cumulative time
-        cum_time = player.play_time + time_left
         # Increment session_num
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player.game_id, token, session_num, cum_time
+            player.game_id, token, session_num, "Done"
         )
         # Update game state to be done
         game_state = "Done"
-
-    # translate
+    # translate labels into norwegian
+    translation = models.get_translation_dict()
+    certainty_translated = dict([(translation[label], probability)
+                                 for label, probability in certainty.items()])
     data = {
-        "certainty": certainty,
-        "guess": best_guess,
-        "correctLabel": label,
+        "certainty": certainty_translated,
+        "guess": translation[best_guess],
+        "correctLabel": translation[label],
         "hasWon": has_won,
         "gameState": game_state,
     }
-
     return json.dumps(data), 200
 
 

@@ -24,7 +24,6 @@ from utilities.keys import Keys
 from utilities import setup
 from webapp import models
 from webapp import api
-from utilities.setup import LABELS
 
 
 class Classifier:
@@ -270,6 +269,16 @@ class Classifier:
         with api.app.app_context():
             self.iteration_name = models.update_iteration_name(iteration_name)
 
+    def delete_all_images(self) -> None:
+        """
+            Function for deleting uploaded images in Customv Vision.
+        """
+        try:
+            self.trainer.delete_images(
+                self.project_id, all_images=True, all_iterations=True)
+        except Exception as e:
+            raise Exception("Could not delete all images: " + str(e))
+
 
 def main():
     """
@@ -291,8 +300,11 @@ def main():
         result, best_guess = classifier.predict_image(f)
         print(f"png result:\n{result}")
 
-    classifier.upload_images(LABELS)
-    classifier.train(LABELS)
+    with api.app.app_context():
+        labels = models.get_all_labels()
+
+    classifier.upload_images(labels)
+    classifier.train(labels)
 
 
 if __name__ == "__main__":

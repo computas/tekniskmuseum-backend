@@ -56,7 +56,7 @@ def test_insert_into_player_in_game():
     """
     with api.app.app_context():
         result = models.insert_into_player_in_game(
-            TestValues.TOKEN, TestValues.GAME_ID, cfg.PLAY_TIME
+            TestValues.TOKEN, TestValues.GAME_ID, cfg.STATE
         )
 
     assert result
@@ -119,7 +119,7 @@ def test_query_equals_insert_player_in_game():
         result = models.get_record_from_player_in_game(TestValues.TOKEN)
 
     assert result.game_id == TestValues.GAME_ID
-    assert result.play_time == cfg.PLAY_TIME
+    assert result.state == cfg.STATE
 
 
 def test_get_daily_high_score_sorted():
@@ -224,7 +224,7 @@ def test_to_norwegian_correct_translation():
         for i in range(0, len(english_words)):
             translation = models.to_norwegian(english_words[i])
             print(translation)
-            assert (translation == norwgian_words[i])
+            assert translation == norwgian_words[i]
 
 
 def test_to_norwegian_illegal_parameter():

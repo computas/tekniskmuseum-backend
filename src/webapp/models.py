@@ -50,7 +50,7 @@ class PlayerInGame(db.Model):
     """
     token = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
-    play_time = db.Column(db.Float, nullable=False)
+    state = db.Column(db.String(32))
 
 
 class Labels(db.Model):
@@ -138,7 +138,6 @@ def get_iteration_name():
     """
         Returns the first and only iteration name that should be in the model
     """
-
     iteration = Iteration.query.filter_by().first()
     assert iteration.iteration_name is not None
     return iteration.iteration_name
@@ -159,23 +158,23 @@ def update_iteration_name(new_name):
     return new_name
 
 
-def insert_into_player_in_game(token, game_id, play_time):
+def insert_into_player_in_game(token, game_id, state):
     """
         Insert values into PlayerInGame table.
 
         Parameters:
         token: random uuid.uuid4().hex
         game_id: random uuid.uuid4().hex
-        play_time: float
+        state: string
     """
     if (
         isinstance(token, str)
         and isinstance(game_id, str)
-        and isinstance(play_time, float)
+        and isinstance(state, str)
     ):
         try:
             player_in_game = PlayerInGame(
-                token=token, game_id=game_id, play_time=play_time
+                token=token, game_id=game_id, state=state
             )
             db.session.add(player_in_game)
             db.session.commit()
@@ -184,8 +183,7 @@ def insert_into_player_in_game(token, game_id, play_time):
             raise Exception("Could not insert into games: " + str(e))
     else:
         raise excp.BadRequest(
-            "Token has to be string, game_id has to be string "
-            "and play time has to be float."
+            "All params has to be string."
         )
 
 
@@ -227,7 +225,7 @@ def update_game(game_id, session_num, play_time):
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
-def update_game_for_player(game_id, token, session_num, play_time):
+def update_game_for_player(game_id, token, session_num, state):
     """
         Update game and player_in_game record for the incomming game_id and
         token with the given parameters.
@@ -236,7 +234,7 @@ def update_game_for_player(game_id, token, session_num, play_time):
         game = Games.query.get(game_id)
         game.session_num += 1
         player_in_game = PlayerInGame.query.get(token)
-        player_in_game.play_time = play_time
+        player_in_game.state = state
         db.session.commit()
         return True
     except Exception as e:
@@ -355,20 +353,17 @@ def seed_labels(app, filepath):
     """
     with app.app_context():
         if os.path.exists(filepath):
-            # clear table
-            Labels.query.delete()
-            db.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=",")
-
                     for row in readCSV:
-                        insert_into_labels(row[0], row[1])
+                        # Insert label into Labels table if not present
+                        if Labels.query.get(row[0]) is None:
+                            insert_into_labels(row[0], row[1])
                 except AttributeError as e:
                     raise AttributeError(
-                        "Could not insert into games: " + str(e)
+                        "Could not insert into Labels table: " + str(e)
                     )
-
         else:
             raise AttributeError("File path not found")
 
@@ -384,14 +379,14 @@ def insert_into_labels(english, norwegian):
             db.session.commit()
             return True
         except Exception as e:
-            raise Exception("Could not insert into label: " + str(e))
+            raise Exception("Could not insert into Labels table: " + str(e))
     else:
         raise excp.BadRequest("English and norwegian must be strings")
 
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses 3 random labels in a list
+        Reads all rows from database and chooses n random labels in a list
     """
     try:
         # read all english labels in database
@@ -399,6 +394,19 @@ def get_n_labels(n):
         english_labels = [str(label.english) for label in labels]
         random_list = random.sample(english_labels, n)
         return random_list
+
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
+
+
+def get_all_labels():
+    """
+        Reads all labels from database
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        return [str(label.english) for label in labels]
 
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
@@ -414,4 +422,16 @@ def to_norwegian(english_label):
 
     except AttributeError as e:
         raise AttributeError(
-            "Could not find translation in Labels table: " + str(e))
+            "Could not find translation in Labels table: " + str(e)
+        )
+
+
+def get_translation_dict():
+    """
+        Reads all labels from database and create dictionary
+    """
+    try:
+        labels = Labels.query.all()
+        return dict([(str(label.english), str(label.norwegian)) for label in labels])
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
