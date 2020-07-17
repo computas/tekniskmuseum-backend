@@ -237,6 +237,7 @@ def test_view_highscore(client):
     response = json.loads(res.data)
     #check that data structure is correct
     if len(response["total"][0]) > 0:
+        print("len større enn 0: ", len(response["total"][0])
         assert(isinstance(response, dict))
         assert(isinstance(response["daily"], list))
         assert(isinstance(response["total"], list))
