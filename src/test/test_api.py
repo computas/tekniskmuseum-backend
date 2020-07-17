@@ -242,3 +242,35 @@ def test_view_highscore(client):
         assert(isinstance(response["total"], list))
         assert(isinstance(response["daily"][0], dict))
         assert(isinstance(response["total"][0], dict))
+
+
+def test_white_image_true(self):
+    """
+        Test if the white_image function returns True if the image is
+        completely white.
+    """
+    pass
+
+
+def test_white_image_false(self):
+    """
+        Test if the white_image function returns False if the image isn't
+        compeltely white.
+    """
+    pass
+
+
+def test_white_image_data_playing(self):
+    """
+        Test if the white_image_data function returns the correct data and
+        that state is "playing" when time_left parameter is larger than zero.
+    """
+    pass
+
+
+def test_white_image_data_done(self):
+    """
+        Test if the white_image_data function returns the correct data and
+        that state is "done" when time_left parameter is zero.
+    """
+    pass
