@@ -99,7 +99,6 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-    certainty, best_guess = classifier.predict_image(image)
     # use token submitted by player to find game
     token = request.values["token"]
     # Get time from POST request
@@ -209,9 +208,17 @@ def allowed_file(image):
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
-    image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
-    image.seek(0)
+    height, width = get_image_resolution(image)
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+def get_image_resolution(image):
+    """
+        Retrieve the resolution of the image provided.
+    """
+    image.seek(0)
+    height, width = Image.open(BytesIO(image.stream.read())).size
+    image.seek(0)
+    return height, width
