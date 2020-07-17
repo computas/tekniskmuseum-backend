@@ -179,7 +179,7 @@ def test_classify_correct(client):
     assert("hasWon" in data)
     # Check if 200 is returned
     assert(res.status_code == 200)
-'''
+
 
 def test_allowedFile_small_resolution():
     """
@@ -299,7 +299,7 @@ def test_view_highscore(client):
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
     #check that data structure is correct
-    if not response["total"][0] is None:
+    if len(response["total"][0]) > 0:
         assert(isinstance(response, dict))
         assert(isinstance(response["daily"], list))
         assert(isinstance(response["total"], list))
@@ -316,7 +316,7 @@ def test_white_image_true():
     path = os.path.join(dir_path, cfg.API_IMAGE5)
     img = PIL.Image.open(path)
     white = api.white_image(img)
-    assert(white == True)
+    assert(white is True)
 
 
 def test_white_image_false():
@@ -328,7 +328,7 @@ def test_white_image_false():
     path = os.path.join(dir_path, cfg.API_IMAGE1)
     img = PIL.Image.open(path)
     white = api.white_image(img)
-    assert(white == False)
+    assert(white is False)
 
 
 def test_white_image_data_keys():
@@ -356,7 +356,7 @@ def test_white_image_data_playing():
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Playing")
     assert(json_data["guess"] == label)
-    assert(json_data["hasWon"] == False)
+    assert(json_data["hasWon"] is False)
     assert(json_data["certainty"] == 1.0)
 
 
@@ -370,5 +370,5 @@ def test_white_image_data_done():
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Done")
     assert(json_data["guess"] == label)
-    assert(json_data["hasWon"] == False)
+    assert(json_data["hasWon"] is False)
     assert(json_data["certainty"] == 1.0)
