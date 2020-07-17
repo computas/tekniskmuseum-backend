@@ -12,6 +12,7 @@ from webapp import models
 from test import test_db
 from test import config as cfg
 from werkzeug import exceptions as excp
+import PIL
 
 
 @pytest.fixture
@@ -244,23 +245,31 @@ def test_view_highscore(client):
         assert(isinstance(response["total"][0], dict))
 
 
-def test_white_image_true(self):
+def test_white_image_true():
     """
         Test if the white_image function returns True if the image is
         completely white.
     """
-    pass
+    dir_path = construct_path(cfg.API_PATH_DATA)
+    path = os.path.join(dir_path, cfg.API_IMAGE5)
+    img = PIL.Image.open(path)
+    white = api.white_image(img)
+    assert(white == True)
 
 
-def test_white_image_false(self):
+def test_white_image_false():
     """
         Test if the white_image function returns False if the image isn't
         compeltely white.
     """
-    pass
+    dir_path = construct_path(cfg.API_PATH_DATA)
+    path = os.path.join(dir_path, cfg.API_IMAGE1)
+    img = PIL.Image.open(path)
+    white = api.white_image(img)
+    assert(white == False)
 
 
-def test_white_image_data_playing(self):
+def test_white_image_data_playing():
     """
         Test if the white_image_data function returns the correct data and
         that state is "playing" when time_left parameter is larger than zero.
@@ -268,7 +277,7 @@ def test_white_image_data_playing(self):
     pass
 
 
-def test_white_image_data_done(self):
+def test_white_image_data_done():
     """
         Test if the white_image_data function returns the correct data and
         that state is "done" when time_left parameter is zero.
