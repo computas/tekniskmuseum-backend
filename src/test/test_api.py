@@ -269,6 +269,21 @@ def test_white_image_false():
     assert(white == False)
 
 
+def test_white_image_data_keys():
+    """
+        Test if the white_image_data_function returns a data of the correct
+        format (check if all keys are in the json object returned).
+    """
+    data, code = api.white_image_data("", 1)
+    json_data = json.loads(data)
+    assert("certainty" in json_data)
+    assert("guess" in json_data)
+    assert("correctLabel" in json_data)
+    assert("hasWon" in json_data)
+    assert("gameState" in json_data)
+    assert(code == 200)
+
+
 def test_white_image_data_playing():
     """
         Test if the white_image_data function returns the correct data and
