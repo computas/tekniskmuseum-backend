@@ -14,7 +14,7 @@ from test import config as cfg
 
 
 class TestValues:
-    TOKEN = uuid.uuid4().hex
+    PLAYER_ID = uuid.uuid4().hex
     GAME_ID = uuid.uuid4().hex
     TODAY = datetime.datetime.today()
     CV_ITERATION_NAME_LENGTH = 36
@@ -50,13 +50,13 @@ def test_insert_into_scores():
     assert result
 
 
-def test_insert_into_player_in_game():
+def test_insert_into_players():
     """
         Check that record exists in PlayerInGame table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_player_in_game(
-            TestValues.TOKEN, TestValues.GAME_ID, cfg.STATE
+        result = models.insert_into_players(
+            TestValues.PLAYER_ID, TestValues.GAME_ID, cfg.STATE
         )
 
     assert result
@@ -91,13 +91,13 @@ def test_illegal_parameter_labels():
         models.insert_into_labels(1, None)
 
 
-def test_illegal_parameter_player_in_game():
+def test_illegal_parameter_players():
     """
         Check that exception is raised when illegal arguments is passed
         into player in game table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_player_in_game(100, 200, 11)
+        models.insert_into_players(100, 200, 11)
 
 
 def test_query_euqals_insert_games():
@@ -105,18 +105,18 @@ def test_query_euqals_insert_games():
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_game(TestValues.GAME_ID)
+        result = models.get_game(TestValues.GAME_ID)
 
     assert result.labels == cfg.LABELS
     # Datetime assertion can't be done due to millisec differents
 
 
-def test_query_equals_insert_player_in_game():
+def test_query_equals_insert_players():
     """
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
-        result = models.get_record_from_player_in_game(TestValues.TOKEN)
+        result = models.get_player(TestValues.PLAYER_ID)
 
     assert result.game_id == TestValues.GAME_ID
     assert result.state == cfg.STATE
