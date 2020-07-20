@@ -18,7 +18,7 @@ import json
 import datetime
 from webapp import storage
 from webapp import models
-from utilities.setup import NUM_GAMES, CERTAINTY_THRESHOLD, TOP_N
+from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -56,7 +56,7 @@ def start_game():
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
     token = uuid.uuid4().hex
-    labels = models.get_n_labels(NUM_GAMES)
+    labels = models.get_n_labels(setup.NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_player_in_game(token, game_id, "Playing")
@@ -77,7 +77,7 @@ def get_label():
     game = models.get_record_from_game(player.game_id)
 
     # Check if game complete
-    if game.session_num > NUM_GAMES:
+    if game.session_num > setup.NUM_GAMES:
         raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
@@ -90,7 +90,7 @@ def get_label():
 @app.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continuous guesses.
+        Classify endpoint for continous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -111,6 +111,7 @@ def classify():
     label = labels[game.session_num - 1]
     # Check if the image hasn't been drawn on
     bytes_img = Image.open(BytesIO(image.stream.read()))
+    image.seek(0)
     if white_image(bytes_img):
         return white_image_data(label, time_left)
 
@@ -120,7 +121,7 @@ def classify():
     has_won = (
         time_left > 0
         and best_guess == label
-        and best_certainty >= CERTAINTY_THRESHOLD
+        and best_certainty >= setup.CERTAINTY_THRESHOLD
     )
     # End game if player win or loose
     if has_won or time_left <= 0:
@@ -159,7 +160,7 @@ def end_game():
     player = models.get_record_from_player_in_game(token)
     game = models.get_record_from_game(player.game_id)
 
-    if game.session_num != NUM_GAMES + 1:
+    if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")
 
     today = datetime.date.today()
@@ -178,7 +179,7 @@ def view_high_score():
         last 24 hours.
     """
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(TOP_N)
+    top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
     # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
@@ -244,7 +245,7 @@ def white_image_data(label, time_left):
 
     data = {
         "certainty": 1.0,
-        "guess": "",
+        "guess": setup.WHITE_IMAGE_GUESS,
         "correctLabel": label,
         "hasWon": False,
         "gameState": game_state,

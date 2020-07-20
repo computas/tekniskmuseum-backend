@@ -11,6 +11,7 @@ from webapp import api
 from webapp import models
 from test import test_db
 from test import config as cfg
+from utilities import setup
 from werkzeug import exceptions as excp
 import PIL
 
@@ -355,9 +356,10 @@ def test_white_image_data_playing():
     data, code = api.white_image_data(label, 1)
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Playing")
-    assert(json_data["guess"] == label)
+    assert(json_data["correctLabel"] == label)
     assert(json_data["hasWon"] is False)
     assert(json_data["certainty"] == 1.0)
+    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
 
 
 def test_white_image_data_done():
@@ -369,6 +371,7 @@ def test_white_image_data_done():
     data, code = api.white_image_data(label, 0)
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Done")
-    assert(json_data["guess"] == label)
+    assert(json_data["correctLabel"] == label)
     assert(json_data["hasWon"] is False)
     assert(json_data["certainty"] == 1.0)
+    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
