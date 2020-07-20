@@ -15,6 +15,7 @@ CV_MAX_IMAGES = 64
 # The guess provided to the user when the image is blank
 WHITE_IMAGE_GUESS = "blank image"
 
+
 class Flask_config:
     """
         Config settings for flask and sqlalchemy should be set here.

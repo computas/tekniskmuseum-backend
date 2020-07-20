@@ -2,7 +2,7 @@
 """
     API with endpoints runned by Flask. Contains three endpoints:
         / : Responds if the API is up
-        /startGame : Provide client with unique token used for identification
+        /startGame : Provide client with unique player_id used for identification
         /getLabel : Provide client with a new word
         /classify : Classify an image
         /endGame : Signal from client that the game is finished
@@ -51,18 +51,18 @@ def hello():
 @app.route("/startGame")
 def start_game():
     """
-        Starts a new game by providing the client with a unique token.
+        Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
-    token = uuid.uuid4().hex
+    player_id = uuid.uuid4().hex
     labels = models.get_n_labels(setup.NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
-    models.insert_into_player_in_game(token, game_id, "Playing")
+    models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
-        "token": token,
+        "player_id": player_id,
     }
     return json.dumps(data), 200
 
@@ -72,9 +72,9 @@ def get_label():
     """
         Provides the client with a new word.
     """
-    token = request.values["token"]
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player_id = request.values["player_id"]
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
 
     # Check if game complete
     if game.session_num > setup.NUM_GAMES:
@@ -90,7 +90,7 @@ def get_label():
 @app.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continous guesses.
+        Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -100,13 +100,13 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-    # use token submitted by player to find game
-    token = request.values["token"]
+    # use player_id submitted by player to find game
+    player_id = request.values["player_id"]
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     # Check if the image hasn't been drawn on
@@ -131,7 +131,7 @@ def classify():
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player.game_id, token, session_num, "Done"
+            player.game_id, player_id, session_num, "Done"
         )
         # Update game state to be done
         game_state = "Done"
@@ -154,11 +154,11 @@ def end_game():
     """
         Endpoint for ending game consisting of a few sessions.
     """
-    token = request.values["token"]
+    player_id = request.values["player_id"]
     name = request.values["name"]
     score = float(request.values["score"])
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
 
     if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")

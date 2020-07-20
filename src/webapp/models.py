@@ -23,7 +23,7 @@ class Iteration(db.Model):
 class Games(db.Model):
     """
        This is the Games model in the database. It is important that the
-       inserted values match the column values. Token column value cannot
+       inserted values match the column values. player_id column value cannot
        be String when a long hex is given.
     """
     game_id = db.Column(db.NVARCHAR(32), primary_key=True)
@@ -43,12 +43,12 @@ class Scores(db.Model):
     date = db.Column(db.Date)
 
 
-class PlayerInGame(db.Model):
+class Players(db.Model):
     """
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
-    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    player_id = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
     state = db.Column(db.String(32))
 
@@ -158,23 +158,23 @@ def update_iteration_name(new_name):
     return new_name
 
 
-def insert_into_player_in_game(token, game_id, state):
+def insert_into_players(player_id, game_id, state):
     """
-        Insert values into PlayerInGame table.
+        Insert values into Players table.
 
         Parameters:
-        token: random uuid.uuid4().hex
+        player_id: random uuid.uuid4().hex
         game_id: random uuid.uuid4().hex
         state: string
     """
     if (
-        isinstance(token, str)
+        isinstance(player_id, str)
         and isinstance(game_id, str)
         and isinstance(state, str)
     ):
         try:
-            player_in_game = PlayerInGame(
-                token=token, game_id=game_id, state=state
+            player_in_game = Players(
+                player_id=player_id, game_id=game_id, state=state
             )
             db.session.add(player_in_game)
             db.session.commit()
@@ -187,7 +187,7 @@ def insert_into_player_in_game(token, game_id, state):
         )
 
 
-def get_record_from_game(game_id):
+def get_game(game_id):
     """
         Return the game record with the corresponding game_id.
     """
@@ -198,13 +198,13 @@ def get_record_from_game(game_id):
     return game
 
 
-def get_record_from_player_in_game(token):
+def get_player(player_id):
     """
-        Return the player in game record with the corresponding token.
+        Return the player in players record with the corresponding player_id.
     """
-    player_in_game = PlayerInGame.query.get(token)
+    player_in_game = Players.query.get(player_id)
     if player_in_game is None:
-        raise excp.BadRequest("Token invalid or expired")
+        raise excp.BadRequest("player_id invalid or expired")
 
     return player_in_game
 
@@ -212,7 +212,7 @@ def get_record_from_player_in_game(token):
 # DELETABLE
 def update_game(game_id, session_num, play_time):
     """
-        Update game record for the incomming token with the given parameters.
+        Update game record for the incomming player_id with the given parameters.
     """
     try:
         game = Games.query.get(game_id)
@@ -225,15 +225,15 @@ def update_game(game_id, session_num, play_time):
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
-def update_game_for_player(game_id, token, session_num, state):
+def update_game_for_player(game_id, player_id, session_num, state):
     """
         Update game and player_in_game record for the incomming game_id and
-        token with the given parameters.
+        player_id with the given parameters.
     """
     try:
         game = Games.query.get(game_id)
         game.session_num += 1
-        player_in_game = PlayerInGame.query.get(token)
+        player_in_game = Players.query.get(player_id)
         player_in_game.state = state
         db.session.commit()
         return True
@@ -249,8 +249,8 @@ def delete_session_from_game(game_id):
     """
     try:
         game = Games.query.get(game_id)
-        db.session.query(PlayerInGame).filter(
-            PlayerInGame.game_id == game_id
+        db.session.query(Players).filter(
+            Players.game_id == game_id
         ).delete()
         db.session.delete(game)
         db.session.commit()
@@ -274,8 +274,8 @@ def delete_old_games():
             .all()
         )
         for game in games:
-            db.session.query(PlayerInGame).filter(
-                PlayerInGame.game_id == game.game_id
+            db.session.query(Players).filter(
+                Players.game_id == game.game_id
             ).delete()
             db.session.delete(game)
 
