@@ -2,7 +2,7 @@
 """
     API with endpoints runned by Flask. Contains three endpoints:
         / : Responds if the API is up
-        /startGame : Provide client with unique token used for identification
+        /startGame : Provide client with unique player_id used for identification
         /getLabel : Provide client with a new word
         /classify : Classify an image
         /endGame : Signal from client that the game is finished
@@ -18,7 +18,7 @@ import json
 import datetime
 from webapp import storage
 from webapp import models
-from utilities.setup import NUM_GAMES, CERTAINTY_THRESHOLD, TOP_N
+from utilities import setup
 from customvision.classifier import Classifier
 from io import BytesIO
 from PIL import Image
@@ -26,6 +26,7 @@ from flask import Flask
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
+import PIL
 
 # Initialization and global variables
 app = Flask(__name__)
@@ -50,18 +51,18 @@ def hello():
 @app.route("/startGame")
 def start_game():
     """
-        Starts a new game by providing the client with a unique token.
+        Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
     game_id = uuid.uuid4().hex
-    token = uuid.uuid4().hex
-    labels = models.get_n_labels(NUM_GAMES)
+    player_id = uuid.uuid4().hex
+    labels = models.get_n_labels(setup.NUM_GAMES)
     today = datetime.datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
-    models.insert_into_player_in_game(token, game_id, "Playing")
+    models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
-        "token": token,
+        "player_id": player_id,
     }
     return json.dumps(data), 200
 
@@ -71,12 +72,12 @@ def get_label():
     """
         Provides the client with a new word.
     """
-    token = request.values["token"]
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player_id = request.values["player_id"]
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
 
     # Check if game complete
-    if game.session_num > NUM_GAMES:
+    if game.session_num > setup.NUM_GAMES:
         raise excp.BadRequest("Number of games exceeded")
 
     labels = json.loads(game.labels)
@@ -99,22 +100,28 @@ def classify():
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
-    certainty, best_guess = classifier.predict_image(image)
-    # use token submitted by player to find game
-    token = request.values["token"]
+    # use player_id submitted by player to find game
+    player_id = request.values["player_id"]
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    # Check if the image hasn't been drawn on
+    bytes_img = Image.open(BytesIO(image.stream.read()))
+    image.seek(0)
+    if white_image(bytes_img):
+        return white_image_data(label, time_left)
+
+    certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
         time_left > 0
         and best_guess == label
-        and best_certainty >= CERTAINTY_THRESHOLD
+        and best_certainty >= setup.CERTAINTY_THRESHOLD
     )
     # End game if player win or loose
     if has_won or time_left <= 0:
@@ -124,7 +131,7 @@ def classify():
         session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
-            player.game_id, token, session_num, "Done"
+            player.game_id, player_id, session_num, "Done"
         )
         # Update game state to be done
         game_state = "Done"
@@ -147,13 +154,13 @@ def end_game():
     """
         Endpoint for ending game consisting of a few sessions.
     """
-    token = request.values["token"]
+    player_id = request.values["player_id"]
     name = request.values["name"]
     score = float(request.values["score"])
-    player = models.get_record_from_player_in_game(token)
-    game = models.get_record_from_game(player.game_id)
+    player = models.get_player(player_id)
+    game = models.get_game(player.game_id)
 
-    if game.session_num != NUM_GAMES + 1:
+    if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")
 
     today = datetime.date.today()
@@ -172,7 +179,7 @@ def view_high_score():
         last 24 hours.
     """
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(TOP_N)
+    top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
     # read daily high score
     daily_high_scores = models.get_daily_high_score()
     data = {
@@ -210,9 +217,47 @@ def allowed_file(image):
     # Ensure the file isn't too large
     too_large = len(image.read()) > 4000000
     # Ensure the file has correct resolution
-    image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
-    image.seek(0)
+    height, width = get_image_resolution(image)
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+def white_image(image):
+    """
+        Check if the image provided is completely white.
+    """
+    if not PIL.ImageChops.invert(image).getbbox():
+        return True
+    else:
+        return False
+
+
+def white_image_data(label, time_left):
+    """
+        Generate the json data to be returned to the client when a completely
+        white image has been submitted for classification.
+    """
+    if time_left <= 0:
+        game_state = "Done"
+    else:
+        game_state = "Playing"
+
+    data = {
+        "certainty": 1.0,
+        "guess": setup.WHITE_IMAGE_GUESS,
+        "correctLabel": label,
+        "hasWon": False,
+        "gameState": game_state,
+    }
+    return json.dumps(data), 200
+
+
+def get_image_resolution(image):
+    """
+        Retrieve the resolution of the image provided.
+    """
+    image.seek(0)
+    height, width = Image.open(BytesIO(image.stream.read())).size
+    image.seek(0)
+    return height, width
