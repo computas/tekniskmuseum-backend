@@ -69,9 +69,8 @@ class User(db.Model):
         This is user model in the database to store username and psw for
         administrators.
     """
-    email = db.Column(db.String(120), primary_key=True)
-    password = db.Column(db.String(64))
-    username = db.Column(db.String(64))
+    username = db.Column(db.String(64), primary_key=True)
+    password = db.Column(db.String(128))
 
 
 # Functions to manipulate the tables above
@@ -198,14 +197,13 @@ def insert_into_player_in_game(token, game_id, play_time):
         )
 
 
-def insert_into_user(username, email, password):
+def insert_into_user(username, password):
     """
         Insert values into User table.
     """
-    if (isinstance(username, str) and isinstance(email, str)
-       and isinstance(password, str)):
+    if isinstance(username, str) and isinstance(password, str):
         try:
-            user = User(email=email, password=password, username=username)
+            user = User(password=password, username=username)
             db.session.add(user)
             db.session.commit()
             return True
@@ -378,14 +376,11 @@ def drop_table(table):
 
 
 # User related functions
-def get_user(email):
+def get_user(username):
     """
-        Return user record with corresponding email.
+        Return user record with corresponding username.
     """
-    user = db.session.query(User).get(email)
-    if user is None:
-        raise AttributeError("Invalid email")
-
+    user = db.session.query(User).get(username)
     return user
 
 

@@ -81,3 +81,7 @@ class Flask_config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str
+
+    SECRET_KEY = Keys.get("SECRET_KEY")
+    SESSION_COOKIE_SECURE = True
+

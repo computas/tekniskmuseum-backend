@@ -22,22 +22,27 @@ from PIL import Image
 from flask import Flask
 from flask import request
 from flask import json
-import flask_login
+from flask import session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
 
-# Initialization and global variables
+# Initialization app
 app = Flask(__name__)
+app.config.from_object("utilities.setup.Flask_config")
+
+# import global constants
 NUM_GAMES = setup.num_games
 CERTAINTY_TRESHOLD = setup.certainty_threshold
 HIGH_SCORE_LIST_SIZE = setup.top_n
-app.config.from_object("utilities.setup.Flask_config")
+
+# set up DB and models
 models.db.init_app(app)
 models.create_tables(app)
+
+# initialize CV classifier
 classifier = Classifier()
-login_manager = LoginManager()
-login_manager.init_app(app)
+
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -192,47 +197,44 @@ def view_high_score():
 @app.route("/auth", methods=["POST"])
 def authenticate():
     """
-        Endpoint for administrating the application; clear/drop tables,
-        retrain ML, clear training set.
+        Endpoint for admin authentication.
     """
-    email = request.values["email"]
+    username = request.values["username"]
     password = request.values["password"]
 
-    user = models.get_user(email)
+    user = models.get_user(username)
 
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
 
+    session["last_login"] = datetime.datetime.now()
+    session["username"] = username
+
     return "OK", 200
 
 
-@app.route("/adminPage/<action>", methods=["POST"])
-def admin_page():
+@app.route("/admin/<action>", methods=["POST"])
+def admin_page(action):
+    """
+        Endpoint for admin actions. Requires authentication from /auth within
+        EXPIRATION_TIME
+    """
+    print(session)
+    is_authenticated(session)
     if action == "dropTable":
-        @login_required
         def drop_table():
             table = request.values["table"]
             # If table is None all tables is dropped - should this be prevented??
             models.drop_table(table)
 
     elif action == "trainML":
-        @login_required
-        def train_ml():
-            pass
+        pass
 
     elif action == "clearTrainSet":
-        @login_required
-        def clear_train_set():
-            pass
+        pass
 
-
-def add_user(username, email, password):
-    """
-        Add user to user table in db.
-    """
-    # Do we want a cond check_secure_password(password)?
-    hashed_psw = generate_password_hash(password, method="pbkdf2:sha256", salt_length=8)
-    models.insert_into_user(username, email, hashed_psw)
+    elif action == "ping":
+        return "pong", 200
 
 
 @app.errorhandler(Exception)
@@ -269,3 +271,36 @@ def allowed_file(image):
     correct_res = (height >= 256) and (width >= 256)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+@app.route("/newUser", methods=["POST"])
+def add_user():
+    """
+        Add user to user table in db.
+    """
+    username = request.values["username"]
+    password = request.values["password"]
+    # Do we want a cond check_secure_password(password)?
+    hashed_psw = generate_password_hash(password, method="pbkdf2:sha256",
+                                        salt_length=16)
+    models.insert_into_user(username, hashed_psw)
+    return "user added", 200
+
+
+def is_authenticated(session):
+    """
+        Check if user has an unexpired cookie. Renew time if not expired.
+        Raises exception if cookie is invalid.
+    """
+    if not "last_login" in session:
+        raise excp.Unauthorized()
+
+    session_length = datetime.datetime.now() - session["last_login"]
+    is_auth = session_length < datetime.timedelta(minutes=10)
+
+    if not is_auth:
+        raise excp.Unauthorized("Session expired")
+    else:
+        session["last_login"] = datetime.datetime.now()
+
+        return True
