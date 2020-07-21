@@ -9,21 +9,19 @@ import sys
 import pytest
 import argparse
 
+
 # parse cli arguments
 parser = argparse.ArgumentParser(description='get key string')
 parser.add_argument('--keys', action='store', type=str,
                     help='The text to parse.')
-arguments = parser.parse_args()
-
-
+ARGUMENTS = parser.parse_args()
 # export keys
-keylist = json.loads(arguments.keys)
-for keydict in keylist:
+KEYLIST = json.loads(ARGUMENTS.keys)
+for keydict in KEYLIST:
     os.environ[keydict["name"]] = keydict["value"]
 
 # clear cli arguments as pytest reads them
 sys.argv = [sys.argv[0]]
-
 # run pytets
-test_result = pytest.main()
-assert test_result == 0
+TEST_RESULT = pytest.main()
+assert TEST_RESULT == 0

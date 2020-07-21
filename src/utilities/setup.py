@@ -2,68 +2,18 @@ import sys
 import os
 from utilities.keys import Keys
 
-# USED BY CUSTOM VISION
+# number of players in overall high score top list
+TOP_N = 10
+# Total number of games
+NUM_GAMES = 3
+# certainties from costum vision lower than this -> haswon=False
+CERTAINTY_THRESHOLD = 0.5
 # custom vision can't have more than 10 iterations at a time, if more classifier.py will delete the oldest iteration
 CV_MAX_ITERATIONS = 10
 # can't upload more than 64 images at a time, if more
 CV_MAX_IMAGES = 64
-
-# USED BY API
-LABELS = [
-    "airplane",
-    "angel",
-    "ant",
-    "apple",
-    "axe",
-    "bathtub",
-    "beach",
-    "bee",
-    "bicycle",
-    "birthday cake",
-    "book",
-    "bus",
-    "butterfly",
-    "calculator",
-    "camel",
-    "castle",
-    "cat",
-    "cow",
-    "crab",
-    "crocodile",
-    "diamond",
-    "elephant",
-    "eye",
-    "frying pan",
-    "giraffe",
-    "hammer",
-    "hand",
-    "helicopter",
-    "horse",
-    "hospital",
-    "key",
-    "lightning",
-    "mermaid",
-    "mountain",
-    "ocean",
-    "palm tree",
-    "piano",
-    "pineapple",
-    "pizza",
-    "police car",
-    "screwdriver",
-    "sheep",
-    "snail",
-    "suitcase",
-    "tractor",
-    "watermelon",
-    "wheel",
-    "wristwatch",
-]
-
-top_n = 10  # number of players in overall high score top list
-num_games = 3
-# certainties from costum vision lower than this -> haswon=False
-certainty_threshold = 0.5
+# The guess provided to the user when the image is blank
+WHITE_IMAGE_GUESS = "blank image"
 
 
 class Flask_config:

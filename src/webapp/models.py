@@ -23,7 +23,7 @@ class Iteration(db.Model):
 class Games(db.Model):
     """
        This is the Games model in the database. It is important that the
-       inserted values match the column values. Token column value cannot
+       inserted values match the column values. player_id column value cannot
        be String when a long hex is given.
     """
     game_id = db.Column(db.NVARCHAR(32), primary_key=True)
@@ -43,14 +43,14 @@ class Scores(db.Model):
     date = db.Column(db.Date)
 
 
-class PlayerInGame(db.Model):
+class Players(db.Model):
     """
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
-    token = db.Column(db.NVARCHAR(32), primary_key=True)
+    player_id = db.Column(db.NVARCHAR(32), primary_key=True)
     game_id = db.Column(db.NVARCHAR(32), nullable=False)
-    play_time = db.Column(db.Float, nullable=False)
+    state = db.Column(db.String(32))
 
 
 class Labels(db.Model):
@@ -167,23 +167,23 @@ def update_iteration_name(new_name):
     return new_name
 
 
-def insert_into_player_in_game(token, game_id, play_time):
+def insert_into_players(player_id, game_id, state):
     """
-        Insert values into PlayerInGame table.
+        Insert values into Players table.
 
         Parameters:
-        token: random uuid.uuid4().hex
+        player_id: random uuid.uuid4().hex
         game_id: random uuid.uuid4().hex
-        play_time: float
+        state: string
     """
     if (
-        isinstance(token, str)
+        isinstance(player_id, str)
         and isinstance(game_id, str)
-        and isinstance(play_time, float)
+        and isinstance(state, str)
     ):
         try:
-            player_in_game = PlayerInGame(
-                token=token, game_id=game_id, play_time=play_time
+            player_in_game = Players(
+                player_id=player_id, game_id=game_id, state=state
             )
             db.session.add(player_in_game)
             db.session.commit()
@@ -192,8 +192,7 @@ def insert_into_player_in_game(token, game_id, play_time):
             raise Exception("Could not insert into games: " + str(e))
     else:
         raise excp.BadRequest(
-            "Token has to be string, game_id has to be string "
-            "and play time has to be float."
+            "All params has to be string."
         )
 
 
@@ -215,7 +214,7 @@ def insert_into_user(username, password):
         )
 
 
-def get_record_from_game(game_id):
+def get_game(game_id):
     """
         Return the game record with the corresponding game_id.
     """
@@ -226,13 +225,13 @@ def get_record_from_game(game_id):
     return game
 
 
-def get_record_from_player_in_game(token):
+def get_player(player_id):
     """
-        Return the player in game record with the corresponding token.
+        Return the player in players record with the corresponding player_id.
     """
-    player_in_game = PlayerInGame.query.get(token)
+    player_in_game = Players.query.get(player_id)
     if player_in_game is None:
-        raise excp.BadRequest("Token invalid or expired")
+        raise excp.BadRequest("player_id invalid or expired")
 
     return player_in_game
 
@@ -240,7 +239,7 @@ def get_record_from_player_in_game(token):
 # DELETABLE
 def update_game(game_id, session_num, play_time):
     """
-        Update game record for the incomming token with the given parameters.
+        Update game record for the incomming player_id with the given parameters.
     """
     try:
         game = Games.query.get(game_id)
@@ -253,16 +252,16 @@ def update_game(game_id, session_num, play_time):
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
-def update_game_for_player(game_id, token, session_num, play_time):
+def update_game_for_player(game_id, player_id, session_num, state):
     """
         Update game and player_in_game record for the incomming game_id and
-        token with the given parameters.
+        player_id with the given parameters.
     """
     try:
         game = Games.query.get(game_id)
         game.session_num += 1
-        player_in_game = PlayerInGame.query.get(token)
-        player_in_game.play_time = play_time
+        player_in_game = Players.query.get(player_id)
+        player_in_game.state = state
         db.session.commit()
         return True
     except Exception as e:
@@ -277,8 +276,8 @@ def delete_session_from_game(game_id):
     """
     try:
         game = Games.query.get(game_id)
-        db.session.query(PlayerInGame).filter(
-            PlayerInGame.game_id == game_id
+        db.session.query(Players).filter(
+            Players.game_id == game_id
         ).delete()
         db.session.delete(game)
         db.session.commit()
@@ -302,8 +301,8 @@ def delete_old_games():
             .all()
         )
         for game in games:
-            db.session.query(PlayerInGame).filter(
-                PlayerInGame.game_id == game.game_id
+            db.session.query(Players).filter(
+                Players.game_id == game.game_id
             ).delete()
             db.session.delete(game)
 
@@ -386,24 +385,21 @@ def get_user(username):
 
 def seed_labels(app, filepath):
     """
-        Read file in filepath and upload to database
+        Function for updating labels in database.
     """
     with app.app_context():
         if os.path.exists(filepath):
-            # clear table
-            Labels.query.delete()
-            db.session.commit()
             with open(filepath) as csvfile:
                 try:
                     readCSV = csv.reader(csvfile, delimiter=",")
-
                     for row in readCSV:
-                        insert_into_labels(row[0], row[1])
+                        # Insert label into Labels table if not present
+                        if Labels.query.get(row[0]) is None:
+                            insert_into_labels(row[0], row[1])
                 except AttributeError as e:
                     raise AttributeError(
-                        "Could not insert into games: " + str(e)
+                        "Could not insert into Labels table: " + str(e)
                     )
-
         else:
             raise AttributeError("File path not found")
 
@@ -419,14 +415,14 @@ def insert_into_labels(english, norwegian):
             db.session.commit()
             return True
         except Exception as e:
-            raise Exception("Could not insert into label: " + str(e))
+            raise Exception("Could not insert into Labels table: " + str(e))
     else:
         raise excp.BadRequest("English and norwegian must be strings")
 
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses 3 random labels in a list
+        Reads all rows from database and chooses n random labels in a list
     """
     try:
         # read all english labels in database
@@ -436,9 +432,20 @@ def get_n_labels(n):
         return random_list
 
     except Exception as e:
-        return Exception(
-            "Could not read " + str(e) + " random rows from Labels table"
-        )
+        raise Exception("Could not read Labels table: " + str(e))
+
+
+def get_all_labels():
+    """
+        Reads all labels from database
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.all()
+        return [str(label.english) for label in labels]
+
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
 
 
 def to_norwegian(english_label):
@@ -446,10 +453,21 @@ def to_norwegian(english_label):
         Reads the labels tabel and return the norwegian translation of the english word
     """
     try:
-        norwegian_word = Labels.query.get(english_label)
-        return norwegian_word
+        query = Labels.query.get(english_label)
+        return str(query.norwegian)
 
     except AttributeError as e:
-        return AttributeError(
+        raise AttributeError(
             "Could not find translation in Labels table: " + str(e)
         )
+
+
+def get_translation_dict():
+    """
+        Reads all labels from database and create dictionary
+    """
+    try:
+        labels = Labels.query.all()
+        return dict([(str(label.english), str(label.norwegian)) for label in labels])
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
