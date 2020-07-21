@@ -70,7 +70,7 @@ class User(db.Model):
         administrators.
     """
     username = db.Column(db.String(64), primary_key=True)
-    password = db.Column(db.String(128))
+    password = db.Column(db.String(256))
 
 
 # Functions to manipulate the tables above

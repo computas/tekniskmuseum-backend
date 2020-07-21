@@ -14,6 +14,11 @@ CV_MAX_ITERATIONS = 10
 CV_MAX_IMAGES = 64
 # The guess provided to the user when the image is blank
 WHITE_IMAGE_GUESS = "blank image"
+# Authorization cookie expiration time in minutes
+SESSION_EXPIRATION_TIME = 10
+# Maximum file size and minimum resolution for CV classification
+MAX_IMAGE_SIZE = 4000000
+MIN_RESOLUTION = 256
 
 
 class Flask_config:
@@ -34,4 +39,3 @@ class Flask_config:
 
     SECRET_KEY = Keys.get("SECRET_KEY")
     SESSION_COOKIE_SECURE = True
-
