@@ -121,7 +121,7 @@ class Classifier:
         """
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
-        res = self.predictor.classify_image(
+        res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
         # reset the file head such that it does not affect the state of the file handle
