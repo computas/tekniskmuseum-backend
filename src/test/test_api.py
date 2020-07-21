@@ -300,7 +300,7 @@ def test_view_highscore(client):
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
     #check that data structure is correct
-    if len(response["total"][0]) > 0:
+    if response["total"]:
         assert(isinstance(response, dict))
         assert(isinstance(response["daily"], list))
         assert(isinstance(response["total"], list))
