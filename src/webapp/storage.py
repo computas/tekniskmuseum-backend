@@ -48,17 +48,18 @@ def clear_dataset():
     # Instantiate a BlobServiceClient using a connection string
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
     # Instantiate a ContainerClient
-    container_client = blob_service_client.get_container_client(
-        "container_name"
-    )
+    container_client = blob_service_client.get_container_client(container_name)
     print("1")
-    container_client.delete_blob(
-        "new/airplane/04745354fd574484b0b942f56c4ba015.png"
-    )
+    # container_client.delete_blob(
+    #    "new/airplane/04745354fd574484b0b942f56c4ba015.png"
+    # )
 
     blob_prefix = f"new/"
     blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
     print("2")
-    # container_client.delete_blobs(*blob_list)
+    import pdb
 
-    return url
+    pdb.set_trace()
+    container_client.delete_blobs(*blob_list)
+
+    return True
