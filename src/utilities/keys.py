@@ -7,11 +7,11 @@ import json
 ENVIRON = os.environ
 if "IS_PRODUCTION" in ENVIRON:
     keys = ENVIRON
-    isProduction = True
+    keys["is_production"] = True
 elif os.path.isfile("./config.json"):
     with open("./config.json") as configFile:
         keys = json.load(configFile)
-    isProduction = False
+    keys["is_production"] = False
 else:
     raise OSError(
         "Secret keys must either be stored as environment variables"
@@ -28,7 +28,7 @@ class Keys:
         try:
             return keys[keyName]
         except KeyError:
-            if isProduction:
+            if keys["is_production"]:
                 message = (
                     "Key not found. Keys need to be stored as"
                     " environment variables or in 'src/config.json'."

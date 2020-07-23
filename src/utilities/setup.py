@@ -38,4 +38,7 @@ class Flask_config:
     SQLALCHEMY_DATABASE_URI = con_str
 
     SECRET_KEY = Keys.get("SECRET_KEY")
-    SESSION_COOKIE_SECURE = True
+    if Keys.get("is_production"):
+        SESSION_COOKIE_SECURE = True
+    else:
+        SESSION_COOKIE_SECURE = False

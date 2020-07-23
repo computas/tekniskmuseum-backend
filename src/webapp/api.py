@@ -18,6 +18,7 @@ import json
 import datetime
 import PIL
 from PIL import Image
+from threading import Thread
 from io import BytesIO
 from webapp import storage
 from webapp import models
@@ -160,7 +161,7 @@ def classify():
 @app.route("/endGame", methods=["POST"])
 def end_game():
     """
-        Endpoint for ending game consisting of a few sessions.
+        Endpoint for ending game consisting of NUM_GAMES sessions.
     """
     player_id = request.values["player_id"]
     name = request.values["name"]
@@ -183,8 +184,8 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and all of
-        last 24 hours.
+        Read highscore from database. Return top n of all time and daily high
+        scores.
     """
     # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
@@ -224,14 +225,20 @@ def admin_page(action):
         SESSION_EXPIRATION_TIME
     """
     is_authenticated()
-    if action == "dropTable":
-        pass
+    # Delete old games?
+    if action == "clearHighScore":
+        models.clear_highscores()
+        return "High scores cleared", 200
 
     elif action == "trainML":
-        pass
+        # Run training asynchronously
+        Thread(target=classifier.retrain).start()
+        return "Training started", 200
 
-    elif action == "clearTrainSet":
-        pass
+    elif action == "hardReset":
+        classifier.delete_all_images()
+        # classifier.retrain()
+        return "All images deleted from CV", 200
 
     elif action == "ping":
         return "pong", 200

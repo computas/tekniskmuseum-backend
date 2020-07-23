@@ -342,7 +342,7 @@ def get_daily_high_score():
 
 def get_top_n_high_score_list(top_n):
     """
-        Funtion for reading tootal top n list from database.
+        Funtion for reading total top n list from database.
 
         Parameter: top_n, number of players in top list.
 
@@ -364,6 +364,11 @@ def get_top_n_high_score_list(top_n):
         raise AttributeError(
             "Could not read top high score from database: " + str(e)
         )
+
+
+def clear_highscores():
+    Scores.query.delete()
+    db.session.commit()
 
 
 def drop_table(table):
