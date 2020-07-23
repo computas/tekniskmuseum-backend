@@ -7,6 +7,7 @@ import sys
 import logging
 from webapp import api
 from azure.storage.blob import BlobClient
+from azure.storage.blob import BlobServiceClient
 from utilities.keys import Keys
 
 
@@ -33,5 +34,31 @@ def save_image(image, label):
     url = base_url + "/" + container_name + "/" + file_name
 
     logging.info(url)
+
+    return url
+
+
+def clear_dataset():
+    """
+        Method for resetting dataset back to original dataset 
+        from Google Quickdraw. It deletes all blobs in /oldim
+    """
+    container_name = Keys.get("CONTAINER_NAME")
+    connect_str = Keys.get("BLOB_CONNECTION_STRING")
+    # Instantiate a BlobServiceClient using a connection string
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    # Instantiate a ContainerClient
+    container_client = blob_service_client.get_container_client(
+        "container_name"
+    )
+    print("1")
+    container_client.delete_blob(
+        "new/airplane/04745354fd574484b0b942f56c4ba015.png"
+    )
+
+    blob_prefix = f"new/"
+    blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
+    print("2")
+    # container_client.delete_blobs(*blob_list)
 
     return url

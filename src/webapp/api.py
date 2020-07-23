@@ -48,6 +48,11 @@ def hello():
     return "Yes, we're up", 200
 
 
+@app.route("/clean")
+def clean_data():
+    storage.clear_dataset()
+
+
 @app.route("/startGame")
 def start_game():
     """
@@ -137,8 +142,12 @@ def classify():
         game_state = "Done"
     # translate labels into norwegian
     translation = models.get_translation_dict()
-    certainty_translated = dict([(translation[label], probability)
-                                 for label, probability in certainty.items()])
+    certainty_translated = dict(
+        [
+            (translation[label], probability)
+            for label, probability in certainty.items()
+        ]
+    )
     data = {
         "certainty": certainty_translated,
         "guess": translation[best_guess],
