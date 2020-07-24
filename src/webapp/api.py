@@ -16,27 +16,33 @@ import os
 import logging
 import json
 import datetime
+import PIL
+from PIL import Image
+from io import BytesIO
 from webapp import storage
 from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
-from io import BytesIO
-from PIL import Image
 from flask import Flask
 from flask import request
+from flask import session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
-import PIL
 
-# Initialization and global variables
+# Initialization app
 app = Flask(__name__)
 app.config.from_object("utilities.setup.Flask_config")
+
+# Set up DB and models
 models.db.init_app(app)
 models.create_tables(app)
 models.seed_labels(app, "./dict_eng_to_nor.csv")
+
+# Initialize CV classifier
 classifier = Classifier()
 
-storage.clear_dataset()
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -200,6 +206,46 @@ def view_high_score():
     return json.dumps(data), 200
 
 
+@app.route("/auth", methods=["POST"])
+def authenticate():
+    """
+        Endpoint for admin authentication. Returns encrypted cookie with login
+        time and username.
+    """
+    username = request.values["username"]
+    password = request.values["password"]
+
+    user = models.get_user(username)
+
+    if user is None or not check_password_hash(user.password, password):
+        raise excp.Unauthorized("Invalid username or password")
+
+    session["last_login"] = datetime.datetime.now()
+    session["username"] = username
+
+    return "OK", 200
+
+
+@app.route("/admin/<action>", methods=["POST"])
+def admin_page(action):
+    """
+        Endpoint for admin actions. Requires authentication from /auth within
+        SESSION_EXPIRATION_TIME
+    """
+    is_authenticated()
+    if action == "dropTable":
+        pass
+
+    elif action == "trainML":
+        pass
+
+    elif action == "clearTrainSet":
+        pass
+
+    elif action == "ping":
+        return "pong", 200
+
+
 @app.errorhandler(Exception)
 def handle_exception(error):
     """
@@ -226,12 +272,48 @@ def allowed_file(image):
     # Check that the file is a png
     is_png = image.content_type == "image/png"
     # Ensure the file isn't too large
-    too_large = len(image.read()) > 4000000
+    too_large = len(image.read()) > setup.MAX_IMAGE_SIZE
     # Ensure the file has correct resolution
     height, width = get_image_resolution(image)
-    correct_res = (height >= 256) and (width >= 256)
+    MIN_RES = setup.MIN_RESOLUTION
+    correct_res = (height >= MIN_RES) and (width >= MIN_RES)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+def add_user():
+    """
+        Add user to user table in db.
+    """
+    username = request.values["username"]
+    password = request.values["password"]
+    # Do we want a cond check_secure_password(password)?
+    hashed_psw = generate_password_hash(
+        password, method="pbkdf2:sha256:200000", salt_length=128
+    )
+    models.insert_into_user(username, hashed_psw)
+    return "user added", 200
+
+
+def is_authenticated():
+    """
+        Check if user has an unexpired cookie. Renew time if not expired.
+        Raises exception if cookie is invalid.
+    """
+    if "last_login" not in session:
+        raise excp.Unauthorized()
+
+    session_length = datetime.datetime.now() - session["last_login"]
+    is_auth = session_length < datetime.timedelta(
+        minutes=setup.SESSION_EXPIRATION_TIME
+    )
+
+    if not is_auth:
+        raise excp.Unauthorized("Session expired")
+    else:
+        session["last_login"] = datetime.datetime.now()
+
+        return True
 
 
 def white_image(image):

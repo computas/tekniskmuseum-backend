@@ -64,6 +64,15 @@ class Labels(db.Model):
     norwegian = db.Column(db.String(32))
 
 
+class User(db.Model):
+    """
+        This is user model in the database to store username and psw for
+        administrators.
+    """
+    username = db.Column(db.String(64), primary_key=True)
+    password = db.Column(db.String(256))
+
+
 # Functions to manipulate the tables above
 def create_tables(app):
     """
@@ -187,6 +196,24 @@ def insert_into_players(player_id, game_id, state):
         )
 
 
+def insert_into_user(username, password):
+    """
+        Insert values into User table.
+    """
+    if isinstance(username, str) and isinstance(password, str):
+        try:
+            user = User(password=password, username=username)
+            db.session.add(user)
+            db.session.commit()
+            return True
+        except Exception as e:
+            raise Exception("Could not insert into user: " + str(e))
+    else:
+        raise excp.BadRequest(
+            "Invalid type of parameters."
+        )
+
+
 def get_game(game_id):
     """
         Return the game record with the corresponding game_id.
@@ -220,8 +247,8 @@ def update_game(game_id, session_num, play_time):
         game.play_time = play_time
         db.session.commit()
         return True
-    except Exception:
-        raise Exception("Couldn't update game.")
+    except Exception as e:
+        raise Exception("Couldn't update game: " + e)
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
@@ -254,7 +281,7 @@ def delete_session_from_game(game_id):
         ).delete()
         db.session.delete(game)
         db.session.commit()
-        return "Record deleted."
+        return True
     except AttributeError as e:
         db.session.rollback()
         raise AttributeError("Couldn't find game_id: " + str(e))
@@ -345,6 +372,15 @@ def drop_table(table):
     """
     # Calling 'drop_table' with None as parameter means dropping all tables.
     db.drop_all(bind=table)
+
+
+# User related functions
+def get_user(username):
+    """
+        Return user record with corresponding username.
+    """
+    user = db.session.query(User).get(username)
+    return user
 
 
 def seed_labels(app, filepath):
