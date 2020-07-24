@@ -308,6 +308,7 @@ def test_view_highscore(client):
         assert(isinstance(response["total"][0], dict))
 
 
+'''
 def test_white_image_true():
     """
         Test if the white_image function returns True if the image is
@@ -375,3 +376,4 @@ def test_white_image_data_done():
     assert(json_data["hasWon"] is False)
     assert(json_data["certainty"] == 1.0)
     assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
+'''
