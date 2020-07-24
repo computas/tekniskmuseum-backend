@@ -145,8 +145,12 @@ def classify():
         game_state = "Done"
     # translate labels into norwegian
     translation = models.get_translation_dict()
-    certainty_translated = dict([(translation[label], probability)
-                                 for label, probability in certainty.items()])
+    certainty_translated = dict(
+        [
+            (translation[label], probability)
+            for label, probability in certainty.items()
+        ]
+    )
     data = {
         "certainty": certainty_translated,
         "guess": translation[best_guess],
@@ -279,8 +283,9 @@ def add_user():
     username = request.values["username"]
     password = request.values["password"]
     # Do we want a cond check_secure_password(password)?
-    hashed_psw = generate_password_hash(password, method="pbkdf2:sha256:200000",
-                                        salt_length=128)
+    hashed_psw = generate_password_hash(
+        password, method="pbkdf2:sha256:200000", salt_length=128
+    )
     models.insert_into_user(username, hashed_psw)
     return "user added", 200
 
@@ -294,8 +299,8 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = (session_length
-               < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME))
+    is_auth = session_length 
+        < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
