@@ -56,11 +56,6 @@ def hello():
     return "Yes, we're up", 200
 
 
-@app.route("/clean")
-def clean_data():
-    storage.clear_dataset()
-
-
 @app.route("/startGame")
 def start_game():
     """
