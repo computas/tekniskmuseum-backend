@@ -43,7 +43,7 @@ def clear_dataset():
         Method for resetting dataset back to original dataset
         from Google Quickdraw. It deletes all blobs in '/new' directory.
     """
-    blob_prefix = "new/bathtub"
+    blob_prefix = "new/"
     container_name = Keys.get("CONTAINER_NAME")
     connect_str = Keys.get("BLOB_CONNECTION_STRING")
     try:
