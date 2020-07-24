@@ -50,27 +50,8 @@ def clear_dataset():
     # Instantiate a ContainerClient
     container_client = blob_service_client.get_container_client(container_name)
 
-    blob_prefix = "new/axe"
+    blob_prefix = "new"
     blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
 
-    blob_names = [bytes(blob.name, "utf-8") for blob in blob_list]
-    print(blob_names)
-    container_client.delete_blobs(blob_names)
-
-    """
-    for blob in blob_list:
-        print("ok")
-        try:
-            print("deleting: ", blob.name)
-            blob_name = blob.name
-            container_client.delete_blob(blob.name)
-            print("was deleted")
-        except Exception as e:
-            raise Exception(
-                "could not delete blob with name: ",
-                blob.name,
-                ". Error message: ",
-                str(e),
-            )
-    """
-
+    blob_names = [blob.name.encode() for blob in blob_list]
+    container_client.delete_blobs(*blob_names)
