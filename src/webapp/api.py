@@ -110,6 +110,12 @@ def classify():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
+    # Comment out because frontend doesn't send blank images
+    # Check if the image hasn't been drawn on
+    # bytes_img = Image.open(BytesIO(image.stream.read()))
+    # image.seek(0)
+    # if white_image(bytes_img):
+    #   return white_image_data(label, time_left)
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -122,6 +128,8 @@ def classify():
     if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
+        # Increment session_num
+        session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
             player.game_id, player_id, session_num, "Done"
@@ -132,7 +140,6 @@ def classify():
     translation = models.get_translation_dict()
     certainty_translated = dict([(translation[label], probability)
                                  for label, probability in certainty.items()])
-    
     data = {
         "certainty": certainty_translated,
         "guess": translation[best_guess],
@@ -140,13 +147,6 @@ def classify():
         "hasWon": has_won,
         "gameState": game_state,
     }
-
-    # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
-    image.seek(0)
-    if white_image(bytes_img):
-        data = white_image_data(label, time_left)
-
     return json.dumps(data), 200
 
 
