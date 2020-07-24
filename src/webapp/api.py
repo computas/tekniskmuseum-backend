@@ -109,11 +109,6 @@ def classify():
     game = models.get_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
-    image.seek(0)
-    if white_image(bytes_img):
-        return white_image_data(label, time_left)
 
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
@@ -139,6 +134,7 @@ def classify():
     translation = models.get_translation_dict()
     certainty_translated = dict([(translation[label], probability)
                                  for label, probability in certainty.items()])
+    
     data = {
         "certainty": certainty_translated,
         "guess": translation[best_guess],
@@ -146,6 +142,13 @@ def classify():
         "hasWon": has_won,
         "gameState": game_state,
     }
+
+    # Check if the image hasn't been drawn on
+    bytes_img = Image.open(BytesIO(image.stream.read()))
+    image.seek(0)
+    if white_image(bytes_img):
+        data = white_image_data(label, time_left)
+
     return json.dumps(data), 200
 
 
@@ -250,7 +253,7 @@ def white_image_data(label, time_left):
         "hasWon": False,
         "gameState": game_state,
     }
-    return json.dumps(data), 200
+    return data
 
 
 def get_image_resolution(image):
