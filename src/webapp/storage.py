@@ -7,6 +7,7 @@ import sys
 import logging
 from webapp import api
 from azure.storage.blob import BlobClient
+from azure.storage.blob import BlobServiceClient
 from utilities.keys import Keys
 
 
@@ -35,3 +36,32 @@ def save_image(image, label):
     logging.info(url)
 
     return url
+
+
+def clear_dataset():
+    """
+        Method for resetting dataset back to original dataset
+        from Google Quickdraw. It deletes all blobs in '/new' directory.
+    """
+    blob_prefix = "new/"
+    container_name = Keys.get("CONTAINER_NAME")
+    connect_str = Keys.get("BLOB_CONNECTION_STRING")
+    try:
+        # Instantiate a BlobServiceClient using a connection string
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connect_str
+        )
+        # Instantiate a ContainerClient
+        container_client = blob_service_client.get_container_client(
+            container_name
+        )
+    except Exception as e:
+        raise Exception("could not connect to blob client: " + str(e))
+
+    try:
+        blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
+
+        blob_names = [blob.name.encode() for blob in blob_list]
+        container_client.delete_blobs(*blob_names)
+    except Exception as e:
+        raise Exception("could not delete all images from blob" + str(e))
