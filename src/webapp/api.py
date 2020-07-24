@@ -36,6 +36,8 @@ models.create_tables(app)
 models.seed_labels(app, "./dict_eng_to_nor.csv")
 classifier = Classifier()
 
+storage.clear_dataset()
+
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers

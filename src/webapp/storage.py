@@ -49,17 +49,28 @@ def clear_dataset():
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
     # Instantiate a ContainerClient
     container_client = blob_service_client.get_container_client(container_name)
-    print("1")
-    # container_client.delete_blob(
-    #    "new/airplane/04745354fd574484b0b942f56c4ba015.png"
-    # )
 
-    blob_prefix = f"new/"
+    blob_prefix = "new/axe"
     blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
-    print("2")
-    import pdb
 
-    pdb.set_trace()
-    container_client.delete_blobs(*blob_list)
+    blob_names = [bytes(blob.name, "utf-8") for blob in blob_list]
+    print(blob_names)
+    container_client.delete_blobs(blob_names)
 
-    return True
+    """
+    for blob in blob_list:
+        print("ok")
+        try:
+            print("deleting: ", blob.name)
+            blob_name = blob.name
+            container_client.delete_blob(blob.name)
+            print("was deleted")
+        except Exception as e:
+            raise Exception(
+                "could not delete blob with name: ",
+                blob.name,
+                ". Error message: ",
+                str(e),
+            )
+    """
+
