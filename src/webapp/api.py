@@ -300,8 +300,7 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = session_length 
-        < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
+    is_auth = session_length < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
