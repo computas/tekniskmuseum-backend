@@ -224,6 +224,7 @@ def admin_page(action):
         Endpoint for admin actions. Requires authentication from /auth within
         SESSION_EXPIRATION_TIME
     """
+    # Check if user has valid cookie
     is_authenticated()
     # Delete old games?
     if action == "clearHighScore":
@@ -237,10 +238,17 @@ def admin_page(action):
 
     elif action == "hardReset":
         classifier.delete_all_images()
-        return "All images deleted from CV", 200
+        storage.clear_dataset()
+        return "All images deleted from CV and BLOB storage", 200
 
     elif action == "status":
-        pass
+        # get number of new images
+        iteration = classifier.getIteration()
+        data = {
+            "CV_iteration_name": iteration.name,
+            "CV_time_created": str(iteration.created),
+        }
+        return json.dumps(data), 200
 
     elif action == "ping":
         return "pong", 200

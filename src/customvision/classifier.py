@@ -237,6 +237,9 @@ class Classifier:
         for emsg in error_messages:
             print(f"\t {emsg}")
 
+    def getIteration(self):
+        return self.trainer.get_iterations(self.project_id)[-1]
+
     def delete_iteration(self) -> None:
         """
             Deletes the oldest iteration in Custom Vision if there are 11 iterations.
@@ -328,7 +331,7 @@ class Classifier:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            print(e,"exiting...")
+            print(e, "exiting...")
             raise excp.BadRequest(msg)
 
 
