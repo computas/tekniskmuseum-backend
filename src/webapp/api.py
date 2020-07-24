@@ -122,8 +122,6 @@ def classify():
     if has_won or time_left <= 0:
         # save image in blob storage
         storage.save_image(image, label)
-        # Increment session_num
-        session_num = game.session_num + 1
         # Add to games table
         models.update_game_for_player(
             player.game_id, player_id, session_num, "Done"
