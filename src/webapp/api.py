@@ -237,8 +237,10 @@ def admin_page(action):
 
     elif action == "hardReset":
         classifier.delete_all_images()
-        # classifier.retrain()
         return "All images deleted from CV", 200
+
+    elif action == "status":
+        pass
 
     elif action == "ping":
         return "pong", 200
