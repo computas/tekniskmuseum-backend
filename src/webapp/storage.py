@@ -4,23 +4,26 @@
 import os
 import uuid
 import sys
+import time
 import logging
 from webapp import api
+from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
 from utilities.keys import Keys
+from utilities import setup
 
 
 def save_image(image, label):
     """
-        Upload image to blob storage container with same name as image label.
+        Upload image to blob storage container named "newimgcontainer" with same name as image label.
         Image is renamed to assure unique name. Returns public URL to access
         image.
     """
     file_name = f"new/{label}/{uuid.uuid4().hex}.png"
     connection_string = Keys.get("BLOB_CONNECTION_STRING")
-    container_name = Keys.get("CONTAINER_NAME")
     base_url = Keys.get("BASE_BLOB_URL")
+    container_name = setup.CONTAINER_NAME_NEW
     try:
         blob = BlobClient.from_connection_string(
             conn_str=connection_string,
@@ -28,23 +31,72 @@ def save_image(image, label):
             blob_name=file_name,
         )
         blob.upload_blob(image)
+        container_client = blob_connection()
+        # update metadata in blob
+        image_count = int(
+            container_client.get_container_properties().metadata["image_count"]
+        )
+        metadata = {"image_count": str(image_count + 1)}
+        container_client.set_container_metadata(metadata=metadata)
     except Exception as e:
         api.app.logger.error(e)
-
     url = base_url + "/" + container_name + "/" + file_name
-
     logging.info(url)
-
     return url
 
 
 def clear_dataset():
     """
         Method for resetting dataset back to original dataset
-        from Google Quickdraw. It deletes all blobs in '/new' directory.
+        from Google Quickdraw. It deletes the 'New Images Container'. 
+        NOTE: container is deleted by garbage collection, which does not 
+        happen instantly. A new blob cannot be initalized before old is collected.
     """
-    blob_prefix = "new/"
-    container_name = Keys.get("CONTAINER_NAME")
+    container_client = blob_connection()
+    try:
+        container_client.delete_container()
+    except Exception as e:
+        raise Exception("could not delete container" + str(e))
+    Thread(target=create_container).start()
+
+
+def create_container():
+    """
+        Method for creating a new container. Tries to create a new container 
+        10 times, to make sure Azure garbage collection is done. 
+    """
+    NUM_TRIES = 10
+    container_client = blob_connection()
+    success = False
+    metadata = {"image_count": "0"}
+    for i in range(NUM_TRIES):
+        if success:
+            return
+
+        time.sleep(30)
+        try:
+            print("trying to create a new container")
+            container_client.create_container(
+                metadata=metadata, public_access="container"
+            )
+            success = True
+        except:
+            pass
+
+
+def image_count():
+    """
+        Returns number of images in '/new' folder in blob
+    """
+    container_client = blob_connection()
+    return container_client.get_container_properties().metadata["image_count"]
+
+
+def blob_connection():
+    """
+        Helper method for connection to blob service.
+    """
+    container_name = setup.CONTAINER_NAME_NEW
     connect_str = Keys.get("BLOB_CONNECTION_STRING")
     try:
         # Instantiate a BlobServiceClient using a connection string
@@ -58,10 +110,4 @@ def clear_dataset():
     except Exception as e:
         raise Exception("could not connect to blob client: " + str(e))
 
-    try:
-        blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
-
-        blob_names = [blob.name.encode() for blob in blob_list]
-        container_client.delete_blobs(*blob_names)
-    except Exception as e:
-        raise Exception("could not delete all images from blob" + str(e))
+    return container_client

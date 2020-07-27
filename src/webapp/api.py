@@ -43,7 +43,6 @@ models.seed_labels(app, "./dict_eng_to_nor.csv")
 # Initialize CV classifier
 classifier = Classifier()
 
-
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers
@@ -54,6 +53,18 @@ if __name__ != "__main__":
 def hello():
     app.logger.info("We're up!")
     return "Yes, we're up", 200
+
+
+@app.route("/count")
+def counter():
+    print(storage.image_count())
+    return "Count completed", 200
+
+
+@app.route("/clean")
+def clean():
+    storage.clear_dataset()
+    return "Clean", 200
 
 
 @app.route("/startGame")
@@ -299,8 +310,9 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = session_length 
-        < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
+    is_auth = session_length < datetime.timedelta(
+        minutes=setup.SESSION_EXPIRATION_TIME
+    )
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")

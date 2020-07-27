@@ -11,7 +11,7 @@ import os
 import argparse
 from azure.storage.blob import BlobServiceClient
 from utilities.keys import Keys
-
+from utilities import setup
 
 CONNECT_STR = Keys.get("BLOB_CONNECTION_STRING")
 parser = argparse.ArgumentParser(
@@ -97,7 +97,7 @@ def upload_to_blob(path, key, class_name, blob_service_client):
     blob_name = f"old/{class_name}/{key}.png"
     print(blob_name)
     blob_client = blob_service_client.get_blob_client(
-        Keys.get("CONTAINER_NAME"), blob=blob_name
+        setup.CONTINER_NAME_ORIGINAL, blob=blob_name
     )
     with open(path, "rb") as localFile:
         try:
@@ -153,7 +153,7 @@ def main():
 
     for className in cnames:
         dirp = f"{imgpath}/{className}"
-        container_name = Keys.get("CONTAINER_NAME")
+        container_name = setup.CONTINER_NAME_ORIGINAL
         if container_name not in [
             c["name"] for c in blob_service_client.list_containers()
         ]:

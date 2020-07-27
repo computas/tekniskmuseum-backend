@@ -34,7 +34,7 @@ class Keys:
                     " environment variables or in 'src/config.json'."
                 )
             else:
-                message = "Key not in config.json"
+                message = f"Key not in config.json: '{keyName}'"
             raise KeyError(message)
 
 
