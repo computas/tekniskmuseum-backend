@@ -80,8 +80,8 @@ def create_container():
                 metadata=metadata, public_access="container"
             )
             success = True
-        except Exception as error:
-            api.app.logger.error(error)
+        except Exception as e:
+            api.app.logger.error(e)
 
 
 def image_count():
