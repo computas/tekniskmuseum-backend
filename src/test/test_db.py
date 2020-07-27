@@ -252,4 +252,5 @@ def test_high_score_cleared():
     with api.app.app_context():
         models.clear_highscores()
         num_records = models.Scores.query.count()
+
     assert num_records == 0

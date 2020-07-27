@@ -17,7 +17,6 @@ import logging
 import json
 import datetime
 import PIL
-from PIL import Image
 from threading import Thread
 from io import BytesIO
 from webapp import storage
@@ -119,7 +118,7 @@ def classify():
     label = labels[game.session_num - 1]
 
     # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
+    bytes_img = PIL.Image.open(BytesIO(image.stream.read()))
     image.seek(0)
     if white_image(bytes_img):
         return white_image_data(label, time_left, player.game_id, player_id)
@@ -368,6 +367,6 @@ def get_image_resolution(image):
         Retrieve the resolution of the image provided.
     """
     image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
+    height, width = PIL.Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
