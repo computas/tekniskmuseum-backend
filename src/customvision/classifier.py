@@ -226,10 +226,10 @@ class Classifier:
 
             prc = itr_img / num_imgs
             api.app.logger.info(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
-                  f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
-                  f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
-                  f"\t [{prc:03.2%}]",
-                  sep="", end="\r", flush=True)
+                                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                                f"\t [{prc:03.2%}]",
+                                sep="", end="\r", flush=True)
 
         api.app.logger.info()
         if len(error_messages) > 0:
@@ -293,7 +293,7 @@ class Classifier:
             )
             minutes, seconds = divmod(time.time() - start, 60)
             api.app.logger.info(f"Training status: {iteration.status}",
-                  f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
+                                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
             time.sleep(1)
 
         api.app.logger.info()
