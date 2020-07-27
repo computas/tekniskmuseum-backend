@@ -18,6 +18,7 @@ import json
 import datetime
 import PIL
 from PIL import Image
+from threading import Thread
 from io import BytesIO
 from webapp import storage
 from webapp import models
@@ -163,7 +164,7 @@ def classify():
 @app.route("/endGame", methods=["POST"])
 def end_game():
     """
-        Endpoint for ending game consisting of a few sessions.
+        Endpoint for ending game consisting of NUM_GAMES sessions.
     """
     player_id = request.values["player_id"]
     name = request.values["name"]
@@ -186,8 +187,8 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and all of
-        last 24 hours.
+        Read highscore from database. Return top n of all time and daily high
+        scores.
     """
     # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
@@ -226,18 +227,38 @@ def admin_page(action):
         Endpoint for admin actions. Requires authentication from /auth within
         SESSION_EXPIRATION_TIME
     """
+    # Check if user has valid cookie
     is_authenticated()
-    if action == "dropTable":
-        pass
+
+    if action == "clearHighScore":
+        models.clear_highscores()
+        return "High scores cleared", 200
 
     elif action == "trainML":
-        pass
+        # Run training asynchronously
+        Thread(target=classifier.retrain).start()
+        return "Training started", 200
 
-    elif action == "clearTrainSet":
-        pass
+    elif action == "hardReset":
+        classifier.delete_all_images()
+        storage.clear_dataset()
+        return "All images deleted from CV and BLOB storage", 200
+
+    elif action == "status":
+        new_image_count = storage.image_count()
+        iteration = classifier.getIteration()
+        data = {
+            "CV_iteration_name": iteration.name,
+            "CV_time_created": str(iteration.created),
+            "BLOB_image_count": new_image_count,
+        }
+        return json.dumps(data), 200
 
     elif action == "ping":
         return "pong", 200
+
+    else:
+        return "Admin action unspecified", 400
 
 
 @app.errorhandler(Exception)
@@ -298,7 +319,8 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = session_length < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
+    is_auth = (session_length
+               < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME))
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
