@@ -6,7 +6,13 @@ import uuid
 import time
 import sys
 import os
-
+from typing import Dict
+from typing import List
+from utilities.keys import Keys
+from utilities import setup
+from webapp import models
+from webapp import api
+from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -17,13 +23,8 @@ from azure.cognitiveservices.vision.customvision.training import (
 )
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
+    CustomVisionErrorException,
 )
-from typing import Dict
-from typing import List
-from utilities.keys import Keys
-from utilities import setup
-from webapp import models
-from webapp import api
 
 
 class Classifier:
@@ -137,7 +138,7 @@ class Classifier:
         for i in range(0, len(lst), n):
             yield lst[i: i + n]
 
-    def upload_images(self, labels: List) -> None:
+    def upload_images(self, labels: List, dir_name) -> None:
         """
             Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
             If label in input already exists in Custom Vision project, all images are uploaded directly.
@@ -178,7 +179,7 @@ class Classifier:
             else:
                 tag = tag[0]
 
-            blob_prefix = f"old/{label}/"
+            blob_prefix = f"{dir_name}/{label}/"
             blob_list = container.list_blobs(name_starts_with=blob_prefix)
 
             if not blob_list:
@@ -195,15 +196,49 @@ class Classifier:
                 )
 
         # upload URLs in chunks of 64
-        for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
+        print(f"Uploading images from '{dir_name}' to CV")
+        img_f = 0
+        img_s = 0
+        img_d = 0
+        itr_img = 0
+        chunks = self.__chunks(url_list, setup.CV_MAX_IMAGES)
+        num_imgs = len(url_list)
+        error_messages = []
+        for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
             )
             if not upload_result.is_batch_successful:
-                print("Image batch upload failed.")
                 for image in upload_result.images:
-                    if image.status != "OK":
-                        print("Image status: ", image.status)
+                    if image.status == "OK":
+                        img_s += 1
+                    elif image.status == "OKDuplicate":
+                        img_d += 1
+                    else:
+                        error_messages.append(image.status)
+                        img_f += 1
+
+                    itr_img += 1
+            else:
+                batch_size = len(upload_result.images)
+                img_s += batch_size
+                itr_img += batch_size
+
+            prc = itr_img / num_imgs
+            print(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+                  f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                  f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                  f"\t [{prc:03.2%}]",
+                  sep="", end="\r", flush=True)
+
+        print()
+        if len(error_messages) > 0:
+            print("Error messages:")
+        for emsg in error_messages:
+            print(f"\t {emsg}")
+
+    def getIteration(self):
+        return self.trainer.get_iterations(self.project_id)[-1]
 
     def delete_iteration(self) -> None:
         """
@@ -251,12 +286,17 @@ class Classifier:
             notification_email_address=email,
         )
         # Wait for training to complete
+        start = time.time()
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
                 self.project_id, iteration.id
             )
-            print("Training status: " + iteration.status)
+            minutes, seconds = divmod(time.time() - start, 60)
+            print(f"Training status: {iteration.status}",
+                  f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
             time.sleep(1)
+
+        print()
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
@@ -278,6 +318,21 @@ class Classifier:
                 self.project_id, all_images=True, all_iterations=True)
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
+
+    def retrain(self):
+        """
+            Train model on all labels and update iteration.
+        """
+        with api.app.app_context():
+            labels = models.get_all_labels()
+        self.upload_images(labels, "old")
+        self.upload_images(labels, "new")
+        try:
+            self.train(labels)
+        except CustomVisionErrorException as e:
+            msg = "No changes since last training"
+            print(e, "exiting...")
+            raise excp.BadRequest(msg)
 
 
 def main():
@@ -303,7 +358,7 @@ def main():
     with api.app.app_context():
         labels = models.get_all_labels()
 
-    classifier.upload_images(labels)
+    classifier.upload_images(labels, "old")
     classifier.train(labels)
 
 
