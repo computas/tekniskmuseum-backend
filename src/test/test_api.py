@@ -369,7 +369,6 @@ def test_white_image_data_done(client):
     """
     res = client.get("/startGame")
     player_id = json.loads(res.data)["player_id"]
-    print("PLAYER_ID: " + player_id)
     game_id = models.get_player(player_id).game_id
     label = ""
     data, code = api.white_image_data(label, 0, game_id, player_id)

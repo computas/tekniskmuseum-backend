@@ -158,7 +158,7 @@ class Classifier:
                 Keys.get("CONTAINER_NAME")
             )
         except Exception as e:
-            print(
+            api.app.logger.info(
                 "could not find container with CONTAINER_NAME name error: ", e,
             )
 
@@ -172,9 +172,9 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    print("Created new label in project: " + label)
+                    api.app.logger.info("Created new label in project: " + label)
                 except Exception as e:
-                    print(e)
+                    api.app.logger.info(e)
                     continue
             else:
                 tag = tag[0]
@@ -190,13 +190,13 @@ class Classifier:
                 blob_name = blob.name
 
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # print(Keys.get("CONTAINER_NAME"))
+                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
         # upload URLs in chunks of 64
-        print(f"Uploading images from '{dir_name}' to CV")
+        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
         img_f = 0
         img_s = 0
         img_d = 0
@@ -225,17 +225,17 @@ class Classifier:
                 itr_img += batch_size
 
             prc = itr_img / num_imgs
-            print(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+            api.app.logger.info(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
                   f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
                   f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
                   f"\t [{prc:03.2%}]",
                   sep="", end="\r", flush=True)
 
-        print()
+        api.app.logger.info()
         if len(error_messages) > 0:
-            print("Error messages:")
+            api.app.logger.info("Error messages:")
         for emsg in error_messages:
-            print(f"\t {emsg}")
+            api.app.logger.info(f"\t {emsg}")
 
     def getIteration(self):
         return self.trainer.get_iterations(self.project_id)[-1]
@@ -275,11 +275,11 @@ class Classifier:
         try:
             email = Keys.get("EMAIL")
         except Exception:
-            print("No email found, setting to empty")
+            api.app.logger.info("No email found, setting to empty")
             email = ""
 
         self.delete_iteration()
-        print("Training...")
+        api.app.logger.info("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
@@ -292,11 +292,11 @@ class Classifier:
                 self.project_id, iteration.id
             )
             minutes, seconds = divmod(time.time() - start, 60)
-            print(f"Training status: {iteration.status}",
+            api.app.logger.info(f"Training status: {iteration.status}",
                   f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
             time.sleep(1)
 
-        print()
+        api.app.logger.info()
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
@@ -331,7 +331,7 @@ class Classifier:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            print(e, "exiting...")
+            api.app.logger.info(e, "exiting...")
             raise excp.BadRequest(msg)
 
 
@@ -348,12 +348,12 @@ def main():
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
-    print(f"url result:\n{best_guess} url result {result}")
+    api.app.logger.info(f"url result:\n{best_guess} url result {result}")
 
     # classify image
     with open("../data/cv_testfile.png", "rb") as f:
         result, best_guess = classifier.predict_image(f)
-        print(f"png result:\n{result}")
+        api.app.logger.info(f"png result:\n{result}")
 
     with api.app.app_context():
         labels = models.get_all_labels()
@@ -363,4 +363,5 @@ def main():
 
 
 if __name__ == "__main__":
+    api.app.logger.info = print
     main()
