@@ -43,7 +43,6 @@ models.seed_labels(app, "./dict_eng_to_nor.csv")
 # Initialize CV classifier
 classifier = Classifier()
 
-
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers
@@ -135,9 +134,7 @@ def classify():
     # End game if player win or loose
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
-        models.update_game_for_player(
-            player.game_id, player_id, 1, "Done"
-        )
+        models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image in blob storage
         storage.save_image(image, label)
         # Update game state to be done
@@ -322,8 +319,9 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = (session_length
-               < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME))
+    is_auth = session_length < datetime.timedelta(
+        minutes=setup.SESSION_EXPIRATION_TIME
+    )
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
@@ -351,9 +349,7 @@ def white_image_data(label, time_left, game_id, player_id):
     if time_left > 0:
         game_state = "Playing"
     else:
-        models.update_game_for_player(
-            game_id, player_id, 1, "Done"
-        )
+        models.update_game_for_player(game_id, player_id, 1, "Done")
         game_state = "Done"
 
     data = {
