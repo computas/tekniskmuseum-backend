@@ -66,6 +66,7 @@ def create_container():
         n times, to make sure Azure garbage collection is finished.
     """
     tries = setup.CREATE_CONTAINER_TRIES
+    waiting_time = setup.CREATE_CONTAINER_WAITER
     container_client = blob_connection()
     success = False
     metadata = {"image_count": "0"}
@@ -73,14 +74,14 @@ def create_container():
         if success:
             return
 
-        time.sleep(30)
+        time.sleep(waiting_time)
         try:
             container_client.create_container(
                 metadata=metadata, public_access="container"
             )
             success = True
-        except Exception:
-            pass
+        except Exception as error:
+            api.app.logger.error(error)
 
 
 def image_count():
