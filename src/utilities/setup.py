@@ -22,6 +22,7 @@ MIN_RESOLUTION = 256
 # Container names
 CONTINER_NAME_ORIGINAL = "originalimgcontainer"
 CONTAINER_NAME_NEW = "newimgcontainer"
+CREATE_CONTAINER_TRIES = 10
 
 
 class Flask_config:
@@ -41,4 +42,7 @@ class Flask_config:
     SQLALCHEMY_DATABASE_URI = con_str
 
     SECRET_KEY = Keys.get("SECRET_KEY")
-    SESSION_COOKIE_SECURE = True
+    if Keys.get("IS_PRODUCTION") == "true":
+        SESSION_COOKIE_SECURE = True
+    else:
+        SESSION_COOKIE_SECURE = False

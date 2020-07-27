@@ -236,22 +236,6 @@ def get_player(player_id):
     return player_in_game
 
 
-# DELETABLE
-def update_game(game_id, session_num, play_time):
-    """
-        Update game record for the incomming player_id with the given parameters.
-    """
-    try:
-        game = Games.query.get(game_id)
-        game.session_num += 1
-        game.play_time = play_time
-        db.session.commit()
-        return True
-    except Exception as e:
-        raise Exception("Couldn't update game: " + e)
-
-
-# ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
 def update_game_for_player(game_id, player_id, session_num, state):
     """
         Update game and player_in_game record for the incomming game_id and
@@ -342,7 +326,7 @@ def get_daily_high_score():
 
 def get_top_n_high_score_list(top_n):
     """
-        Funtion for reading tootal top n list from database.
+        Funtion for reading total top n list from database.
 
         Parameter: top_n, number of players in top list.
 
@@ -364,6 +348,11 @@ def get_top_n_high_score_list(top_n):
         raise AttributeError(
             "Could not read top high score from database: " + str(e)
         )
+
+
+def clear_highscores():
+    Scores.query.delete()
+    db.session.commit()
 
 
 def drop_table(table):

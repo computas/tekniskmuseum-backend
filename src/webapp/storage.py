@@ -65,7 +65,7 @@ def create_container():
         Method for creating a new container. Tries to create a new container 
         10 times, to make sure Azure garbage collection is done. 
     """
-    NUM_TRIES = 10
+    tries = setup.CREATE_CONTAINER_TRIES
     container_client = blob_connection()
     success = False
     metadata = {"image_count": "0"}
@@ -75,7 +75,6 @@ def create_container():
 
         time.sleep(30)
         try:
-            print("trying to create a new container")
             container_client.create_container(
                 metadata=metadata, public_access="container"
             )
@@ -108,6 +107,6 @@ def blob_connection():
             container_name
         )
     except Exception as e:
-        raise Exception("could not connect to blob client: " + str(e))
+        raise Exception("Could not connect to blob client: " + str(e))
 
     return container_client
