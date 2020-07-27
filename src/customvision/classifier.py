@@ -203,7 +203,7 @@ class Classifier:
         itr_img = 0
         chunks = self.__chunks(url_list, setup.CV_MAX_IMAGES)
         num_imgs = len(url_list)
-        error_messages = []
+        error_messages = set()
         for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
@@ -215,7 +215,7 @@ class Classifier:
                     elif image.status == "OKDuplicate":
                         img_d += 1
                     else:
-                        error_messages.append(image.status)
+                        error_messages.add(image.status)
                         img_f += 1
 
                     itr_img += 1
@@ -234,8 +234,8 @@ class Classifier:
         print()
         if len(error_messages) > 0:
             print("Error messages:")
-        for emsg in error_messages:
-            print(f"\t {emsg}")
+            for emsg in error_messages:
+                print(f"\t {emsg}")
 
     def getIteration(self):
         return self.trainer.get_iterations(self.project_id)[-1]
