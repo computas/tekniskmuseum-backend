@@ -48,8 +48,8 @@ def save_image(image, label):
 def clear_dataset():
     """
         Method for resetting dataset back to original dataset
-        from Google Quickdraw. It deletes the 'New Images Container'. 
-        NOTE: container is deleted by garbage collection, which does not 
+        from Google Quickdraw. It deletes the 'New Images Container'.
+        NOTE: container is deleted by garbage collection, which does not
         happen instantly. A new blob cannot be initalized before old is collected.
     """
     container_client = blob_connection()
@@ -62,14 +62,14 @@ def clear_dataset():
 
 def create_container():
     """
-        Method for creating a new container. Tries to create a new container 
-        10 times, to make sure Azure garbage collection is done. 
+        Method for creating a new container. Tries to create a new container
+        n times, to make sure Azure garbage collection is finished.
     """
     tries = setup.CREATE_CONTAINER_TRIES
     container_client = blob_connection()
     success = False
     metadata = {"image_count": "0"}
-    for i in range(NUM_TRIES):
+    for i in range(tries):
         if success:
             return
 
@@ -79,7 +79,7 @@ def create_container():
                 metadata=metadata, public_access="container"
             )
             success = True
-        except:
+        except Exception:
             pass
 
 
