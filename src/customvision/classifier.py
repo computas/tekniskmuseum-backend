@@ -6,7 +6,13 @@ import uuid
 import time
 import sys
 import os
-
+from typing import Dict
+from typing import List
+from utilities.keys import Keys
+from utilities import setup
+from webapp import models
+from webapp import api
+from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
 from azure.cognitiveservices.vision.customvision.prediction import (
@@ -17,13 +23,8 @@ from azure.cognitiveservices.vision.customvision.training import (
 )
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
+    CustomVisionErrorException,
 )
-from typing import Dict
-from typing import List
-from utilities.keys import Keys
-from utilities import setup
-from webapp import models
-from webapp import api
 
 
 class Classifier:
@@ -121,7 +122,7 @@ class Classifier:
         """
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
-        res = self.predictor.classify_image(
+        res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
         # reset the file head such that it does not affect the state of the file handle
@@ -137,7 +138,7 @@ class Classifier:
         for i in range(0, len(lst), n):
             yield lst[i: i + n]
 
-    def upload_images(self, labels: List) -> None:
+    def upload_images(self, labels: List, dir_name) -> None:
         """
             Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
             If label in input already exists in Custom Vision project, all images are uploaded directly.
@@ -157,7 +158,7 @@ class Classifier:
                 Keys.get("CONTAINER_NAME")
             )
         except Exception as e:
-            print(
+            api.app.logger.info(
                 "could not find container with CONTAINER_NAME name error: ", e,
             )
 
@@ -171,14 +172,14 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    print("Created new label in project: " + label)
+                    api.app.logger.info("Created new label in project: " + label)
                 except Exception as e:
-                    print(e)
+                    api.app.logger.info(e)
                     continue
             else:
                 tag = tag[0]
 
-            blob_prefix = f"old/{label}/"
+            blob_prefix = f"{dir_name}/{label}/"
             blob_list = container.list_blobs(name_starts_with=blob_prefix)
 
             if not blob_list:
@@ -189,21 +190,55 @@ class Classifier:
                 blob_name = blob.name
 
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # print(Keys.get("CONTAINER_NAME"))
+                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
         # upload URLs in chunks of 64
-        for url_chunk in self.__chunks(url_list, setup.CV_MAX_IMAGES):
+        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
+        img_f = 0
+        img_s = 0
+        img_d = 0
+        itr_img = 0
+        chunks = self.__chunks(url_list, setup.CV_MAX_IMAGES)
+        num_imgs = len(url_list)
+        error_messages = []
+        for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
             )
             if not upload_result.is_batch_successful:
-                print("Image batch upload failed.")
                 for image in upload_result.images:
-                    if image.status != "OK":
-                        print("Image status: ", image.status)
+                    if image.status == "OK":
+                        img_s += 1
+                    elif image.status == "OKDuplicate":
+                        img_d += 1
+                    else:
+                        error_messages.append(image.status)
+                        img_f += 1
+
+                    itr_img += 1
+            else:
+                batch_size = len(upload_result.images)
+                img_s += batch_size
+                itr_img += batch_size
+
+            prc = itr_img / num_imgs
+            api.app.logger.info(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+                                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                                f"\t [{prc:03.2%}]",
+                                sep="", end="\r", flush=True)
+
+        api.app.logger.info()
+        if len(error_messages) > 0:
+            api.app.logger.info("Error messages:")
+        for emsg in error_messages:
+            api.app.logger.info(f"\t {emsg}")
+
+    def getIteration(self):
+        return self.trainer.get_iterations(self.project_id)[-1]
 
     def delete_iteration(self) -> None:
         """
@@ -240,23 +275,28 @@ class Classifier:
         try:
             email = Keys.get("EMAIL")
         except Exception:
-            print("No email found, setting to empty")
+            api.app.logger.info("No email found, setting to empty")
             email = ""
 
         self.delete_iteration()
-        print("Training...")
+        api.app.logger.info("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
             notification_email_address=email,
         )
         # Wait for training to complete
+        start = time.time()
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
                 self.project_id, iteration.id
             )
-            print("Training status: " + iteration.status)
+            minutes, seconds = divmod(time.time() - start, 60)
+            api.app.logger.info(f"Training status: {iteration.status}",
+                                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
             time.sleep(1)
+
+        api.app.logger.info()
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
@@ -279,6 +319,21 @@ class Classifier:
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
 
+    def retrain(self):
+        """
+            Train model on all labels and update iteration.
+        """
+        with api.app.app_context():
+            labels = models.get_all_labels()
+        self.upload_images(labels, "old")
+        self.upload_images(labels, "new")
+        try:
+            self.train(labels)
+        except CustomVisionErrorException as e:
+            msg = "No changes since last training"
+            api.app.logger.info(e, "exiting...")
+            raise excp.BadRequest(msg)
+
 
 def main():
     """
@@ -293,19 +348,20 @@ def main():
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
-    print(f"url result:\n{best_guess} url result {result}")
+    api.app.logger.info(f"url result:\n{best_guess} url result {result}")
 
     # classify image
     with open("../data/cv_testfile.png", "rb") as f:
         result, best_guess = classifier.predict_image(f)
-        print(f"png result:\n{result}")
+        api.app.logger.info(f"png result:\n{result}")
 
     with api.app.app_context():
         labels = models.get_all_labels()
 
-    classifier.upload_images(labels)
+    classifier.upload_images(labels, "old")
     classifier.train(labels)
 
 
 if __name__ == "__main__":
+    api.app.logger.info = print
     main()

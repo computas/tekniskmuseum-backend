@@ -16,24 +16,31 @@ import os
 import logging
 import json
 import datetime
+import PIL
+from threading import Thread
+from io import BytesIO
 from webapp import storage
 from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
-from io import BytesIO
-from PIL import Image
 from flask import Flask
 from flask import request
+from flask import session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
-import PIL
 
-# Initialization and global variables
+# Initialization app
 app = Flask(__name__)
 app.config.from_object("utilities.setup.Flask_config")
+
+# Set up DB and models
 models.db.init_app(app)
 models.create_tables(app)
 models.seed_labels(app, "./dict_eng_to_nor.csv")
+
+# Initialize CV classifier
 classifier = Classifier()
 
 if __name__ != "__main__":
@@ -109,11 +116,12 @@ def classify():
     game = models.get_game(player.game_id)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+
     # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
+    bytes_img = PIL.Image.open(BytesIO(image.stream.read()))
     image.seek(0)
     if white_image(bytes_img):
-        return white_image_data(label, time_left)
+        return white_image_data(label, time_left, player.game_id, player_id)
 
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
@@ -125,20 +133,20 @@ def classify():
     )
     # End game if player win or loose
     if has_won or time_left <= 0:
+        # Update session_num in game and state for player
+        models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image in blob storage
         storage.save_image(image, label)
-        # Increment session_num
-        session_num = game.session_num + 1
-        # Add to games table
-        models.update_game_for_player(
-            player.game_id, player_id, session_num, "Done"
-        )
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
     translation = models.get_translation_dict()
-    certainty_translated = dict([(translation[label], probability)
-                                 for label, probability in certainty.items()])
+    certainty_translated = dict(
+        [
+            (translation[label], probability)
+            for label, probability in certainty.items()
+        ]
+    )
     data = {
         "certainty": certainty_translated,
         "guess": translation[best_guess],
@@ -152,7 +160,7 @@ def classify():
 @app.route("/endGame", methods=["POST"])
 def end_game():
     """
-        Endpoint for ending game consisting of a few sessions.
+        Endpoint for ending game consisting of NUM_GAMES sessions.
     """
     player_id = request.values["player_id"]
     name = request.values["name"]
@@ -175,8 +183,8 @@ def end_game():
 @app.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and all of
-        last 24 hours.
+        Read highscore from database. Return top n of all time and daily high
+        scores.
     """
     # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
@@ -187,6 +195,70 @@ def view_high_score():
         "total": top_n_high_scores,
     }
     return json.dumps(data), 200
+
+
+@app.route("/auth", methods=["POST"])
+def authenticate():
+    """
+        Endpoint for admin authentication. Returns encrypted cookie with login
+        time and username.
+    """
+    username = request.values["username"]
+    password = request.values["password"]
+
+    user = models.get_user(username)
+
+    if user is None or not check_password_hash(user.password, password):
+        raise excp.Unauthorized("Invalid username or password")
+
+    session["last_login"] = datetime.datetime.now()
+    session["username"] = username
+
+    return "OK", 200
+
+
+@app.route("/admin/<action>", methods=["POST"])
+def admin_page(action):
+    """
+        Endpoint for admin actions. Requires authentication from /auth within
+        SESSION_EXPIRATION_TIME
+    """
+    # Check if user has valid cookie
+    is_authenticated()
+
+    if action == "clearHighScore":
+        models.clear_highscores()
+        return "High scores cleared", 200
+
+    elif action == "trainML":
+        # Run training asynchronously
+        Thread(target=classifier.retrain).start()
+        return "Training started", 200
+
+    elif action == "hardReset":
+        classifier.delete_all_images()
+        storage.clear_dataset()
+        return "All images deleted from CV and BLOB storage", 200
+
+    elif action == "status":
+        new_image_count = storage.image_count()
+        iteration = classifier.getIteration()
+        data = {
+            "CV_iteration_name": iteration.name,
+            "CV_time_created": str(iteration.created),
+            "BLOB_image_count": new_image_count,
+        }
+        return json.dumps(data), 200
+
+    elif action == "logout":
+        session.clear()
+        return "Session cleared", 200
+
+    elif action == "ping":
+        return "pong", 200
+
+    else:
+        return "Admin action unspecified", 400
 
 
 @app.errorhandler(Exception)
@@ -215,12 +287,48 @@ def allowed_file(image):
     # Check that the file is a png
     is_png = image.content_type == "image/png"
     # Ensure the file isn't too large
-    too_large = len(image.read()) > 4000000
+    too_large = len(image.read()) > setup.MAX_IMAGE_SIZE
     # Ensure the file has correct resolution
     height, width = get_image_resolution(image)
-    correct_res = (height >= 256) and (width >= 256)
+    MIN_RES = setup.MIN_RESOLUTION
+    correct_res = (height >= MIN_RES) and (width >= MIN_RES)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+
+
+def add_user():
+    """
+        Add user to user table in db.
+    """
+    username = request.values["username"]
+    password = request.values["password"]
+    # Do we want a cond check_secure_password(password)?
+    hashed_psw = generate_password_hash(
+        password, method="pbkdf2:sha256:200000", salt_length=128
+    )
+    models.insert_into_user(username, hashed_psw)
+    return "user added", 200
+
+
+def is_authenticated():
+    """
+        Check if user has an unexpired cookie. Renew time if not expired.
+        Raises exception if cookie is invalid.
+    """
+    if "last_login" not in session:
+        raise excp.Unauthorized()
+
+    session_length = datetime.datetime.now() - session["last_login"]
+    is_auth = session_length < datetime.timedelta(
+        minutes=setup.SESSION_EXPIRATION_TIME
+    )
+
+    if not is_auth:
+        raise excp.Unauthorized("Session expired")
+    else:
+        session["last_login"] = datetime.datetime.now()
+
+        return True
 
 
 def white_image(image):
@@ -233,15 +341,16 @@ def white_image(image):
         return False
 
 
-def white_image_data(label, time_left):
+def white_image_data(label, time_left, game_id, player_id):
     """
         Generate the json data to be returned to the client when a completely
         white image has been submitted for classification.
     """
-    if time_left <= 0:
-        game_state = "Done"
-    else:
+    if time_left > 0:
         game_state = "Playing"
+    else:
+        models.update_game_for_player(game_id, player_id, 1, "Done")
+        game_state = "Done"
 
     data = {
         "certainty": 1.0,
@@ -258,6 +367,6 @@ def get_image_resolution(image):
         Retrieve the resolution of the image provided.
     """
     image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
+    height, width = PIL.Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width

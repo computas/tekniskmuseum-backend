@@ -13,7 +13,7 @@ from test import test_db
 from test import config as cfg
 from utilities import setup
 from werkzeug import exceptions as excp
-import PIL
+from PIL import Image
 
 
 @pytest.fixture
@@ -300,7 +300,7 @@ def test_view_highscore(client):
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
     #check that data structure is correct
-    if len(response["total"][0]) > 0:
+    if response["total"]:
         assert(isinstance(response, dict))
         assert(isinstance(response["daily"], list))
         assert(isinstance(response["total"], list))
@@ -315,7 +315,7 @@ def test_white_image_true():
     """
     dir_path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(dir_path, cfg.API_IMAGE5)
-    img = PIL.Image.open(path)
+    img = Image.open(path)
     white = api.white_image(img)
     assert(white is True)
 
@@ -327,7 +327,7 @@ def test_white_image_false():
     """
     dir_path = construct_path(cfg.API_PATH_DATA)
     path = os.path.join(dir_path, cfg.API_IMAGE1)
-    img = PIL.Image.open(path)
+    img = Image.open(path)
     white = api.white_image(img)
     assert(white is False)
 
@@ -337,7 +337,7 @@ def test_white_image_data_keys():
         Test if the white_image_data_function returns a data of the correct
         format (check if all keys are in the json object returned).
     """
-    data, code = api.white_image_data("", 1)
+    data, code = api.white_image_data("", 1, "game_id", "player_id")
     json_data = json.loads(data)
     assert("certainty" in json_data)
     assert("guess" in json_data)
@@ -353,7 +353,7 @@ def test_white_image_data_playing():
         that state is "playing" when time_left parameter is larger than zero.
     """
     label = ""
-    data, code = api.white_image_data(label, 1)
+    data, code = api.white_image_data(label, 1, "game_id", "player_id")
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Playing")
     assert(json_data["correctLabel"] == label)
@@ -362,13 +362,16 @@ def test_white_image_data_playing():
     assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
 
 
-def test_white_image_data_done():
+def test_white_image_data_done(client):
     """
         Test if the white_image_data function returns the correct data and
         that state is "done" when time_left parameter is zero.
     """
+    res = client.get("/startGame")
+    player_id = json.loads(res.data)["player_id"]
+    game_id = models.get_player(player_id).game_id
     label = ""
-    data, code = api.white_image_data(label, 0)
+    data, code = api.white_image_data(label, 0, game_id, player_id)
     json_data = json.loads(data)
     assert(json_data["gameState"] == "Done")
     assert(json_data["correctLabel"] == label)
