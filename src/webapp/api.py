@@ -17,7 +17,6 @@ import logging
 import json
 import datetime
 import PIL
-from PIL import Image
 from threading import Thread
 from io import BytesIO
 from webapp import storage
@@ -43,7 +42,6 @@ models.seed_labels(app, "./dict_eng_to_nor.csv")
 
 # Initialize CV classifier
 classifier = Classifier()
-
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -120,7 +118,7 @@ def classify():
     label = labels[game.session_num - 1]
 
     # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
+    bytes_img = PIL.Image.open(BytesIO(image.stream.read()))
     image.seek(0)
     if white_image(bytes_img):
         return white_image_data(label, time_left, player.game_id, player_id)
@@ -136,9 +134,7 @@ def classify():
     # End game if player win or loose
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
-        models.update_game_for_player(
-            player.game_id, player_id, 1, "Done"
-        )
+        models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image in blob storage
         storage.save_image(image, label)
         # Update game state to be done
@@ -323,8 +319,9 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = (session_length
-               < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME))
+    is_auth = session_length < datetime.timedelta(
+        minutes=setup.SESSION_EXPIRATION_TIME
+    )
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
@@ -352,9 +349,7 @@ def white_image_data(label, time_left, game_id, player_id):
     if time_left > 0:
         game_state = "Playing"
     else:
-        models.update_game_for_player(
-            game_id, player_id, 1, "Done"
-        )
+        models.update_game_for_player(game_id, player_id, 1, "Done")
         game_state = "Done"
 
     data = {
@@ -372,6 +367,6 @@ def get_image_resolution(image):
         Retrieve the resolution of the image provided.
     """
     image.seek(0)
-    height, width = Image.open(BytesIO(image.stream.read())).size
+    height, width = PIL.Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
