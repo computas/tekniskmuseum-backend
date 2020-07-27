@@ -251,6 +251,10 @@ def admin_page(action):
         }
         return json.dumps(data), 200
 
+    elif action == "logout":
+        session.clear()
+        return "Session cleared", 200
+
     elif action == "ping":
         return "pong", 200
 

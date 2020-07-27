@@ -23,6 +23,7 @@ MIN_RESOLUTION = 256
 CONTINER_NAME_ORIGINAL = "originalimgcontainer"
 CONTAINER_NAME_NEW = "newimgcontainer"
 CREATE_CONTAINER_TRIES = 10
+CREATE_CONTAINER_WAITER = 30  # 30 seconds wait between every time
 
 
 class Flask_config:
