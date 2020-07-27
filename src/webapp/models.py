@@ -248,7 +248,7 @@ def update_game(game_id, session_num, play_time):
         db.session.commit()
         return True
     except Exception as e:
-        raise Exception("Couldn't update game: " + e)
+        raise Exception("Couldn't update game: " + str(e))
 
 
 # ALTERNATIVE FUNC FOR UPDATE GAME TO ALSO WORK FOR MULTI
