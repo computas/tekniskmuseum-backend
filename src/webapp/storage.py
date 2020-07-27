@@ -56,12 +56,17 @@ def clear_dataset():
             container_name
         )
     except Exception as e:
-        raise Exception("could not connect to blob client: " + str(e))
+        raise Exception("Could not connect to blob client: " + str(e))
 
-    try:
-        blob_list = container_client.list_blobs(name_starts_with=blob_prefix)
+    #try:
+    blob_list = container_client.list_blobs(name_starts_with=blob_prefix,
+                                            include=None, timeout=3)
 
-        blob_names = [blob.name.encode() for blob in blob_list]
-        container_client.delete_blobs(*blob_names)
-    except Exception as e:
-        raise Exception("could not delete all images from blob" + str(e))
+    blob_names = [blob.name.encode() for blob in blob_list]
+    responses = container_client.delete_blobs(*blob_names,
+                                              raise_on_any_failure=False)
+    res_set = set(responses)
+    for response in res_set:
+        print(str(response.__dict__))
+    #except Exception as e:
+    #    raise Exception("Could not delete all images from blob: " + str(e))

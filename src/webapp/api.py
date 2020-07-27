@@ -230,7 +230,7 @@ def admin_page(action):
     """
     # Check if user has valid cookie
     is_authenticated()
-    # Delete old games?
+
     if action == "clearHighScore":
         models.clear_highscores()
         return "High scores cleared", 200
@@ -246,16 +246,20 @@ def admin_page(action):
         return "All images deleted from CV and BLOB storage", 200
 
     elif action == "status":
-        # get number of new images
+        new_image_count = storage.image_count()
         iteration = classifier.getIteration()
         data = {
             "CV_iteration_name": iteration.name,
             "CV_time_created": str(iteration.created),
+            "BLOB_image_count": new_image_count,
         }
         return json.dumps(data), 200
 
     elif action == "ping":
         return "pong", 200
+
+    else:
+        return "Admin action unspecified", 400
 
 
 @app.errorhandler(Exception)
@@ -316,8 +320,8 @@ def is_authenticated():
         raise excp.Unauthorized()
 
     session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = session_length 
-        < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
+    is_auth = (session_length
+               < datetime.timedelta(minutes=setup.SESSION_EXPIRATION_TIME))
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
