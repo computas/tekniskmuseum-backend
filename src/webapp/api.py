@@ -118,12 +118,12 @@ def classify():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
-    # Comment out because frontend doesn't send blank images
     # Check if the image hasn't been drawn on
-    # bytes_img = Image.open(BytesIO(image.stream.read()))
-    # image.seek(0)
-    # if white_image(bytes_img):
-    #   return white_image_data(label, time_left)
+    bytes_img = Image.open(BytesIO(image.stream.read()))
+    image.seek(0)
+    if white_image(bytes_img):
+        return white_image_data(label, time_left, player.game_id, player_id)
+
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -134,14 +134,12 @@ def classify():
     )
     # End game if player win or loose
     if has_won or time_left <= 0:
+        # Update session_num in game and state for player
+        models.update_game_for_player(
+            player.game_id, player_id, 1, "Done"
+        )
         # save image in blob storage
         storage.save_image(image, label)
-        # Increment session_num
-        session_num = game.session_num + 1
-        # Add to games table
-        models.update_game_for_player(
-            player.game_id, player_id, session_num, "Done"
-        )
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
@@ -320,15 +318,18 @@ def white_image(image):
         return False
 
 
-def white_image_data(label, time_left):
+def white_image_data(label, time_left, game_id, player_id):
     """
         Generate the json data to be returned to the client when a completely
         white image has been submitted for classification.
     """
-    if time_left <= 0:
-        game_state = "Done"
-    else:
+    if time_left > 0:
         game_state = "Playing"
+    else:
+        models.update_game_for_player(
+            game_id, player_id, 1, "Done"
+        )
+        game_state = "Done"
 
     data = {
         "certainty": 1.0,
@@ -337,7 +338,7 @@ def white_image_data(label, time_left):
         "hasWon": False,
         "gameState": game_state,
     }
-    return data
+    return json.dumps(data), 200
 
 
 def get_image_resolution(image):
