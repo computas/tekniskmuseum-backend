@@ -18,6 +18,12 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
 )
+from typing import Dict
+from typing import List
+from utilities.keys import Keys
+from utilities import setup
+from webapp import models
+from webapp import api
 
 from utilities.keys import Keys
 from utilities import setup
@@ -52,27 +58,33 @@ class Classifier:
         self.prediction_credentials = ApiKeyCredentials(
             in_headers={"Prediction-key": self.prediction_key}
         )
-
         self.predictor = CustomVisionPredictionClient(
             self.ENDPOINT, self.prediction_credentials
         )
-
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
         )
-
         self.trainer = CustomVisionTrainingClient(
             self.ENDPOINT, self.training_credentials
         )
-
         connect_str = Keys.get("BLOB_CONNECTION_STRING")
         self.blob_service_client = BlobServiceClient.from_connection_string(
             connect_str
         )
 
+        # get all project iterations
         iterations = self.trainer.get_iterations(self.project_id)
-        iterations.sort(key=lambda i: i.created)
-        self.iteration_name = iterations[-1].publish_name
+        # find published iterations
+        puplished_iterations = [
+            iteration
+            for iteration in iterations
+            if iteration.publish_name != None
+        ]
+        # get the latest published iteration
+        puplished_iterations.sort(key=lambda i: i.created)
+        self.iteration_name = puplished_iterations[-1].publish_name
+        with api.app.app_context():
+            models.update_iteration_name(self.iteration_name)
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -82,15 +94,17 @@ class Classifier:
             img_url: Image URL
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
-
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
             self.project_id, self.iteration_name, img_url
         )
-
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
+
         return pred_kv, best_guess
 
     def predict_image(self, img) -> Dict[str, float]:
@@ -105,21 +119,19 @@ class Classifier:
             img_url: .png file
 
             Returns:
-            prediction (dict[str,float]): labels and assosiated probabilities
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
         """
-        print(self.iteration_name, self.project_id)
-        res = self.predictor.classify_image(
+        with api.app.app_context():
+            self.iteration_name = models.get_iteration_name()
+        res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
-
         # reset the file head such that it does not affect the state of the file handle
         img.seek(0)
-
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
-
         best_guess = max(pred_kv, key=pred_kv.get)
-
-        return best_guess, pred_kv
+        return pred_kv, best_guess
 
     def __chunks(self, lst, n):
         """
@@ -134,54 +146,53 @@ class Classifier:
             If label in input already exists in Custom Vision project, all images are uploaded directly.
             If label in input does not exist in Custom Vision project, new label (Tag object in Custom Vision) is created before uploading images
 
-
             Parameters:
             labels (str[]): List of labels
 
             Returns:
             None
         """
-
         url_list = []
-        existing_tags = self.trainer.get_tags(self.project_id)
+        existing_tags = list(self.trainer.get_tags(self.project_id))
 
-        # create list of URLs to be uploaded
+        try:
+            container = self.blob_service_client.get_container_client(
+                Keys.get("CONTAINER_NAME")
+            )
+        except Exception as e:
+            print(
+                "could not find container with CONTAINER_NAME name error: ", e,
+            )
+
         for label in labels:
-
             # check if input has correct type
             if not isinstance(label, str):
                 raise Exception("label " + str(label) + " must be a string")
 
             tag = [t for t in existing_tags if t.name == label]
-
             # check if tag already exists
             if len(tag) == 0:
-
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
                     print("Created new label in project: " + label)
                 except Exception as e:
                     print(e)
                     continue
-
             else:
                 tag = tag[0]
 
-            try:
-                container = self.blob_service_client.get_container_client(
-                    str(label)
-                )
-            except Exception as e:
-                print(
-                    "could not find container with label "
-                    + label
-                    + " error: ",
-                    e,
-                )
+            blob_prefix = f"old/{label}/"
+            blob_list = container.list_blobs(name_starts_with=blob_prefix)
 
-            for blob in container.list_blobs():
+            if not blob_list:
+                raise AttributeError("no images for this label")
+
+            for blob in blob_list:
+                # create list of URLs to be uploaded
                 blob_name = blob.name
-                blob_url = f"{self.base_img_url}/{label}/{blob_name}"
+
+                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
+                # print(Keys.get("CONTAINER_NAME"))
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
@@ -202,14 +213,10 @@ class Classifier:
             Deletes the oldest iteration in Custom Vision if there are 11 iterations.
             Custom Vision allows maximum 10 iterations in the free version.
         """
-
         iterations = self.trainer.get_iterations(self.project_id)
-
         if len(iterations) >= setup.CV_MAX_ITERATIONS:
-
             iterations.sort(key=lambda i: i.created)
             oldest_iteration = iterations[0].id
-
             self.trainer.unpublish_iteration(self.project_id, oldest_iteration)
             self.trainer.delete_iteration(self.project_id, oldest_iteration)
 
@@ -240,14 +247,12 @@ class Classifier:
             email = ""
 
         self.delete_iteration()
-
         print("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
             notification_email_address=email,
         )
-
         # Wait for training to complete
         while iteration.status != "Completed":
             iteration = self.trainer.get_iteration(
@@ -258,14 +263,25 @@ class Classifier:
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
-
         self.trainer.publish_iteration(
             self.project_id,
             iteration.id,
             iteration_name,
             self.prediction_resource_id,
         )
-        self.iteration_name = iteration_name
+        with api.app.app_context():
+            self.iteration_name = models.update_iteration_name(iteration_name)
+
+    def delete_all_images(self) -> None:
+        """
+            Function for deleting uploaded images in Customv Vision.
+        """
+        try:
+            self.trainer.delete_images(
+                self.project_id, all_images=True, all_iterations=True
+            )
+        except Exception as e:
+            raise Exception("Could not delete all images: " + str(e))
 
 
 def main():
@@ -275,29 +291,24 @@ def main():
         -no more than two projects created in Azure Custom Vision
         -no more than 10 iterations done in one projectS
     """
-    test_url = "https://originaldataset.blob.core.windows.net/ambulance/4504435055132672.png"
-
-    labels = ["star"]
+    test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
     classifier = Classifier()
 
-    classifier.upload_images(labels)
-
-    classifier.train(labels)
+    # classify image with URL reference
+    result, best_guess = classifier.predict_image_url(test_url)
+    print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
-    # with open(
-    #    "machine_learning_utilities/test_data/4504435055132672.png", "rb"
-    # ) as f:
-    #     pass
-    # result = classifier.predict_image(f)
+    with open("../data/cv_testfile.png", "rb") as f:
+        result, best_guess = classifier.predict_image(f)
+        print(f"png result:\n{result}")
 
-    # print(f"png result {result}")
+    with api.app.app_context():
+        labels = models.get_all_labels()
 
-    # classify image with URL reference
-    best_guess, result = classifier.predict_image_url(test_url)
-
-    print(f"best guess: {best_guess} url result {result}")
+    classifier.upload_images(labels)
+    classifier.train(labels)
 
 
 if __name__ == "__main__":
