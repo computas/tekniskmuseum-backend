@@ -157,14 +157,8 @@ class Classifier:
             container_new = self.blob_service_client.get_container_client(
                 setup.CONTAINER_NAME_NEW
             )
-<<<<<<< HEAD
             container_original = self.blob_service_client.get_container_client(
                 setup.CONTAINER_NAME_ORIGINAL
-=======
-        except Exception as e:
-            api.app.logger.info(
-                "could not find container with CONTAINER_NAME name error: ", e,
->>>>>>> 33304d8b20984c6e4fa2484f539b0ab574e5d482
             )
         except Exception as e:
             raise Exception("could not connect to container: " + str(e))
@@ -179,7 +173,9 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    api.app.logger.info("Created new label in project: " + label)
+                    api.app.logger.info(
+                        "Created new label in project: " + label
+                    )
                 except Exception as e:
                     api.app.logger.info(e)
                     continue
@@ -204,27 +200,14 @@ class Classifier:
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
-                print(blob.name)
 
-            return
-
-<<<<<<< HEAD
             for blob in blob_list_original:
                 blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_ORIGINAL}/{blob.name}"
-=======
-                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
->>>>>>> 33304d8b20984c6e4fa2484f539b0ab574e5d482
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
-
         # upload URLs in chunks of 64
-<<<<<<< HEAD
         print(f"Uploading images from blob to CV")
-=======
-        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
->>>>>>> 33304d8b20984c6e4fa2484f539b0ab574e5d482
         img_f = 0
         img_s = 0
         img_d = 0
@@ -329,8 +312,11 @@ class Classifier:
                 f"\t[{minutes:02.0f}m:{seconds:02.0f}s]",
                 end="\r",
             )
-            api.app.logger.info(f"Training status: {iteration.status}",
-                                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
+            api.app.logger.info(
+                f"Training status: {iteration.status}",
+                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]",
+                end="\r",
+            )
             time.sleep(1)
 
         api.app.logger.info()
@@ -364,16 +350,11 @@ class Classifier:
         with api.app.app_context():
             labels = models.get_all_labels()
         self.upload_images(labels)
-        return
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-<<<<<<< HEAD
             print("exiting...")
-=======
-            api.app.logger.info(e, "exiting...")
->>>>>>> 33304d8b20984c6e4fa2484f539b0ab574e5d482
             raise excp.BadRequest(msg)
 
 
