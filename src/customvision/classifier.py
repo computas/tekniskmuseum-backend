@@ -191,7 +191,6 @@ class Classifier:
                 blob_name = blob.name
 
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # print(Keys.get("CONTAINER_NAME"))
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
@@ -229,7 +228,7 @@ class Classifier:
             print(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
                   f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
                   f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
-                  f"\t [{prc:03.2%}] \r",
+                  f"\t [{prc:03.2%}]",
                   sep="", end="\r", flush=True)
 
         print()
@@ -367,5 +366,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # print = print
     main()

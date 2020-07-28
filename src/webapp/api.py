@@ -243,12 +243,12 @@ def admin_page(action):
         return "All images deleted from CV and BLOB storage", 200
 
     elif action == "status":
-        new_image_count = storage.image_count()
+        new_blob_image_count = storage.image_count()
         iteration = classifier.get_iteration()
         data = {
             "CV_iteration_name": iteration.name,
             "CV_time_created": str(iteration.created),
-            "BLOB_image_count": new_image_count,
+            "BLOB_image_count": new_blob_image_count,
         }
         return json.dumps(data), 200
 
