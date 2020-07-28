@@ -17,6 +17,7 @@ class Iteration(db.Model):
     """
         Model for storing the currently used iteration of the ML model.
     """
+
     iteration_name = db.Column(db.String(64), primary_key=True)
 
 
@@ -26,10 +27,19 @@ class Games(db.Model):
        inserted values match the column values. player_id column value cannot
        be String when a long hex is given.
     """
+
     game_id = db.Column(db.NVARCHAR(32), primary_key=True)
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
     date = db.Column(db.DateTime)
+
+    players = db.relationship(
+        "Players", uselist=False, back_populates="game", cascade="all, delete"
+    )
+    mulitplay = db.relationship(
+        "MulitPlayer", uselist=False, back_populates="game",
+        cascade="all, delete"
+    )
 
 
 class Scores(db.Model):
@@ -37,6 +47,7 @@ class Scores(db.Model):
         This is the Scores model in the database. It is important that the
         inserted values match the column values.
     """
+
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
@@ -48,9 +59,26 @@ class Players(db.Model):
         Table for attributes connected to a player in the game. game_id is a
         foreign key to the game table.
     """
+
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), nullable=False)
-    state = db.Column(db.String(32))
+    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False)
+    state = db.Column(db.String(32), nullable=False)
+
+    game = db.relationship("Games", back_populates="players")
+
+
+class MulitPlayer(db.Model):
+    """
+        Table for storing players who partisipate in the same game.
+    """
+
+    game_id = db.Column(
+        db.NVARCHAR(32), db.ForeignKey("games.game_id"), primary_key=True
+    )
+    player_1 = db.Column(db.NVARCHAR(32))
+    player_2 = db.Column(db.NVARCHAR(32))
+
+    game = db.relationship("Games", back_populates="mulitplay")
 
 
 class Labels(db.Model):
@@ -60,6 +88,7 @@ class Labels(db.Model):
         - translating english labels into norwgian
         - keeping track of all possible labels
     """
+
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
 
@@ -145,7 +174,7 @@ def insert_into_scores(name, score, date):
 
 def get_iteration_name():
     """
-        Returns the first and only iteration name that should be in the model
+        Returns the first and only iteration name that should be in the model.
     """
     iteration = Iteration.query.filter_by().first()
     assert iteration.iteration_name is not None
@@ -154,7 +183,7 @@ def get_iteration_name():
 
 def update_iteration_name(new_name):
     """
-        updates the one only iteration_name to new_name
+        updates the one only iteration_name to new_name.
     """
     iteration = Iteration.query.filter_by().first()
     if iteration is None:
@@ -243,7 +272,7 @@ def update_game_for_player(game_id, player_id, session_num, state):
     """
     try:
         game = Games.query.get(game_id)
-        game.session_num += 1
+        game.session_num += session_num
         player_in_game = Players.query.get(player_id)
         player_in_game.state = state
         db.session.commit()
@@ -263,6 +292,10 @@ def delete_session_from_game(game_id):
         db.session.query(Players).filter(
             Players.game_id == game_id
         ).delete()
+        mp = MulitPlayer.query.get(game_id)
+        if mp is not None:
+            db.session.delete(mp)
+
         db.session.delete(game)
         db.session.commit()
         return True
@@ -287,6 +320,9 @@ def delete_old_games():
         for game in games:
             db.session.query(Players).filter(
                 Players.game_id == game.game_id
+            ).delete()
+            db.session.query(MulitPlayer).filter(
+                MulitPlayer.game_id == game.game_id
             ).delete()
             db.session.delete(game)
 
@@ -351,16 +387,11 @@ def get_top_n_high_score_list(top_n):
 
 
 def clear_highscores():
+    """
+        Function for clearing score table.
+    """
     Scores.query.delete()
     db.session.commit()
-
-
-def drop_table(table):
-    """
-        Function for dropping a table, or all.
-    """
-    # Calling 'drop_table' with None as parameter means dropping all tables.
-    db.drop_all(bind=table)
 
 
 # User related functions
@@ -411,7 +442,7 @@ def insert_into_labels(english, norwegian):
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses n random labels in a list
+        Reads all rows from database and chooses n random labels in a list.
     """
     try:
         # read all english labels in database
@@ -426,7 +457,7 @@ def get_n_labels(n):
 
 def get_all_labels():
     """
-        Reads all labels from database
+        Reads all labels from database.
     """
     try:
         # read all english labels in database
@@ -439,7 +470,8 @@ def get_all_labels():
 
 def to_norwegian(english_label):
     """
-        Reads the labels tabel and return the norwegian translation of the english word
+        Reads the labels tabel and return the norwegian translation of the
+        english word.
     """
     try:
         query = Labels.query.get(english_label)
@@ -453,7 +485,7 @@ def to_norwegian(english_label):
 
 def get_translation_dict():
     """
-        Reads all labels from database and create dictionary
+        Reads all labels from database and create dictionary.
     """
     try:
         labels = Labels.query.all()
