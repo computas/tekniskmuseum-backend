@@ -346,7 +346,7 @@ class Classifier:
         with api.app.app_context():
             labels = models.get_all_labels()
         self.upload_images(labels)
-        return
+
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
