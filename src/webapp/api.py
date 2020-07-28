@@ -135,8 +135,9 @@ def classify():
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
         models.update_game_for_player(player.game_id, player_id, 1, "Done")
-        # save image in blob storage
-        storage.save_image(image, label)
+        # save image in blob storage ifcertainty above threshold
+        if best_certainty > setup.SAVE_CERTAINTY:
+            storage.save_image(image, label)
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
@@ -242,7 +243,7 @@ def admin_page(action):
 
     elif action == "status":
         new_image_count = storage.image_count()
-        iteration = classifier.getIteration()
+        iteration = classifier.get_iteration()
         data = {
             "CV_iteration_name": iteration.name,
             "CV_time_created": str(iteration.created),

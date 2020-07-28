@@ -158,8 +158,9 @@ class Classifier:
                 Keys.get("CONTAINER_NAME")
             )
         except Exception as e:
-            api.app.logger.info(
-                "could not find container with CONTAINER_NAME name error: ", e,
+            print(
+                "could not find container with CONTAINER_NAME name error: ",
+                str(e),
             )
 
         for label in labels:
@@ -172,9 +173,9 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    api.app.logger.info("Created new label in project: " + label)
+                    print("Created new label in project: " + label)
                 except Exception as e:
-                    api.app.logger.info(e)
+                    print(e)
                     continue
             else:
                 tag = tag[0]
@@ -190,13 +191,13 @@ class Classifier:
                 blob_name = blob.name
 
                 blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
+                # print(Keys.get("CONTAINER_NAME"))
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
         # upload URLs in chunks of 64
-        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
+        print(f"Uploading images from '{dir_name}' to CV")
         img_f = 0
         img_s = 0
         img_d = 0
@@ -225,20 +226,23 @@ class Classifier:
                 itr_img += batch_size
 
             prc = itr_img / num_imgs
-            api.app.logger.info(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
-                                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
-                                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
-                                f"\t [{prc:03.2%}]",
-                                sep="", end="\r", flush=True)
+            print(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+                  f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                  f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                  f"\t [{prc:03.2%}] \r",
+                  sep="", end="\r", flush=True)
 
-        api.app.logger.info()
+        print()
         if len(error_messages) > 0:
-            api.app.logger.info("Error messages:")
+            print("Error messages:")
             for error_message in error_messages:
-                api.app.logger.info(f"\t {error_message}")
+                print(f"\t {error_message}")
 
-    def getIteration(self):
-        return self.trainer.get_iterations(self.project_id)[-1]
+    def get_iteration(self):
+        iterations = self.trainer.get_iterations(self.project_id)
+        iterations.sort(key=(lambda i: i.created))
+        newest_iteration = iterations[-1]
+        return newest_iteration
 
     def delete_iteration(self) -> None:
         """
@@ -275,11 +279,11 @@ class Classifier:
         try:
             email = Keys.get("EMAIL")
         except Exception:
-            api.app.logger.info("No email found, setting to empty")
+            print("No email found, setting to empty")
             email = ""
 
         self.delete_iteration()
-        api.app.logger.info("Training...")
+        print("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
@@ -292,11 +296,11 @@ class Classifier:
                 self.project_id, iteration.id
             )
             minutes, seconds = divmod(time.time() - start, 60)
-            api.app.logger.info(f"Training status: {iteration.status}",
-                                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
+            print(f"Training status: {iteration.status}",
+                  f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
             time.sleep(1)
 
-        api.app.logger.info()
+        print()
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
@@ -331,7 +335,7 @@ class Classifier:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            api.app.logger.info(e, "exiting...")
+            print(e, "exiting...")
             raise excp.BadRequest(msg)
 
 
@@ -348,12 +352,12 @@ def main():
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
-    api.app.logger.info(f"url result:\n{best_guess} url result {result}")
+    print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
     with open("../data/cv_testfile.png", "rb") as f:
         result, best_guess = classifier.predict_image(f)
-        api.app.logger.info(f"png result:\n{result}")
+        print(f"png result:\n{result}")
 
     with api.app.app_context():
         labels = models.get_all_labels()
@@ -363,5 +367,5 @@ def main():
 
 
 if __name__ == "__main__":
-    api.app.logger.info = print
+    # print = print
     main()
