@@ -190,8 +190,6 @@ class Classifier:
             blob_list_original = container_original.list_blobs(
                 name_starts_with=blob_prefix
             )
-
-            # TODO do we need this if? we might want to upload anyway
             if not blob_list_new or not blob_list_original:
                 raise AttributeError("no images for this label")
 

@@ -226,7 +226,7 @@ def admin_page(action):
         SESSION_EXPIRATION_TIME
     """
     # Check if user has valid cookie
-    # is_authenticated()
+    is_authenticated()
 
     if action == "clearHighScore":
         models.clear_highscores()
