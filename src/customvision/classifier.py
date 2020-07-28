@@ -181,25 +181,35 @@ class Classifier:
                 tag = tag[0]
 
             blob_prefix = f"{label}/"
-            blob_list = container_new.list_blobs(name_starts_with=blob_prefix)
-            temp = container_original.list_blobs(name_starts_with=blob_prefix)
-            blob_list.append(temp)
+            blob_list_new = container_new.list_blobs(
+                name_starts_with=blob_prefix
+            )
+            blob_list_original = container_original.list_blobs(
+                name_starts_with=blob_prefix
+            )
 
-            if not blob_list:
+            # TODO do we need this if? we might want to upload anyway
+            if not blob_list_new or not blob_list_original:
                 raise AttributeError("no images for this label")
 
-            for blob in blob_list:
-                # create list of URLs to be uploaded
-                blob_name = blob.name
+            # build correct URLs and append to URL list
+            for blob in blob_list_new:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_NEW}/{blob.name}"
+                url_list.append(
+                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
+                )
+                print(blob.name)
 
-                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # print(Keys.get("CONTAINER_NAME"))
+            return
+
+            for blob in blob_list_original:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_ORIGINAL}/{blob.name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
         # upload URLs in chunks of 64
-        print(f"Uploading images from '{dir_name}' to CV")
+        print(f"Uploading images from blob to CV")
         img_f = 0
         img_s = 0
         img_d = 0
@@ -337,11 +347,12 @@ class Classifier:
         with api.app.app_context():
             labels = models.get_all_labels()
         self.upload_images(labels)
+        return
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            print(e, "exiting...")
+            print("exiting...")
             raise excp.BadRequest(msg)
 
 
