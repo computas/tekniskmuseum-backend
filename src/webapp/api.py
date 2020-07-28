@@ -16,8 +16,8 @@ import os
 import logging
 import json
 import datetime
-import PIL
 from PIL import Image
+from PIL import ImageChops
 from threading import Thread
 from io import BytesIO
 from webapp import storage
@@ -336,7 +336,7 @@ def white_image(image):
     """
         Check if the image provided is completely white.
     """
-    if not PIL.ImageChops.invert(image).getbbox():
+    if not ImageChops.invert(image).getbbox():
         return True
     else:
         return False
