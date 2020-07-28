@@ -24,8 +24,10 @@ MIN_RESOLUTION = 256
 # Container names
 CONTAINER_NAME_ORIGINAL = "oldimgcontainer"
 CONTAINER_NAME_NEW = "newimgcontainer"
+# Number of attempt to create a new container, to make sure old container is deleted by Azure.
 CREATE_CONTAINER_TRIES = 10
-CREATE_CONTAINER_WAITER = 30  # 30 seconds wait between every time
+# Waiting interval in seconds for creating new container after deletion
+CREATE_CONTAINER_WAITER = 30
 
 
 class Flask_config:

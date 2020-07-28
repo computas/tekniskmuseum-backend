@@ -103,7 +103,7 @@ def upload_to_blob(path, key, class_name, blob_service_client):
         try:
             blob_client.upload_blob(localFile)
         except Exception as e:
-
+            pass
             print(f"the image {key} already exists {e}")
 
 

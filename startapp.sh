@@ -62,6 +62,8 @@ while [[ "$#" -gt 0 ]]; do
                             shift ;;
         --keys=*)           keystring="${1#*=}";
                             shift ;;
+        -l | --learn)        train=true;
+                            shift ;;
         *)                  echo "Unexpected option: $1, use -h for help";
                             exit 1 ;;
     esac
