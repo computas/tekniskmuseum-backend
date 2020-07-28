@@ -20,7 +20,7 @@ def save_image(image, label):
         Image is renamed to assure unique name. Returns public URL to access
         image.
     """
-    file_name = f"new/{label}/{uuid.uuid4().hex}.png"
+    file_name = f"{label}/{uuid.uuid4().hex}.png"
     connection_string = Keys.get("BLOB_CONNECTION_STRING")
     base_url = Keys.get("BASE_BLOB_URL")
     container_name = setup.CONTAINER_NAME_NEW
@@ -86,7 +86,7 @@ def create_container():
 
 def image_count():
     """
-        Returns number of images in '/new' folder in blob
+        Returns number of images in 'newimgcontainer'.
     """
     container_client = blob_connection()
     return container_client.get_container_properties().metadata["image_count"]
