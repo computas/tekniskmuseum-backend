@@ -194,9 +194,6 @@ class Classifier:
                 raise AttributeError("no images for this label")
 
             # build correct URLs and append to URL list
-            import pdb
-
-            pdb.set_trace()
             for blob in blob_list_new:
                 blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_NEW}/{blob.name}"
                 url_list.append(
