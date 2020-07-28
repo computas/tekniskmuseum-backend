@@ -243,3 +243,14 @@ def test_get_iteration_name_length():
         iteration_name = models.get_iteration_name()
 
     assert len(iteration_name) == TestValues.CV_ITERATION_NAME_LENGTH
+
+
+def test_high_score_cleared():
+    """
+        Check if high score table empty.
+    """
+    with api.app.app_context():
+        models.clear_highscores()
+        num_records = models.Scores.query.count()
+
+    assert num_records == 0
