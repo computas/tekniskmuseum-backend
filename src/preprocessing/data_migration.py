@@ -95,7 +95,7 @@ def upload_to_blob(path, key, class_name, blob_service_client):
         Upload files to Blob Storage.
     """
     blob_name = f"{class_name}/{key}.png"
-    print(blob_name, end=" ")
+    print(blob_name)
     blob_client = blob_service_client.get_blob_client(
         setup.CONTAINER_NAME_ORIGINAL, blob=blob_name
     )

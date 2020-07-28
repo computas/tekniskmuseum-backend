@@ -141,7 +141,7 @@ class Classifier:
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
 
-    def upload_images(self, labels: List, dir_name) -> None:
+    def upload_images(self, labels: List) -> None:
         """
             Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
             If label in input already exists in Custom Vision project, all images are uploaded directly.
@@ -157,12 +157,16 @@ class Classifier:
         existing_tags = list(self.trainer.get_tags(self.project_id))
 
         try:
-            container = self.blob_service_client.get_container_client(
-                Keys.get("CONTAINER_NAME")
+            container_new = self.blob_service_client.get_container_client(
+                setup.CONTAINER_NAME_NEW
+            )
+            container_original = self.blob_service_client.get_container_client(
+                setup.CONTAINER_NAME_ORIGINAL
             )
         except Exception as e:
-            api.app.logger.info(
-                "could not find container with CONTAINER_NAME name error: ", e,
+            print(
+                "could not find container with CONTAINER_NAME name error: ",
+                str(e),
             )
 
         for label in labels:
@@ -175,40 +179,44 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    api.app.logger.info(
-                        "Created new label in project: " + label
-                    )
+                    print("Created new label in project: " + label)
                 except Exception as e:
-                    api.app.logger.info(e)
+                    print(e)
                     continue
             else:
                 tag = tag[0]
 
-            blob_prefix = f"{dir_name}/{label}/"
-            blob_list = container.list_blobs(name_starts_with=blob_prefix)
-
-            if not blob_list:
+            blob_prefix = f"{label}/"
+            blob_list_new = container_new.list_blobs(
+                name_starts_with=blob_prefix
+            )
+            blob_list_original = container_original.list_blobs(
+                name_starts_with=blob_prefix
+            )
+            if not blob_list_new or not blob_list_original:
                 raise AttributeError("no images for this label")
 
-            for blob in blob_list:
-                # create list of URLs to be uploaded
-                blob_name = blob.name
-
-                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
+            # build correct URLs and append to URL list
+            for blob in blob_list_new:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_NEW}/{blob.name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
+            for blob in blob_list_original:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_ORIGINAL}/{blob.name}"
+                url_list.append(
+                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
+                )
         # upload URLs in chunks of 64
-        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
+        print("Uploading images from blob to CV")
         img_f = 0
         img_s = 0
         img_d = 0
         itr_img = 0
         chunks = self.__chunks(url_list, setup.CV_MAX_IMAGES)
         num_imgs = len(url_list)
-        error_messages = []
+        error_messages = set()
         for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
                 self.project_id, images=url_chunk
@@ -220,7 +228,7 @@ class Classifier:
                     elif image.status == "OKDuplicate":
                         img_d += 1
                     else:
-                        error_messages.append(image.status)
+                        error_messages.add(image.status)
                         img_f += 1
 
                     itr_img += 1
@@ -230,7 +238,7 @@ class Classifier:
                 itr_img += batch_size
 
             prc = itr_img / num_imgs
-            api.app.logger.info(
+            print(
                 f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
                 f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
                 f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
@@ -240,14 +248,17 @@ class Classifier:
                 flush=True,
             )
 
-        api.app.logger.info()
+        print()
         if len(error_messages) > 0:
-            api.app.logger.info("Error messages:")
-        for emsg in error_messages:
-            api.app.logger.info(f"\t {emsg}")
+            print("Error messages:")
+            for error_message in error_messages:
+                print(f"\t {error_message}")
 
-    def getIteration(self):
-        return self.trainer.get_iterations(self.project_id)[-1]
+    def get_iteration(self):
+        iterations = self.trainer.get_iterations(self.project_id)
+        iterations.sort(key=(lambda i: i.created))
+        newest_iteration = iterations[-1]
+        return newest_iteration
 
     def delete_iteration(self) -> None:
         """
@@ -284,11 +295,11 @@ class Classifier:
         try:
             email = Keys.get("EMAIL")
         except Exception:
-            api.app.logger.info("No email found, setting to empty")
+            print("No email found, setting to empty")
             email = ""
 
         self.delete_iteration()
-        api.app.logger.info("Training...")
+        print("Training...")
         iteration = self.trainer.train_project(
             self.project_id,
             reserved_budget_in_hours=1,
@@ -301,14 +312,14 @@ class Classifier:
                 self.project_id, iteration.id
             )
             minutes, seconds = divmod(time.time() - start, 60)
-            api.app.logger.info(
+            print(
                 f"Training status: {iteration.status}",
                 f"\t[{minutes:02.0f}m:{seconds:02.0f}s]",
                 end="\r",
             )
             time.sleep(1)
 
-        api.app.logger.info("")
+        print()
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
@@ -338,13 +349,12 @@ class Classifier:
         """
         with api.app.app_context():
             labels = models.get_all_labels()
-        self.upload_images(labels, "old")
-        self.upload_images(labels, "new")
+        self.upload_images(labels)
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            api.app.logger.info(e, "exiting...")
+            print(e, "exiting...")
             raise excp.BadRequest(msg)
 
 
@@ -361,12 +371,12 @@ def main():
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
-    api.app.logger.info(f"url result:\n{best_guess} url result {result}")
+    print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
     with open("../data/cv_testfile.png", "rb") as f:
         result, best_guess = classifier.predict_image(f)
-        api.app.logger.info(f"png result:\n{result}")
+        print(f"png result:\n{result}")
 
     with api.app.app_context():
         labels = models.get_all_labels()
@@ -376,5 +386,4 @@ def main():
 
 
 if __name__ == "__main__":
-    api.app.logger.info = print
     main()
