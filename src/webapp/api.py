@@ -119,6 +119,7 @@ def classify():
     label = labels[game.session_num - 1]
 
     # Check if the image hasn't been drawn on
+    image.seek(0)
     bytes_img = Image.open(BytesIO(image.stream.read()))
     image.seek(0)
     if white_image(bytes_img):
