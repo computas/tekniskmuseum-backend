@@ -136,9 +136,9 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
-    def upload_images(self, labels: List, dir_name) -> None:
+    def upload_images(self, labels: List) -> None:
         """
             Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
             If label in input already exists in Custom Vision project, all images are uploaded directly.
@@ -154,13 +154,14 @@ class Classifier:
         existing_tags = list(self.trainer.get_tags(self.project_id))
 
         try:
-            container = self.blob_service_client.get_container_client(
-                Keys.get("CONTAINER_NAME")
+            container_new = self.blob_service_client.get_container_client(
+                setup.CONTAINER_NAME_NEW
+            )
+            container_original = self.blob_service_client.get_container_client(
+                setup.CONTAINER_NAME_ORIGINAL
             )
         except Exception as e:
-            api.app.logger.info(
-                "could not find container with CONTAINER_NAME name error: ", e,
-            )
+            raise Exception("could not connect to container: " + str(e))
 
         for label in labels:
             # check if input has correct type
@@ -172,31 +173,42 @@ class Classifier:
             if len(tag) == 0:
                 try:
                     tag = self.trainer.create_tag(self.project_id, label)
-                    api.app.logger.info("Created new label in project: " + label)
+                    api.app.logger.info(
+                        "Created new label in project: " + label
+                    )
                 except Exception as e:
                     api.app.logger.info(e)
                     continue
             else:
                 tag = tag[0]
 
-            blob_prefix = f"{dir_name}/{label}/"
-            blob_list = container.list_blobs(name_starts_with=blob_prefix)
+            blob_prefix = f"{label}/"
+            blob_list_new = container_new.list_blobs(
+                name_starts_with=blob_prefix
+            )
+            blob_list_original = container_original.list_blobs(
+                name_starts_with=blob_prefix
+            )
 
-            if not blob_list:
+            # TODO do we need this if? we might want to upload anyway
+            if not blob_list_new or not blob_list_original:
                 raise AttributeError("no images for this label")
 
-            for blob in blob_list:
-                # create list of URLs to be uploaded
-                blob_name = blob.name
+            # build correct URLs and append to URL list
+            for blob in blob_list_new:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_NEW}/{blob.name}"
+                url_list.append(
+                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
+                )
 
-                blob_url = f"{self.base_img_url}/{Keys.get('CONTAINER_NAME')}/{blob_name}"
-                # api.app.logger.info(Keys.get("CONTAINER_NAME"))
+            for blob in blob_list_original:
+                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_ORIGINAL}/{blob.name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
         # upload URLs in chunks of 64
-        api.app.logger.info(f"Uploading images from '{dir_name}' to CV")
+        print("Uploading images from blob to CV")
         img_f = 0
         img_s = 0
         img_d = 0
@@ -225,11 +237,15 @@ class Classifier:
                 itr_img += batch_size
 
             prc = itr_img / num_imgs
-            api.app.logger.info(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
-                                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
-                                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
-                                f"\t [{prc:03.2%}]",
-                                sep="", end="\r", flush=True)
+            print(
+                f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                f"\t [{prc:03.2%}]",
+                sep="",
+                end="\r",
+                flush=True,
+            )
 
         api.app.logger.info()
         if len(error_messages) > 0:
@@ -292,8 +308,11 @@ class Classifier:
                 self.project_id, iteration.id
             )
             minutes, seconds = divmod(time.time() - start, 60)
-            api.app.logger.info(f"Training status: {iteration.status}",
-                                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]", end="\r")
+            print(
+                f"Training status: {iteration.status}",
+                f"\t[{minutes:02.0f}m:{seconds:02.0f}s]",
+                end="\r",
+            )
             time.sleep(1)
 
         api.app.logger.info()
@@ -315,7 +334,8 @@ class Classifier:
         """
         try:
             self.trainer.delete_images(
-                self.project_id, all_images=True, all_iterations=True)
+                self.project_id, all_images=True, all_iterations=True
+            )
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
 
@@ -325,8 +345,8 @@ class Classifier:
         """
         with api.app.app_context():
             labels = models.get_all_labels()
-        self.upload_images(labels, "old")
-        self.upload_images(labels, "new")
+        self.upload_images(labels)
+
         try:
             self.train(labels)
         except CustomVisionErrorException as e:

@@ -20,7 +20,7 @@ SESSION_EXPIRATION_TIME = 10
 MAX_IMAGE_SIZE = 4000000
 MIN_RESOLUTION = 256
 # Container names
-CONTAINER_NAME_ORIGINAL = "originalimgcontainer"
+CONTAINER_NAME_ORIGINAL = "oldimgcontainer"
 CONTAINER_NAME_NEW = "newimgcontainer"
 CREATE_CONTAINER_TRIES = 10
 CREATE_CONTAINER_WAITER = 30  # 30 seconds wait between every time
