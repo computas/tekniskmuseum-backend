@@ -353,7 +353,7 @@ class Classifier:
             self.train(labels)
         except CustomVisionErrorException as e:
             msg = "No changes since last training"
-            print("exiting...")
+            print(e, "exiting...")
             raise excp.BadRequest(msg)
 
 
