@@ -308,7 +308,7 @@ class Classifier:
             )
             time.sleep(1)
 
-        api.app.logger.info()
+        api.app.logger.info("")
 
         # The iteration is now trained. Publish it to the project endpoint
         iteration_name = uuid.uuid4()
