@@ -145,7 +145,7 @@ def insert_into_scores(name, score, date):
 
 def get_iteration_name():
     """
-        Returns the first and only iteration name that should be in the model
+        Returns the first and only iteration name that should be in the model.
     """
     iteration = Iteration.query.filter_by().first()
     assert iteration.iteration_name is not None
@@ -154,7 +154,7 @@ def get_iteration_name():
 
 def update_iteration_name(new_name):
     """
-        updates the one only iteration_name to new_name
+        updates the one only iteration_name to new_name.
     """
     iteration = Iteration.query.filter_by().first()
     if iteration is None:
@@ -243,7 +243,7 @@ def update_game_for_player(game_id, player_id, session_num, state):
     """
     try:
         game = Games.query.get(game_id)
-        game.session_num += 1
+        game.session_num += session_num
         player_in_game = Players.query.get(player_id)
         player_in_game.state = state
         db.session.commit()
@@ -351,16 +351,11 @@ def get_top_n_high_score_list(top_n):
 
 
 def clear_highscores():
+    """
+        Function for clearing score table.
+    """
     Scores.query.delete()
     db.session.commit()
-
-
-def drop_table(table):
-    """
-        Function for dropping a table, or all.
-    """
-    # Calling 'drop_table' with None as parameter means dropping all tables.
-    db.drop_all(bind=table)
 
 
 # User related functions
@@ -411,7 +406,7 @@ def insert_into_labels(english, norwegian):
 
 def get_n_labels(n):
     """
-        Reads all rows from database and chooses n random labels in a list
+        Reads all rows from database and chooses n random labels in a list.
     """
     try:
         # read all english labels in database
@@ -426,7 +421,7 @@ def get_n_labels(n):
 
 def get_all_labels():
     """
-        Reads all labels from database
+        Reads all labels from database.
     """
     try:
         # read all english labels in database
@@ -439,7 +434,8 @@ def get_all_labels():
 
 def to_norwegian(english_label):
     """
-        Reads the labels tabel and return the norwegian translation of the english word
+        Reads the labels tabel and return the norwegian translation of the
+        english word.
     """
     try:
         query = Labels.query.get(english_label)
@@ -453,7 +449,7 @@ def to_norwegian(english_label):
 
 def get_translation_dict():
     """
-        Reads all labels from database and create dictionary
+        Reads all labels from database and create dictionary.
     """
     try:
         labels = Labels.query.all()
