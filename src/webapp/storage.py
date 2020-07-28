@@ -86,7 +86,7 @@ def create_container():
 
 def image_count():
     """
-        Returns number of images in 'newimgcontainer'. 
+        Returns number of images in 'newimgcontainer'.
     """
     container_client = blob_connection()
     return container_client.get_container_properties().metadata["image_count"]
