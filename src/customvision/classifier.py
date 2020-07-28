@@ -8,8 +8,6 @@ import sys
 import os
 from typing import Dict
 from typing import List
-from utilities.keys import Keys
-from utilities import setup
 from webapp import models
 from webapp import api
 from werkzeug import exceptions as excp
@@ -25,6 +23,9 @@ from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
     CustomVisionErrorException,
 )
+
+from utilities.keys import Keys
+from utilities import setup
 
 
 class Classifier:
