@@ -136,9 +136,8 @@ def classify():
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
         models.update_game_for_player(player.game_id, player_id, 1, "Done")
-        # save image in blob storage ifcertainty above threshold
-        if best_certainty > setup.SAVE_CERTAINTY:
-            storage.save_image(image, label)
+        # save image
+        storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
@@ -226,7 +225,7 @@ def admin_page(action):
         SESSION_EXPIRATION_TIME
     """
     # Check if user has valid cookie
-    is_authenticated()
+    # is_authenticated()
 
     if action == "clearHighScore":
         models.clear_highscores()

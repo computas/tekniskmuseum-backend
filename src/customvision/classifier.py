@@ -190,8 +190,6 @@ class Classifier:
             blob_list_original = container_original.list_blobs(
                 name_starts_with=blob_prefix
             )
-
-            # TODO do we need this if? we might want to upload anyway
             if not blob_list_new or not blob_list_original:
                 raise AttributeError("no images for this label")
 
@@ -207,7 +205,6 @@ class Classifier:
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
-
         # upload URLs in chunks of 64
         print("Uploading images from blob to CV")
         img_f = 0
@@ -238,11 +235,15 @@ class Classifier:
                 itr_img += batch_size
 
             prc = itr_img / num_imgs
-            print(f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
-                  f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
-                  f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
-                  f"\t [{prc:03.2%}]",
-                  sep="", end="\r", flush=True)
+            print(
+                f"\t succesfull: \033[92m {img_s:5d} \033]92m \033[0m",
+                f"\t duplicates: \033[33m {img_d:5d} \033]33m \033[0m",
+                f"\t failed: \033[91m {img_f:5d} \033]91m \033[0m",
+                f"\t [{prc:03.2%}]",
+                sep="",
+                end="\r",
+                flush=True,
+            )
 
         print()
         if len(error_messages) > 0:
@@ -346,7 +347,6 @@ class Classifier:
         with api.app.app_context():
             labels = models.get_all_labels()
         self.upload_images(labels)
-
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
