@@ -208,7 +208,7 @@ class Classifier:
                 )
 
         # upload URLs in chunks of 64
-        print(f"Uploading images from blob to CV")
+        print("Uploading images from blob to CV")
         img_f = 0
         img_s = 0
         img_d = 0
