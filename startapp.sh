@@ -51,6 +51,7 @@ printline() {
 runTests() {
     printHeadline 'Teknisk Museum Backend'
     printf "$(python --version)\n$(which python)\n"
+
     cd src/
     if [[ ! -z "$keystring" ]]; then
         python runTests.py --keys="$keystring"

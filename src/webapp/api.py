@@ -119,10 +119,13 @@ def classify():
     label = labels[game.session_num - 1]
 
     # Check if the image hasn't been drawn on
-    bytes_img = Image.open(BytesIO(image.stream.read()))
     image.seek(0)
+    bytes_img = Image.open(BytesIO(image.stream.read()))
+
     if white_image(bytes_img):
         return white_image_data(label, time_left, player.game_id, player_id)
+
+    image.seek(0)
 
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
@@ -136,9 +139,8 @@ def classify():
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
         models.update_game_for_player(player.game_id, player_id, 1, "Done")
-        # save image in blob storage ifcertainty above threshold
-        if best_certainty > setup.SAVE_CERTAINTY:
-            storage.save_image(image, label)
+        # save image
+        storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
