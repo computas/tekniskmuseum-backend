@@ -51,3 +51,4 @@ class Flask_config:
         SESSION_COOKIE_SECURE = True
     else:
         SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_HTTPONLY = False
