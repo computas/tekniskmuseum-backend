@@ -231,11 +231,11 @@ def admin_page(action):
         return json.dumps({"success": "Training started"}), 200
 
     elif action == "hardReset":
+        # Delete all images in CV, upload all orignal images and retrain
         classifier.delete_all_images()
         storage.clear_dataset()
-        response = {
-            "success": "All images deleted from CV and BLOB storage"
-        }
+        Thread(target=classifier.hard_reset_retrain).start()
+        response = {"success": "All images deleted, nodel now training"}
         return json.dumps(response), 200
 
     elif action == "status":
@@ -306,9 +306,7 @@ def add_user():
         password, method="pbkdf2:sha256:200000", salt_length=128
     )
     models.insert_into_user(username, hashed_psw)
-    response = {
-        "response": "user added"
-    }
+    response = {"response": "user added"}
     return json.dumps(response), 200
 
 
