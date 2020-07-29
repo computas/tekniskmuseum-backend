@@ -172,7 +172,7 @@ def end_game():
     # Clean database for unnecessary data
     models.delete_session_from_game(player.game_id)
     models.delete_old_games()
-    return "OK", 200
+    return json.dumps({"success": "OK"}), 200
 
 
 @app.route("/viewHighScore")
@@ -209,7 +209,7 @@ def authenticate():
     session["last_login"] = datetime.datetime.now()
     session["username"] = username
 
-    return "OK", 200
+    return json.dumps({"success": "OK"}), 200
 
 
 @app.route("/admin/<action>", methods=["POST"])
@@ -223,17 +223,20 @@ def admin_page(action):
 
     if action == "clearHighScore":
         models.clear_highscores()
-        return "High scores cleared", 200
+        return json.dumps({"success": "High scores cleared"}), 200
 
     elif action == "trainML":
         # Run training asynchronously
         Thread(target=classifier.retrain).start()
-        return "Training started", 200
+        return json.dumps({"success": "Training started"}), 200
 
     elif action == "hardReset":
         classifier.delete_all_images()
         storage.clear_dataset()
-        return "All images deleted from CV and BLOB storage", 200
+        response = {
+            "success": "All images deleted from CV and BLOB storage"
+        }
+        return json.dumps(response), 200
 
     elif action == "status":
         new_blob_image_count = storage.image_count()
@@ -247,13 +250,13 @@ def admin_page(action):
 
     elif action == "logout":
         session.clear()
-        return "Session cleared", 200
+        return json.dumps({"success": "Session cleared"}), 200
 
     elif action == "ping":
-        return "pong", 200
+        return json.dumps({"success": "pong"}), 200
 
     else:
-        return "Admin action unspecified", 400
+        return json.dumps({"error": "Admin action unspecified"}), 400
 
 
 @app.errorhandler(Exception)
@@ -269,7 +272,7 @@ def handle_exception(error):
             return error
     else:
         app.logger.error(error)
-        return "Internal server error", 500
+        return json.dumps({"error": "Internal server error"}), 500
 
 
 def allowed_file(image):
@@ -303,7 +306,10 @@ def add_user():
         password, method="pbkdf2:sha256:200000", salt_length=128
     )
     models.insert_into_user(username, hashed_psw)
-    return "user added", 200
+    response = {
+        "response": "user added"
+    }
+    return json.dumps(response), 200
 
 
 def is_authenticated():
