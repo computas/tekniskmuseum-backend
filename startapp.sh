@@ -48,28 +48,10 @@ printline() {
     printf '\e[0m\n'
 }
 
-# Parse flags
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -t | --test)        test=true;
-                            shift ;;
-        -h | --help)        help=true;
-                            shift ;;
-        -d | --debug)       debug=true;
-                            nworkers=1;
-                            shift ;;
-        -w=* | --workers=*) nworkers="${1#*=}";
-                            shift ;;
-        --keys=*)           keystring="${1#*=}";
-                            shift ;;
-        -l | --learn)        train=true;
-                            shift ;;
-        *)                  echo "Unexpected option: $1, use -h for help";
-                            exit 1 ;;
-    esac
-done
+runTests() {
+    printHeadline 'Teknisk Museum Backend'
+    printf "$(python --version)\n$(which python)\n"
 
-if [[ $test = true ]]; then
     cd src/
     if [[ ! -z "$keystring" ]]; then
         python runTests.py --keys="$keystring"
@@ -84,16 +66,30 @@ if [[ $test = true ]]; then
             printHeadline red 'linting failed'
         fi
         python -m pytest
-        exit
     fi
-elif [[ $help = true ]]; then
-    echo "$usage"
-    exit
-fi
+}
 
+# Parse flags
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -h | --help)        echo "$usage";
+                            exit 0;;
+        --keys=*)           keystring="${1#*=}";
+                            shift;;
+        -t | --test)        runTests;
+                            exit 0;;
+        -d | --debug)       debug=true;
+                            nworkers=1;
+                            shift;;
+        -w=* | --workers=*) nworkers="${1#*=}";
+                            shift;;
+        *)                  echo "Unexpected option: $1, use -h for help";
+                            exit 1;;
+    esac
+done
 
 # Print some info
-printHeadline 'Teknisk museum backend'
+printHeadline 'Teknisk Museum backend'
 echo "$(python --version)
 $(which python)
 Number processing units: $ncores
@@ -116,4 +112,5 @@ else
     printline
     gunicorn --bind=0.0.0.0 $default_settings
 fi
+
 printline

@@ -118,13 +118,6 @@ def classify():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
-    # Check if the image hasn't been drawn on
-    image.seek(0)
-    bytes_img = Image.open(BytesIO(image.stream.read()))
-    image.seek(0)
-    if white_image(bytes_img):
-        return white_image_data(label, time_left, player.game_id, player_id)
-
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -299,6 +292,7 @@ def allowed_file(image):
     correct_res = (height >= MIN_RES) and (width >= MIN_RES)
     if not is_png or too_large or not correct_res:
         raise excp.UnsupportedMediaType("Wrong image format")
+    image.seek(0)
 
 
 def add_user():
