@@ -139,7 +139,7 @@ class Classifier:
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
 
-    def upload_images(self, labels: List) -> None:
+    def upload_images(self, labels: List, container_name) -> None:
         """
             Takes as input a list of labels, uploads all assosiated images to Azure Custom Vision project.
             If label in input already exists in Custom Vision project, all images are uploaded directly.
@@ -155,11 +155,8 @@ class Classifier:
         existing_tags = list(self.trainer.get_tags(self.project_id))
 
         try:
-            container_new = self.blob_service_client.get_container_client(
-                setup.CONTAINER_NAME_NEW
-            )
-            container_original = self.blob_service_client.get_container_client(
-                setup.CONTAINER_NAME_ORIGINAL
+            container = self.blob_service_client.get_container_client(
+                container_name
             )
         except Exception as e:
             print(
@@ -185,27 +182,18 @@ class Classifier:
                 tag = tag[0]
 
             blob_prefix = f"{label}/"
-            blob_list_new = container_new.list_blobs(
-                name_starts_with=blob_prefix
-            )
-            blob_list_original = container_original.list_blobs(
-                name_starts_with=blob_prefix
-            )
-            if not blob_list_new or not blob_list_original:
+            blob_list = container.list_blobs(name_starts_with=blob_prefix)
+
+            if not blob_list:
                 raise AttributeError("no images for this label")
 
             # build correct URLs and append to URL list
-            for blob in blob_list_new:
-                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_NEW}/{blob.name}"
+            for blob in blob_list:
+                blob_url = f"{self.base_img_url}/{container_name}/{blob.name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
 
-            for blob in blob_list_original:
-                blob_url = f"{self.base_img_url}/{setup.CONTAINER_NAME_ORIGINAL}/{blob.name}"
-                url_list.append(
-                    ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
-                )
         # upload URLs in chunks of 64
         print("Uploading images from blob to CV")
         img_f = 0
@@ -347,7 +335,23 @@ class Classifier:
         """
         with api.app.app_context():
             labels = models.get_all_labels()
-        self.upload_images(labels)
+
+        self.upload_images(labels, setup.CONTAINER_NAME_NEW)
+        try:
+            self.train(labels)
+        except CustomVisionErrorException as e:
+            msg = "No changes since last training"
+            print(e, "exiting...")
+            raise excp.BadRequest(msg)
+
+    def hard_reset_retrain(self):
+        """
+            Train model on all labels and update iteration.
+        """
+        with api.app.app_context():
+            labels = models.get_all_labels()
+
+        self.upload_images(labels, setup.CONTAINER_NAME_ORIGINAL)
         try:
             self.train(labels)
         except CustomVisionErrorException as e:
