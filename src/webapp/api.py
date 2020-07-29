@@ -234,8 +234,8 @@ def admin_page(action):
         # Delete all images in CV, upload all orignal images and retrain
         classifier.delete_all_images()
         storage.clear_dataset()
-        classifier.hard_reset_retrain()
-        response = {"success": "All images deleted from CV and BLOB storage"}
+        Thread(target=classifier.hard_reset_retrain).start()
+        response = {"success": "All images deleted, nodel now training"}
         return json.dumps(response), 200
 
     elif action == "status":

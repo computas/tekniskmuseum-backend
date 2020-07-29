@@ -82,6 +82,7 @@ class Classifier:
         # get the latest published iteration
         puplished_iterations.sort(key=lambda i: i.created)
         self.iteration_name = puplished_iterations[-1].publish_name
+
         with api.app.app_context():
             models.update_iteration_name(self.iteration_name)
 
@@ -262,21 +263,9 @@ class Classifier:
         """
             Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
             Generates unique iteration name, publishes model and sets self.iteration_name if successful.
-
-            then publishes the model.
-            C
+    
             Parameters:
             labels (str[]): List of labels
-
-            Returns:
-            None
-
-            # TODO
-            There might arrise an error where the self.iteration_name is not syncronised between processes.
-            If the processes live long enough this will cause prediciton to fail due to the oldest iteration being deleted when training happens
-
-            Potential fixes for this are requesting the latest iteration_name every time you predict,
-            or storing the latest iteration name in a database and fetching this every time you do a prediction
         """
         try:
             email = Keys.get("EMAIL")
@@ -346,11 +335,16 @@ class Classifier:
 
     def hard_reset_retrain(self):
         """
-            Train model on all labels and update iteration.
+            Train model on all labels and update iteration. 
+            This method sleeps for 60 seconds to make sure all
+            old images are deleted from custom vision before
+            uploading original dataset.
         """
         with api.app.app_context():
             labels = models.get_all_labels()
 
+        # Wait 60 seconds to make sure all images are deleted in custom vision
+        time.sleep(60)
         self.upload_images(labels, setup.CONTAINER_NAME_ORIGINAL)
         try:
             self.train(labels)

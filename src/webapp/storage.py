@@ -95,9 +95,6 @@ def image_count():
     container_client = blob_connection()
     return container_client.get_container_properties().metadata["image_count"]
 
-def image_cunt()
-    CloudBlobContainer container = GetContainer("oldimgcontainer")
-    var count = container.ListBlobs(null, true).Count()
 
 def blob_connection():
     """
