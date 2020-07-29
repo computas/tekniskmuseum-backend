@@ -30,6 +30,7 @@ CREATE_CONTAINER_TRIES = 10
 CREATE_CONTAINER_WAITER = 30
 
 
+# Object used to initialize Flask instance
 class Flask_config:
     """
         Config settings for flask and sqlalchemy should be set here.
@@ -43,12 +44,18 @@ class Flask_config:
         # Connection string for production database
         con_str = Keys.get("DB_CONNECTION_STRING")
 
+    # database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = con_str
 
+    # secret key for cookie encryption
     SECRET_KEY = Keys.get("SECRET_KEY")
+
+    # cookie settings
     if Keys.get("IS_PRODUCTION") == "true":
         SESSION_COOKIE_SECURE = True
     else:
         SESSION_COOKIE_SECURE = False
-    SESSION_COOKIE_HTTPONLY = False
+
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'None'
