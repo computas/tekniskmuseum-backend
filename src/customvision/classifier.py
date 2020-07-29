@@ -263,7 +263,6 @@ class Classifier:
         """
             Trains model on all labels specified in input list, exeption is raised by self.trainer.train_projec() is asked to train on non existent labels.
             Generates unique iteration name, publishes model and sets self.iteration_name if successful.
-    
             Parameters:
             labels (str[]): List of labels
         """
@@ -335,7 +334,7 @@ class Classifier:
 
     def hard_reset_retrain(self):
         """
-            Train model on all labels and update iteration. 
+            Train model on all labels and update iteration.
             This method sleeps for 60 seconds to make sure all
             old images are deleted from custom vision before
             uploading original dataset.
