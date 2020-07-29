@@ -121,9 +121,11 @@ def classify():
     # Check if the image hasn't been drawn on
     image.seek(0)
     bytes_img = Image.open(BytesIO(image.stream.read()))
-    image.seek(0)
+
     if white_image(bytes_img):
         return white_image_data(label, time_left, player.game_id, player_id)
+
+    image.seek(0)
 
     certainty, best_guess = classifier.predict_image(image)
     best_certainty = certainty[best_guess]
