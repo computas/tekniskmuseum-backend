@@ -1,5 +1,5 @@
-./training-tool/data/*
-./training-tool/images/*
+src/preprocessing/data/*
+src/preprocessing/images/*
 .vscode
 *__pycache__*
 config.json
