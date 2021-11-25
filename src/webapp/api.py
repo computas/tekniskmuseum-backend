@@ -28,12 +28,14 @@ from flask import Flask
 from flask import request
 from flask import session
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
 
 # Initialization app
 app = Flask(__name__)
+CORS(app)
 app.config.from_object("utilities.setup.Flask_config")
 
 # Set up DB and models
@@ -118,7 +120,7 @@ def classify():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
-    certainty, best_guess = classifier.predict_image(image)
+    certainty, best_guess = classifier.predict_image_by_post(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
     has_won = (
@@ -131,7 +133,7 @@ def classify():
         # Update session_num in game and state for player
         models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image
-        storage.save_image(image, label, best_certainty)
+        # storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian

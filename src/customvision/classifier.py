@@ -2,6 +2,7 @@
 """
     Tools for interacting with Azure Custom Vision and Azure Blob Storage
 """
+import logging
 import uuid
 import time
 import sys
@@ -10,6 +11,7 @@ from typing import Dict
 from typing import List
 from webapp import models
 from webapp import api
+import requests
 from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
@@ -70,21 +72,25 @@ class Classifier:
         self.blob_service_client = BlobServiceClient.from_connection_string(
             connect_str
         )
+        try:
+            # get all project iterations
+            iterations = self.trainer.get_iterations(self.project_id)
+            # find published iterations
+            puplished_iterations = [
+                iteration
+                for iteration in iterations
+                if iteration.publish_name != None
+            ]
+            # get the latest published iteration
+            puplished_iterations.sort(key=lambda i: i.created)
+            self.iteration_name = puplished_iterations[-1].publish_name
 
-        # get all project iterations
-        iterations = self.trainer.get_iterations(self.project_id)
-        # find published iterations
-        puplished_iterations = [
-            iteration
-            for iteration in iterations
-            if iteration.publish_name != None
-        ]
-        # get the latest published iteration
-        puplished_iterations.sort(key=lambda i: i.created)
-        self.iteration_name = puplished_iterations[-1].publish_name
+            with api.app.app_context():
+                models.update_iteration_name(self.iteration_name)
+        except Exception as e:
+            logging.info(e)
+            self.iteration_name = "iteration1"
 
-        with api.app.app_context():
-            models.update_iteration_name(self.iteration_name)
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -130,6 +136,29 @@ class Classifier:
         # reset the file head such that it does not affect the state of the file handle
         img.seek(0)
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+        best_guess = max(pred_kv, key=pred_kv.get)
+        return pred_kv, best_guess
+
+    def predict_image_by_post(self, img) -> Dict[str, float]:
+        """
+            Predicts label(s) of Image read from URL.
+            ASSUMES:
+            -image of type .png
+            -image size less than 4MB
+            -image resolution at least 256x256 pixels
+
+            Parameters:
+            img_url: .png file
+
+            Returns:
+            (prediction (dict[str,float]): labels and assosiated probabilities,
+            best_guess: (str): name of the label with highest probability)
+        """
+
+        headers = {'content-type': 'application/octet-stream', "prediction-key": self.prediction_key}
+        res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
+        img.seek(0)
+        pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
         best_guess = max(pred_kv, key=pred_kv.get)
         return pred_kv, best_guess
 

@@ -46,7 +46,7 @@ class Flask_config:
 
     # database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = con_str
+    SQLALCHEMY_DATABASE_URI = "mssql+pyodbc://%s" % con_str
 
     # secret key for cookie encryption
     SECRET_KEY = Keys.get("SECRET_KEY")
