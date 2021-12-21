@@ -4,7 +4,7 @@ azure-cognitiveservices-vision-customvision==2.0.0
 azure-common==1.1.25
 azure-core==1.6.0
 azure-storage-blob==12.3.2
-flake8==3.7.9
+flake8==3.8.3
 pytest==5.3.5
 pyodbc===4.0.30
 gunicorn==20.0.4
