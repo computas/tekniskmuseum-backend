@@ -15,7 +15,7 @@ import sys
 import os
 import logging
 import json
-import datetime
+from datetime import datetime,timezone, timedelta
 from PIL import Image
 from PIL import ImageChops
 from threading import Thread
@@ -35,7 +35,7 @@ from werkzeug import exceptions as excp
 
 # Initialization app
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 app.config.from_object("utilities.setup.Flask_config")
 
 # Set up DB and models
@@ -67,7 +67,7 @@ def start_game():
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
     labels = models.get_n_labels(setup.NUM_GAMES)
-    today = datetime.datetime.today()
+    today = datetime.today()
     models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
@@ -168,7 +168,7 @@ def end_game():
     if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")
 
-    today = datetime.date.today()
+    today = datetime.today()
     models.insert_into_scores(name, score, today)
 
     # Clean database for unnecessary data
@@ -208,7 +208,7 @@ def authenticate():
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
 
-    session["last_login"] = datetime.datetime.now()
+    session["last_login"] = datetime.now(timezone.utc)
     session["username"] = username
 
     return json.dumps({"success": "OK"}), 200
@@ -320,15 +320,15 @@ def is_authenticated():
     if "last_login" not in session:
         raise excp.Unauthorized()
 
-    session_length = datetime.datetime.now() - session["last_login"]
-    is_auth = session_length < datetime.timedelta(
+    session_length = datetime.now(timezone.utc) - session["last_login"]
+    is_auth = session_length < timedelta(
         minutes=setup.SESSION_EXPIRATION_TIME
     )
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
     else:
-        session["last_login"] = datetime.datetime.now()
+        session["last_login"] = datetime.now(timezone.utc)
 
         return True
 
