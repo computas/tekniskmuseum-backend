@@ -32,10 +32,14 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
+from utilities.keys import Keys
 
 # Initialization app
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
+if Keys.exists("CORS_ALLOWED_ORIGIN"):
+    cors = CORS(app, resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
+else :
+    cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 app.config.from_object("utilities.setup.Flask_config")
 
 # Set up DB and models

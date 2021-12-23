@@ -19,6 +19,11 @@ else:
 
 
 class Keys:
+    def exists(keyName):
+        if keyName in keys:
+            return True
+        else:
+            return False
     def get(keyName):
         """
             Returns secret matching the key. Returns appropriate error message if key
