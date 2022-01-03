@@ -110,7 +110,7 @@ def classify():
     # Check if image submitted correctly
     if "image" not in request.files:
         raise excp.BadRequest("No image submitted")
-
+    
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
@@ -120,7 +120,13 @@ def classify():
     time_left = float(request.values["time"])
     # Get label for game session
     player = models.get_player(player_id)
+
+    clientRound = request.values.get("client_round_num", None)
     game = models.get_game(player.game_id)
+    server_round = game.session_num
+    if clientRound is not None and int(clientRound) < game.session_num:
+        raise excp.BadRequest("Server-round number larger than request/client. Probably a request processed out of order")
+    print(clientRound)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
@@ -137,7 +143,7 @@ def classify():
         # Update session_num in game and state for player
         models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image
-        # storage.save_image(image, label, best_certainty)
+        storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
@@ -154,6 +160,7 @@ def classify():
         "correctLabel": translation[label],
         "hasWon": has_won,
         "gameState": game_state,
+        "serverRound": server_round,
     }
     return json.dumps(data), 200
 
