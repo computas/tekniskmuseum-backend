@@ -1,0 +1,16 @@
+{
+    "CV_ENDPOINT": "https://example.cognitiveservices.azure.com/",
+    "CV_PREDICTION_ENDPOINT": "https://example-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/94ca4f89-f477-4649-a15b-e56715d950e1/classify/iterations/5b2486b9-c817-4075-b427-292076b7452d/image",
+    "CV_PROJECT_ID": "exampleid",
+    "CV_TRAINING_KEY": "examplekey",
+    "CV_PREDICTION_KEY": "examplekey",
+    "CV_PREDICTION_RESOURCE_ID": "/subscriptions/16511401-9e5d-4117-88f5-69eae5631cfc/resourceGroups/KunstigeJens-Prod/providers/Microsoft.CognitiveServices/accounts/example-Prediction",
+    "EMAIL": "example@computas.com",
+    "BASE_BLOB_URL": "https://example.blob.core.windows.net",
+    "BLOB_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=example;AccountKey=exampleKey;EndpointSuffix=core.windows.net",
+    "CONTAINER_NAME": "oldimgcontainer",
+    "TEST_DB_CONNECTION_STRING": "exampleusr:examplepwd@example-database-server.database.windows.net:1433/example-database?driver=ODBC+Driver+17+for+SQL+Server",
+    "DB_CONNECTION_STRING": "exampleusr:examplepwd@example-database-server.database.windows.net:1433/example-database?driver=ODBC+Driver+17+for+SQL+Server&Connection",
+    "SECRET_KEY": "whateveryouwanthere",
+    "CORS_ALLOWED_ORIGIN": "http://localhost:4200"
+}

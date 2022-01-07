@@ -126,7 +126,6 @@ def classify():
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
         raise excp.BadRequest("Server-round number larger than request/client. Probably a request processed out of order")
-    print(clientRound)
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
