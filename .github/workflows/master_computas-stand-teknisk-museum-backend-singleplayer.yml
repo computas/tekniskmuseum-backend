@@ -59,5 +59,4 @@ jobs:
         with:
           app-name: 'tekniskmuseumbackendsingleplayer'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DBFD6D0307404B9396FB68F1A6B345D0 }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F19D5611F6CA40A38D6D595CF6AEB4C6 }}
