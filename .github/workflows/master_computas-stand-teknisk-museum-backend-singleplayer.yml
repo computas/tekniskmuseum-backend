@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v1
         with:
-          python-version: '3.8'
+          python-version: '3.7'
 
       - name: Create and start virtual environment
         run: |
@@ -57,6 +57,6 @@ jobs:
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'tekniskback'
+          app-name: 'teknisk-museum-backend-singleplayer'
           slot-name: 'production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F19D5611F6CA40A38D6D595CF6AEB4C6 }}
