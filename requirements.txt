@@ -1,4 +1,5 @@
 Flask==1.0.2
+itsdangerous==2.0.1
 Flask-SQLAlchemy==2.4.1
 azure-cognitiveservices-vision-customvision==2.0.0
 azure-common==1.1.25
