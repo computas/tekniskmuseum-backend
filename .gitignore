@@ -1,6 +1,7 @@
 src/preprocessing/data/*
 src/preprocessing/images/*
 .vscode
+.idea
 *__pycache__*
 config.json
 *.pytest_cache*
