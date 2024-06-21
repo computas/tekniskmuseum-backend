@@ -7,6 +7,7 @@ LABEL_LIST = [
     "bathtub",
     "beach",
     "bee",
+    "belt",
     "bicycle",
     "birthday cake",
     "book",
