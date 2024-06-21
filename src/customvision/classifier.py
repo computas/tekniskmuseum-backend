@@ -50,6 +50,7 @@ class Classifier:
             None
         """
         self.ENDPOINT = Keys.get("CV_ENDPOINT")
+        self.PREDICTION_ENDPOINT = Keys.get("CV_PREDICTION_ENDPOINT")
         self.project_id = Keys.get("CV_PROJECT_ID")
         self.prediction_key = Keys.get("CV_PREDICTION_KEY")
         self.training_key = Keys.get("CV_TRAINING_KEY")
@@ -60,7 +61,7 @@ class Classifier:
             in_headers={"Prediction-key": self.prediction_key}
         )
         self.predictor = CustomVisionPredictionClient(
-            self.ENDPOINT, self.prediction_credentials
+            self.PREDICTION_ENDPOINT, self.prediction_credentials
         )
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
@@ -106,7 +107,7 @@ class Classifier:
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
-            self.project_id, self.iteration_name, img_url
+            project_id=self.project_id, published_name=self.iteration_name, url=img_url, custom_headers={"Prediction-Key": self.prediction_key}
         )
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
@@ -156,9 +157,14 @@ class Classifier:
         """
 
         headers = {'content-type': 'application/octet-stream', "prediction-key": self.prediction_key}
-        res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
+        res = self.predictor.classify_image(
+            self.project_id, self.iteration_name, img.read(), custom_headers=headers
+        )
+        #res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
+        
         img.seek(0)
-        pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
+        #pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
+        pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
         return pred_kv, best_guess
 
@@ -389,24 +395,29 @@ def main():
         -no more than two projects created in Azure Custom Vision
         -no more than 10 iterations done in one projectS
     """
-    test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
+    test_url = "https://i.imgur.com/PamZxsc.png"
 
     classifier = Classifier()
+
+    # classifier.upload_images(["belt", "apple", "airplane"], "oldimgcontainer")
+
+    # classifier.train(["belt", "apple", "airplane"])
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
     print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
-    with open("../data/cv_testfile.png", "rb") as f:
-        result, best_guess = classifier.predict_image(f)
+    with open("./preprocessing/images/airplane/4554736336371712.png", "rb") as f:
+        #result, best_guess = classifier.predict_image(f)
+        result = classifier.predict_image_by_post(f)
         print(f"png result:\n{result}")
 
     with api.app.app_context():
         labels = models.get_all_labels()
 
-    classifier.upload_images(labels, "old")
-    classifier.train(labels)
+    #classifier.upload_images(labels, "old")
+    #classifier.train(labels)
 
 
 if __name__ == "__main__":
