@@ -14,11 +14,15 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 
 ### **Development**
 * Clone repository.
-* Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15).
+* Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15). Download version 17.
 * Install python requirements with pip: `pip install -r requirements.txt`.
 * Save the secret keys as a json object in: `src/config.json`.
-* Run script: `bash startapp.sh -d`to run the app locally.
-* Use `bash startapp.sh` in production.
+1. Head to portal.azure.com
+2. Enter *KunstigeJens-Dev*
+3. Under resources, go to *tekniskmuseumbackendsingleplayer-dev*
+4. On the left column under settings, click *Environment variables*
+5. Copy all the variables to the config file.
+* Run script: `bash startapp.sh`to run the app (For windows users: Run this in a WSL shell).
 
 ### **Tests**
 #### Run the tests with the following command:
@@ -109,3 +113,5 @@ _When rebasing, you will go through the commit history in your current branch an
 4. git rebase --continue
 5. git add .
 5. git push --force
+
+## **Development**
