@@ -471,7 +471,6 @@ def get_n_labels(n, difficulty_id):
     try:
         # read all english labels in database
         labels = Labels.query.filter(Labels.difficulty_id <= difficulty_id).all()
-        labels = Labels.query.all()
         english_labels = [str(label.english) for label in labels]
         random_list = random.sample(english_labels, n)
         return random_list
