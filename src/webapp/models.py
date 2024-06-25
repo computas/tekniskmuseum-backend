@@ -32,7 +32,7 @@ class Games(db.Model):
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
     date = db.Column(db.DateTime)
-
+    difficulty_id = db.Column(db.Integer, db.ForeignKey("difficulty.id"), default=1)
     players = db.relationship(
         "Players", uselist=False, back_populates="game", cascade="all, delete"
     )
@@ -91,6 +91,7 @@ class Labels(db.Model):
 
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
+    difficulty_id = db.Column(db.Integer, db.ForeignKey("difficulty.id"), default=1)
 
 
 class User(db.Model):
@@ -100,6 +101,11 @@ class User(db.Model):
     """
     username = db.Column(db.String(64), primary_key=True)
     password = db.Column(db.String(256))
+
+
+class Difficulty(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    difficulty = db.Column(db.String(32), nullable=False)
 
 
 # Functions to manipulate the tables above
@@ -112,8 +118,26 @@ def create_tables(app):
 
     return True
 
+def populate_difficulty(app):
+    """
+        Insert values into Difficulty table.
+    """
+    with app.app_context():
+        if Difficulty.query.count() == 0:
+            try:
+                difficulty = Difficulty(difficulty="easy")
+                db.session.add(difficulty)
+                difficulty = Difficulty(difficulty="medium")
+                db.session.add(difficulty)
+                difficulty = Difficulty(difficulty="hard")
+                db.session.add(difficulty)
+                db.session.commit()
+                return True
+            except Exception as e:
+                raise Exception("Could not insert into Difficulty table: " + str(e))
+    
 
-def insert_into_games(game_id, labels, date):
+def insert_into_games(game_id, labels, date, difficulty_id):
     """
         Insert values into Games table.
 
@@ -129,7 +153,7 @@ def insert_into_games(game_id, labels, date):
     ):
 
         try:
-            game = Games(game_id=game_id, labels=labels, date=date)
+            game = Games(game_id=game_id, labels=labels, date=date, difficulty_id=difficulty_id)
             db.session.add(game)
             db.session.commit()
             return True
@@ -415,7 +439,7 @@ def seed_labels(app, filepath):
                     for row in readCSV:
                         # Insert label into Labels table if not present
                         if Labels.query.get(row[0]) is None:
-                            insert_into_labels(row[0], row[1])
+                            insert_into_labels(row[0], row[1], row[2])
                 except AttributeError as e:
                     raise AttributeError(
                         "Could not insert into Labels table: " + str(e)
@@ -424,13 +448,13 @@ def seed_labels(app, filepath):
             raise AttributeError("File path not found")
 
 
-def insert_into_labels(english, norwegian):
+def insert_into_labels(english, norwegian, difficulty_id):
     """
         Insert values into Scores table.
     """
     if isinstance(english, str) and isinstance(norwegian, str):
         try:
-            label_row = Labels(english=english, norwegian=norwegian)
+            label_row = Labels(english=english, norwegian=norwegian, difficulty_id=difficulty_id)
             db.session.add(label_row)
             db.session.commit()
             return True
@@ -440,12 +464,13 @@ def insert_into_labels(english, norwegian):
         raise excp.BadRequest("English and norwegian must be strings")
 
 
-def get_n_labels(n):
+def get_n_labels(n, difficulty_id):
     """
         Reads all rows from database and chooses n random labels in a list.
     """
     try:
         # read all english labels in database
+        labels = Labels.query.filter(Labels.difficulty_id <= difficulty_id).all()
         labels = Labels.query.all()
         english_labels = [str(label.english) for label in labels]
         random_list = random.sample(english_labels, n)
@@ -468,6 +493,17 @@ def get_all_labels():
         raise Exception("Could not read Labels table: " + str(e))
 
 
+def get_labels_with_difficulty(difficulty):
+    """
+        Reads all labels from database with the given difficulty.
+    """
+    try:
+        # read all english labels in database
+        labels = Labels.query.filter_by(difficulty_id=difficulty).all()
+        return [str(label.english) for label in labels]
+
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
 def to_norwegian(english_label):
     """
         Reads the labels tabel and return the norwegian translation of the
@@ -492,3 +528,12 @@ def get_translation_dict():
         return dict([(str(label.english), str(label.norwegian)) for label in labels])
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
+
+def delete_all_tables(app):
+    """
+        Function for deleting all tables in the database.
+        Can use if you need to reset the database after adding new columns
+    """
+    with app.app_context():
+        db.drop_all()
+    return True
