@@ -32,7 +32,8 @@ class Games(db.Model):
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
     date = db.Column(db.DateTime)
-    difficulty_id = db.Column(db.Integer, db.ForeignKey("difficulty.id"), default=1)
+    difficulty_id = db.Column(
+        db.Integer, db.ForeignKey("difficulty.id"), default=1)
     players = db.relationship(
         "Players", uselist=False, back_populates="game", cascade="all, delete"
     )
@@ -61,7 +62,8 @@ class Players(db.Model):
     """
 
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False)
+    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey(
+        "games.game_id"), nullable=False)
     state = db.Column(db.String(32), nullable=False)
 
     game = db.relationship("Games", back_populates="players")
@@ -91,7 +93,8 @@ class Labels(db.Model):
 
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
-    difficulty_id = db.Column(db.Integer, db.ForeignKey("difficulty.id"), default=1)
+    difficulty_id = db.Column(
+        db.Integer, db.ForeignKey("difficulty.id"), default=1)
 
 
 class User(db.Model):
@@ -118,6 +121,7 @@ def create_tables(app):
 
     return True
 
+
 def populate_difficulty(app):
     """
         Insert values into Difficulty table.
@@ -134,8 +138,9 @@ def populate_difficulty(app):
                 db.session.commit()
                 return True
             except Exception as e:
-                raise Exception("Could not insert into Difficulty table: " + str(e))
-    
+                raise Exception(
+                    "Could not insert into Difficulty table: " + str(e))
+
 
 def insert_into_games(game_id, labels, date, difficulty_id):
     """
@@ -153,7 +158,8 @@ def insert_into_games(game_id, labels, date, difficulty_id):
     ):
 
         try:
-            game = Games(game_id=game_id, labels=labels, date=date, difficulty_id=difficulty_id)
+            game = Games(game_id=game_id, labels=labels,
+                         date=date, difficulty_id=difficulty_id)
             db.session.add(game)
             db.session.commit()
             return True
@@ -454,7 +460,8 @@ def insert_into_labels(english, norwegian, difficulty_id):
     """
     if isinstance(english, str) and isinstance(norwegian, str):
         try:
-            label_row = Labels(english=english, norwegian=norwegian, difficulty_id=difficulty_id)
+            label_row = Labels(
+                english=english, norwegian=norwegian, difficulty_id=difficulty_id)
             db.session.add(label_row)
             db.session.commit()
             return True
@@ -470,7 +477,8 @@ def get_n_labels(n, difficulty_id):
     """
     try:
         # read all english labels in database
-        labels = Labels.query.filter(Labels.difficulty_id <= difficulty_id).all()
+        labels = Labels.query.filter(
+            Labels.difficulty_id <= difficulty_id).all()
         english_labels = [str(label.english) for label in labels]
         random_list = random.sample(english_labels, n)
         return random_list
@@ -503,6 +511,8 @@ def get_labels_with_difficulty(difficulty):
 
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
+
+
 def to_norwegian(english_label):
     """
         Reads the labels tabel and return the norwegian translation of the
@@ -527,6 +537,7 @@ def get_translation_dict():
         return dict([(str(label.english), str(label.norwegian)) for label in labels])
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
+
 
 def delete_all_tables(app):
     """

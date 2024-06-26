@@ -41,7 +41,7 @@ def test_start_game_wrong_request(client):
     """
     # send request to test client with empty dictionary
     res = client.post("/startGame", data=dict())
-    assert(b"405 Method Not Allowed" in res.data)
+    assert (b"405 Method Not Allowed" in res.data)
 
 
 def test_start_game_correct(client):
@@ -50,7 +50,7 @@ def test_start_game_correct(client):
     """
     res = client.get("/startGame", data=dict())
     # Ensure that the returned dictionary contains a player_id
-    assert(b"player_id" in res.data)
+    assert (b"player_id" in res.data)
 
 
 def test_classify_wrong_request(client):
@@ -61,7 +61,7 @@ def test_classify_wrong_request(client):
     # Submit GET request
     res = client.get("/classify")
     # Should give error since POST is required
-    assert(b"405 Method Not Allowed" in res.data)
+    assert (b"405 Method Not Allowed" in res.data)
 
 
 def test_classify_no_image(client):
@@ -108,13 +108,13 @@ def test_classify_white_image_data(client):
     res = classify_helper(
         client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
-    assert(res.status == "200 OK")
+    assert (res.status == "200 OK")
     data = json.loads(res.data.decode("utf-8"))
-    assert("certainty" in data)
-    assert("guess" in data)
-    assert("correctLabel" in data)
-    assert("hasWon" in data)
-    assert("gameState" in data)
+    assert ("certainty" in data)
+    assert ("guess" in data)
+    assert ("correctLabel" in data)
+    assert ("hasWon" in data)
+    assert ("gameState" in data)
 
 
 def test_classify_white_image_done(client):
@@ -133,7 +133,7 @@ def test_classify_white_image_done(client):
         client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
-    assert(data["gameState"] == "Done")
+    assert (data["gameState"] == "Done")
 
 
 def test_classify_white_image_not_done(client):
@@ -152,7 +152,7 @@ def test_classify_white_image_not_done(client):
         client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
-    assert(data["gameState"] == "Playing")
+    assert (data["gameState"] == "Playing")
 
 
 def test_classify_correct(client):
@@ -174,12 +174,12 @@ def test_classify_correct(client):
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
-    assert(isinstance(data, dict))
+    assert (isinstance(data, dict))
     # Check if the correct keys are included
-    assert("certainty" in data)
-    assert("hasWon" in data)
+    assert ("certainty" in data)
+    assert ("hasWon" in data)
     # Check if 200 is returned
-    assert(res.status_code == 200)
+    assert (res.status_code == 200)
 
 
 def test_allowedFile_small_resolution():
@@ -299,13 +299,13 @@ def test_view_highscore(client):
     # get response
     res = client.get("/viewHighScore")
     response = json.loads(res.data)
-    #check that data structure is correct
+    # check that data structure is correct
     if response["total"]:
-        assert(isinstance(response, dict))
-        assert(isinstance(response["daily"], list))
-        assert(isinstance(response["total"], list))
-        assert(isinstance(response["daily"][0], dict))
-        assert(isinstance(response["total"][0], dict))
+        assert (isinstance(response, dict))
+        assert (isinstance(response["daily"], list))
+        assert (isinstance(response["total"], list))
+        assert (isinstance(response["daily"][0], dict))
+        assert (isinstance(response["total"][0], dict))
 
 
 def test_white_image_true():
@@ -317,7 +317,7 @@ def test_white_image_true():
     path = os.path.join(dir_path, cfg.API_IMAGE5)
     img = Image.open(path)
     white = api.white_image(img)
-    assert(white is True)
+    assert (white is True)
 
 
 def test_white_image_false():
@@ -329,7 +329,7 @@ def test_white_image_false():
     path = os.path.join(dir_path, cfg.API_IMAGE1)
     img = Image.open(path)
     white = api.white_image(img)
-    assert(white is False)
+    assert (white is False)
 
 
 def test_white_image_data_keys():
@@ -339,12 +339,12 @@ def test_white_image_data_keys():
     """
     data, code = api.white_image_data("", 1, "game_id", "player_id")
     json_data = json.loads(data)
-    assert("certainty" in json_data)
-    assert("guess" in json_data)
-    assert("correctLabel" in json_data)
-    assert("hasWon" in json_data)
-    assert("gameState" in json_data)
-    assert(code == 200)
+    assert ("certainty" in json_data)
+    assert ("guess" in json_data)
+    assert ("correctLabel" in json_data)
+    assert ("hasWon" in json_data)
+    assert ("gameState" in json_data)
+    assert (code == 200)
 
 
 def test_white_image_data_playing():
@@ -355,11 +355,11 @@ def test_white_image_data_playing():
     label = ""
     data, code = api.white_image_data(label, 1, "game_id", "player_id")
     json_data = json.loads(data)
-    assert(json_data["gameState"] == "Playing")
-    assert(json_data["correctLabel"] == label)
-    assert(json_data["hasWon"] is False)
-    assert(json_data["certainty"] == 1.0)
-    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
+    assert (json_data["gameState"] == "Playing")
+    assert (json_data["correctLabel"] == label)
+    assert (json_data["hasWon"] is False)
+    assert (json_data["certainty"] == 1.0)
+    assert (json_data["guess"] == setup.WHITE_IMAGE_GUESS)
 
 
 def test_white_image_data_done(client):
@@ -373,8 +373,8 @@ def test_white_image_data_done(client):
     label = ""
     data, code = api.white_image_data(label, 0, game_id, player_id)
     json_data = json.loads(data)
-    assert(json_data["gameState"] == "Done")
-    assert(json_data["correctLabel"] == label)
-    assert(json_data["hasWon"] is False)
-    assert(json_data["certainty"] == 1.0)
-    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
+    assert (json_data["gameState"] == "Done")
+    assert (json_data["correctLabel"] == label)
+    assert (json_data["hasWon"] is False)
+    assert (json_data["certainty"] == 1.0)
+    assert (json_data["guess"] == setup.WHITE_IMAGE_GUESS)
