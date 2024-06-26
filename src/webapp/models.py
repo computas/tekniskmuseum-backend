@@ -49,7 +49,7 @@ class Scores(db.Model):
     """
 
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(32))
+    player_id = db.Column(db.NVARCHAR(32), db.ForeignKey("players.player_id"))
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
 
@@ -142,24 +142,24 @@ def insert_into_games(game_id, labels, date):
         )
 
 
-def insert_into_scores(name, score, date):
+def insert_into_scores(player_id, score, date):
     """
         Insert values into Scores table.
 
         Parameters:
-        name: user name, string
+        player_id: player id, string
         score: float
         date: datetime.date
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
 
     if (
-        isinstance(name, str)
+        isinstance(player_id, str)
         and score_int_or_float
         and isinstance(date, datetime.date)
     ):
         try:
-            score = Scores(name=name, score=score, date=date)
+            score = Scores(player_id=player_id, score=score, date=date)
             db.session.add(score)
             db.session.commit()
             return True
@@ -349,8 +349,8 @@ def get_daily_high_score():
         )
         # structure data
         new = [
-            {"name": player.name, "score": player.score}
-            for player in top_n_list
+            {"id": score.score_id, "score": score.score}
+            for score in top_n_list
         ]
         return new
 
@@ -375,8 +375,8 @@ def get_top_n_high_score_list(top_n):
         )
         # strucutre data
         new = [
-            {"name": player.name, "score": player.score}
-            for player in top_n_list
+            {"id": score.score_id, "score": score.score}
+            for score in top_n_list
         ]
         return new
 
