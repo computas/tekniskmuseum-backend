@@ -63,12 +63,15 @@ def hello():
     return "Yes, we're up", 200
 
 
-@app.route("/startGame", defaults={"difficulty_id": 1})
-def start_game(difficulty_id):
+@app.route("/startGame")
+def start_game():
     """
         Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
+    difficulty_id = request.args.get("difficulty_id", default=None, type=int)
+    if difficulty_id is None:
+        return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
     labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
