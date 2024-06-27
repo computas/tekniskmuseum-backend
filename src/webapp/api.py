@@ -15,7 +15,7 @@ import sys
 import os
 import logging
 import json
-from datetime import datetime,timezone, timedelta
+from datetime import datetime, timezone, timedelta
 from PIL import Image
 from PIL import ImageChops
 from threading import Thread
@@ -37,16 +37,19 @@ from utilities.keys import Keys
 # Initialization app
 app = Flask(__name__)
 if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app, resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
-else :
-    cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
+    cors = CORS(app, resources={
+                r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
+else:
+    cors = CORS(app, resources={
+                r"/*": {"origins": "*", "supports_credentials": True}})
 app.config.from_object("utilities.setup.Flask_config")
 
 # Set up DB and models
 models.db.init_app(app)
 models.create_tables(app)
 models.populate_difficulty(app)
-models.seed_labels(app, "./dict_eng_to_nor_difficulties.csv") # Point to correct CSV file
+# Point to correct CSV file
+models.seed_labels(app, "./dict_eng_to_nor_difficulties.csv")
 
 # Initialize CV classifier
 classifier = Classifier()
@@ -114,7 +117,7 @@ def classify():
     # Check if image submitted correctly
     if "image" not in request.files:
         raise excp.BadRequest("No image submitted")
-    
+
     # Retrieve the image and check if it satisfies constraints
     image = request.files["image"]
     allowed_file(image)
@@ -129,7 +132,8 @@ def classify():
     game = models.get_game(player.game_id)
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
-        raise excp.BadRequest("Server-round number larger than request/client. Probably a request processed out of order")
+        raise excp.BadRequest(
+            "Server-round number larger than request/client. Probably a request processed out of order")
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
