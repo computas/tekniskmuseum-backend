@@ -80,7 +80,7 @@ class Classifier:
             puplished_iterations = [
                 iteration
                 for iteration in iterations
-                if iteration.publish_name != None
+                if iteration.publish_name is not None
             ]
             # get the latest published iteration
             puplished_iterations.sort(key=lambda i: i.created)
@@ -91,7 +91,6 @@ class Classifier:
         except Exception as e:
             logging.info(e)
             self.iteration_name = "iteration1"
-
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -107,8 +106,11 @@ class Classifier:
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
-            project_id=self.project_id, published_name=self.iteration_name, url=img_url, custom_headers={"Prediction-Key": self.prediction_key}
-        )
+            project_id=self.project_id,
+            published_name=self.iteration_name,
+            url=img_url,
+            custom_headers={
+                "Prediction-Key": self.prediction_key})
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
 
@@ -134,7 +136,8 @@ class Classifier:
         res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
-        # reset the file head such that it does not affect the state of the file handle
+        # reset the file head such that it does not affect the state of the
+        # file handle
         img.seek(0)
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
@@ -156,14 +159,17 @@ class Classifier:
             best_guess: (str): name of the label with highest probability)
         """
 
-        headers = {'content-type': 'application/octet-stream', "prediction-key": self.prediction_key}
+        headers = {'content-type': 'application/octet-stream',
+                   "prediction-key": self.prediction_key}
         res = self.predictor.classify_image(
-            self.project_id, self.iteration_name, img.read(), custom_headers=headers
-        )
-        #res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
-        
+            self.project_id,
+            self.iteration_name,
+            img.read(),
+            custom_headers=headers)
+        # res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
+
         img.seek(0)
-        #pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
+        # pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
         return pred_kv, best_guess
@@ -173,7 +179,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i : i + n]
+            yield lst[i: i + n]
 
     def upload_images(self, labels: List, container_name) -> None:
         """
@@ -409,15 +415,15 @@ def main():
 
     # classify image
     with open("./preprocessing/images/airplane/4554736336371712.png", "rb") as f:
-        #result, best_guess = classifier.predict_image(f)
+        # result, best_guess = classifier.predict_image(f)
         result = classifier.predict_image_by_post(f)
         print(f"png result:\n{result}")
 
-    with api.app.app_context():
-        labels = models.get_all_labels()
+    # with api.app.app_context():
+    #     labels = models.get_all_labels()
 
-    #classifier.upload_images(labels, "old")
-    #classifier.train(labels)
+    # classifier.upload_images(labels, "old")
+    # classifier.train(labels)
 
 
 if __name__ == "__main__":

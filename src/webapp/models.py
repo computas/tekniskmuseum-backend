@@ -490,6 +490,7 @@ def get_translation_dict():
     """
     try:
         labels = Labels.query.all()
-        return dict([(str(label.english), str(label.norwegian)) for label in labels])
+        return dict([(str(label.english), str(label.norwegian))
+                    for label in labels])
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))

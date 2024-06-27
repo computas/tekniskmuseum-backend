@@ -37,8 +37,9 @@ from utilities.keys import Keys
 # Initialization app
 app = Flask(__name__)
 if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app, resources={
-                r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
+    cors = CORS(app,
+                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
+                                   "supports_credentials": True}})
 else:
     cors = CORS(app, resources={
                 r"/*": {"origins": "*", "supports_credentials": True}})
