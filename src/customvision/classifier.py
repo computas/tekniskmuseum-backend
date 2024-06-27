@@ -106,9 +106,11 @@ class Classifier:
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
-            project_id=self.project_id, published_name=self.iteration_name, url=img_url, custom_headers={
-                "Prediction-Key": self.prediction_key}
-        )
+            project_id=self.project_id,
+            published_name=self.iteration_name,
+            url=img_url,
+            custom_headers={
+                "Prediction-Key": self.prediction_key})
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
 
@@ -160,8 +162,10 @@ class Classifier:
         headers = {'content-type': 'application/octet-stream',
                    "prediction-key": self.prediction_key}
         res = self.predictor.classify_image(
-            self.project_id, self.iteration_name, img.read(), custom_headers=headers
-        )
+            self.project_id,
+            self.iteration_name,
+            img.read(),
+            custom_headers=headers)
         # res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
 
         img.seek(0)

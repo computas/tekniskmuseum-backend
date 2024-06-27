@@ -461,7 +461,9 @@ def insert_into_labels(english, norwegian, difficulty_id):
     if isinstance(english, str) and isinstance(norwegian, str):
         try:
             label_row = Labels(
-                english=english, norwegian=norwegian, difficulty_id=difficulty_id)
+                english=english,
+                norwegian=norwegian,
+                difficulty_id=difficulty_id)
             db.session.add(label_row)
             db.session.commit()
             return True
