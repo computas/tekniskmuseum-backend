@@ -45,7 +45,7 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("Test User", 500, TestValues.TODAY)
+        result = models.insert_into_scores("TestUser", 500, TestValues.TODAY)
 
     assert result
 
@@ -130,7 +130,7 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "Test User",
+                "TestUser",
                 10 + i,
                 datetime.date.today() - datetime.timedelta(days=i),
             )

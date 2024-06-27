@@ -10,7 +10,8 @@ NUM_GAMES = 3
 CERTAINTY_THRESHOLD = 0.7
 # certainty threhold for saving images to BLOB storage for training
 SAVE_CERTAINTY = 0.3
-# custom vision can't have more than 10 iterations at a time, if more classifier.py will delete the oldest iteration
+# custom vision can't have more than 10 iterations at a time, if more
+# classifier.py will delete the oldest iteration
 CV_MAX_ITERATIONS = 10
 # can't upload more than 64 images at a time, if more
 CV_MAX_IMAGES = 64
@@ -24,7 +25,8 @@ MIN_RESOLUTION = 256
 # Container names
 CONTAINER_NAME_ORIGINAL = "oldimgcontainer"
 CONTAINER_NAME_NEW = "newimgcontainer"
-# Number of attempt to create a new container, to make sure old container is deleted by Azure.
+# Number of attempt to create a new container, to make sure old container
+# is deleted by Azure.
 CREATE_CONTAINER_TRIES = 10
 # Waiting interval in seconds for creating new container after deletion
 CREATE_CONTAINER_WAITER = 30

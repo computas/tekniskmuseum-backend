@@ -37,8 +37,9 @@ from utilities.keys import Keys
 # Initialization app
 app = Flask(__name__)
 if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app, resources={
-                r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
+    cors = CORS(app,
+                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
+                                   "supports_credentials": True}})
 else:
     cors = CORS(app, resources={
                 r"/*": {"origins": "*", "supports_credentials": True}})
@@ -172,14 +173,15 @@ def classify():
     return json.dumps(data), 200
 
 
-@app.route("/endGame", methods=["POST"])
-def end_game():
+@app.route("/postScore", methods=["POST"])
+def post_score():
     """
         Endpoint for ending game consisting of NUM_GAMES sessions.
     """
-    player_id = request.values["player_id"]
-    name = request.values["name"]
-    score = float(request.values["score"])
+    data = request.get_json()
+    player_id = data.get("player_id")
+    score = float(data.get("score"))
+
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
 
@@ -187,11 +189,12 @@ def end_game():
         raise excp.BadRequest("Game not finished")
 
     today = datetime.today()
-    models.insert_into_scores(name, score, today)
+    models.insert_into_scores(player_id, score, today)
 
+    # ! Need to decide if this is needed
     # Clean database for unnecessary data
-    models.delete_session_from_game(player.game_id)
-    models.delete_old_games()
+    # models.delete_session_from_game(player.game_id)
+    # models.delete_old_games()
     return json.dumps({"success": "OK"}), 200
 
 
