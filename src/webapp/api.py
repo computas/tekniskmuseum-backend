@@ -37,9 +37,8 @@ from utilities.keys import Keys
 # Initialization app
 app = Flask(__name__)
 if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app,
-                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
-                                   "supports_credentials": True}})
+    cors = CORS(app, resources={
+                r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
 else:
     cors = CORS(app, resources={
                 r"/*": {"origins": "*", "supports_credentials": True}})
@@ -48,7 +47,9 @@ app.config.from_object("utilities.setup.Flask_config")
 # Set up DB and models
 models.db.init_app(app)
 models.create_tables(app)
-models.seed_labels(app, "./dict_eng_to_nor.csv")
+models.populate_difficulty(app)
+# Point to correct CSV file
+models.seed_labels(app, "./dict_eng_to_nor_difficulties.csv")
 
 # Initialize CV classifier
 classifier = Classifier()
@@ -71,11 +72,14 @@ def start_game():
         Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
+    difficulty_id = request.args.get("difficulty_id", default=None, type=int)
+    if difficulty_id is None:
+        return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
-    labels = models.get_n_labels(setup.NUM_GAMES)
+    labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
     today = datetime.today()
-    models.insert_into_games(game_id, json.dumps(labels), today)
+    models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
     models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
