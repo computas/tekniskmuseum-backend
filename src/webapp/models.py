@@ -79,6 +79,7 @@ class MulitPlayer(db.Model):
     )
     player_1 = db.Column(db.NVARCHAR(32))
     player_2 = db.Column(db.NVARCHAR(32))
+    pair_id = db.Column(db.NVARCHAR(32))
 
     game = db.relationship("Games", back_populates="mulitplay")
 
