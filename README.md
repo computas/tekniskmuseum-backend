@@ -33,6 +33,53 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 All python requirements should be included in `requirements.txt`, and can be installed by running
 * `pip install -r requirements.txt`
 
+
+## **Migration of Images and Training the Model**
+
+The backend is setup with scripts to use the image data from the QuickDraw dataset and process this. This includes transforming the image format from ndjson to png, uploading them to azure blob storage, and after that uploading it to Azure CustomVision for training.
+
+This also assumes that both Azure Blob Storage and Azure CustomVision is already setup and running.
+
+### **Downloading the dataset from Quickdraw and uploading it to blob storage**
+
+1. Downloading the dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. 
+
+Note that the entire dataset is around ~22GB. More info on the dataset can be found on the [Github page](https://github.com/googlecreativelab/quickdraw-dataset#get-the-data).
+
+Migrating the data to the Blob Storage is done in `src/preprocessing/data_migration.py`. This script uses the library *cairocffi* to transform the image vectors into pngs. This also requires to have *Cairo* Downloaded on the machine running the script. It is recommended to install this on either macOS or WSL.
+
+
+2. Instructions for WSL/Ubuntu and macOS. 
+    - On Ubuntu, run `sudo apt install libcairo2-dev pkg-config python3-dev`
+    - On macOS/Homebrew, run `brew install cairo pkg-config`
+
+While it is not the same python library, the documentation for [pycairo](https://pycairo.readthedocs.io/en/latest/getting_started.html) has some notes on installing Cairo.
+
+3. Install the *cairocffi* package with `pip install cairocffi`
+
+4. Open `transfer.sh` from in the src folder, and type in the words you want to migrate to the blob storage
+
+5. Run `bash transfer.sh` from the src folder once the script is read
+
+Assuming everything runs without errors, the images should now be in the blob storage
+
+### **Uploading the data to Azure CustomVision and training an iteration of the classification model**
+
+There is not a specific script to do this step, but both functions are ready for use in `src/customvision/classifier.py`. The classifier class is also initizalied in `src/webapp/api.py`, meaning the data can be uploaded and trained on there.
+
+1. Add the lines for uploading images to api.py, so it looks something like the code below. "labels" is the list of labels to be trained on, e.g. ["airplane", "apple", "ant"]
+
+        # Initialize CV classifier
+        classifier = Classifier()
+        classifier.upload_images(labels, "oldimgcontainer")
+
+2. Run `startapp.sh` once, assuming the images gets uploaded without error, the upload_images line should be removed before running `startapp.sh` again later.
+
+3. Go to [customvision.ai](customvision.ai), and click on the `Train` button in the top right after entering the correct project. For most use cases, `Quick Training` can be chosen here.
+
+
+
+
 ## **Conventions and Rules**
 
 ### **Coding Conventions**
