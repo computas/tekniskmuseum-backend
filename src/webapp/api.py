@@ -95,6 +95,7 @@ def get_label():
         Provides the client with a new word.
     """
     player_id = request.values["player_id"]
+    lang = request.values["lang"]
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
 
@@ -104,9 +105,13 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    norwegian_label = models.to_norwegian(label)
-    data = {"label": norwegian_label}
-    return json.dumps(data), 200
+    if lang == "NO":
+        norwegian_label = models.to_norwegian(label)
+        data = {"label": norwegian_label}
+        return json.dumps(data), 200
+    else:
+        data = {"label": label}
+        return json.dumps(data), 200
 
 
 @app.route("/classify", methods=["POST"])
