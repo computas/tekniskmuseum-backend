@@ -125,6 +125,7 @@ def classify():
         raise excp.BadRequest("No image submitted")
 
     # Retrieve the image and check if it satisfies constraints
+    lang = request.values["lang"]
     image = request.files["image"]
     allowed_file(image)
     # use player_id submitted by player to find game
@@ -160,21 +161,32 @@ def classify():
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
-    translation = models.get_translation_dict()
-    certainty_translated = dict(
-        [
-            (translation[label], probability)
-            for label, probability in certainty.items()
-        ]
-    )
-    data = {
-        "certainty": certainty_translated,
-        "guess": translation[best_guess],
-        "correctLabel": translation[label],
-        "hasWon": has_won,
-        "gameState": game_state,
-        "serverRound": server_round,
-    }
+    if lang == "NO":
+        translation = models.get_translation_dict()
+        certainty_translated = dict(
+            [
+                (translation[label], probability)
+                for label, probability in certainty.items()
+            ]
+        )
+        data = {
+            "certainty": certainty_translated,
+            "guess": translation[best_guess],
+            "correctLabel": translation[label],
+            "hasWon": has_won,
+            "gameState": game_state,
+            "serverRound": server_round,
+        }
+    else:
+        data = {
+            "certainty": certainty,
+            "guess": best_guess,
+            "correctLabel": label,
+            "hasWon": has_won,
+            "gameState": game_state,
+            "serverRound": server_round,
+        }
+
     return json.dumps(data), 200
 
 
