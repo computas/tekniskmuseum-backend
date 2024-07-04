@@ -482,8 +482,11 @@ def get_n_labels(n, difficulty_id):
     try:
 
         # get labels from three most recent games
-        games = Games.query.filter(Games.difficulty_id <= difficulty_id, difficulty_id
-                                   - Games.difficulty_id < 2).order_by(Games.date.desc()).limit(3).all()
+        games = Games.query.filter(
+            Games.difficulty_id <= difficulty_id,
+            difficulty_id
+            - Games.difficulty_id < 2).order_by(
+            Games.date.desc()).limit(3).all()
         labels_to_filter = [
             label for game in games for label in json.loads(game.labels)]
 
@@ -494,7 +497,8 @@ def get_n_labels(n, difficulty_id):
 
         minimum_labels = 6
         for label in labels_to_filter:
-            if label in english_labels and len(english_labels) > minimum_labels:
+            if label in english_labels and len(
+                    english_labels) > minimum_labels:
                 english_labels.remove(label)
 
         random_list = random.sample(english_labels, n)
