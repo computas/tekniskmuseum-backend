@@ -36,10 +36,15 @@ def save_image(image, label, certainty):
         )
         blob.upload_blob(image)
         container_client = blob_connection()
+        properties = (container_client.get_container_properties())
         # update metadata in blob
-        image_count = int(
-            container_client.get_container_properties().metadata["image_count"]
-        )
+        try:
+            image_count = int(
+                container_client.get_container_properties(
+                ).metadata["image_count"]
+            )
+        except KeyError:
+            image_count = 0
         metadata = {"image_count": str(image_count + 1)}
         container_client.set_container_metadata(metadata=metadata)
     except Exception as e:
