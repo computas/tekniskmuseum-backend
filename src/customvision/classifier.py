@@ -24,6 +24,7 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
     CustomVisionErrorException,
+    ImageUrlCreateBatch
 )
 
 from utilities.keys import Keys
@@ -247,7 +248,7 @@ class Classifier:
         error_messages = set()
         for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
-                self.project_id, images=url_chunk
+                self.project_id, batch=ImageUrlCreateBatch(images=url_chunk)
             )
             if not upload_result.is_batch_successful:
                 for image in upload_result.images:

@@ -95,6 +95,7 @@ def get_label():
         Provides the client with a new word.
     """
     player_id = request.values["player_id"]
+    lang = request.values["lang"]
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
 
@@ -104,9 +105,13 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    norwegian_label = models.to_norwegian(label)
-    data = {"label": norwegian_label}
-    return json.dumps(data), 200
+    if lang == "NO":
+        norwegian_label = models.to_norwegian(label)
+        data = {"label": norwegian_label}
+        return json.dumps(data), 200
+    else:
+        data = {"label": label}
+        return json.dumps(data), 200
 
 
 @app.route("/classify", methods=["POST"])
@@ -120,6 +125,7 @@ def classify():
         raise excp.BadRequest("No image submitted")
 
     # Retrieve the image and check if it satisfies constraints
+    lang = request.values["lang"]
     image = request.files["image"]
     allowed_file(image)
     # use player_id submitted by player to find game
@@ -155,21 +161,32 @@ def classify():
         # Update game state to be done
         game_state = "Done"
     # translate labels into norwegian
-    translation = models.get_translation_dict()
-    certainty_translated = dict(
-        [
-            (translation[label], probability)
-            for label, probability in certainty.items()
-        ]
-    )
-    data = {
-        "certainty": certainty_translated,
-        "guess": translation[best_guess],
-        "correctLabel": translation[label],
-        "hasWon": has_won,
-        "gameState": game_state,
-        "serverRound": server_round,
-    }
+    if lang == "NO":
+        translation = models.get_translation_dict()
+        certainty_translated = dict(
+            [
+                (translation[label], probability)
+                for label, probability in certainty.items()
+            ]
+        )
+        data = {
+            "certainty": certainty_translated,
+            "guess": translation[best_guess],
+            "correctLabel": translation[label],
+            "hasWon": has_won,
+            "gameState": game_state,
+            "serverRound": server_round,
+        }
+    else:
+        data = {
+            "certainty": certainty,
+            "guess": best_guess,
+            "correctLabel": label,
+            "hasWon": has_won,
+            "gameState": game_state,
+            "serverRound": server_round,
+        }
+
     return json.dumps(data), 200
 
 
