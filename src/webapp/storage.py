@@ -36,7 +36,6 @@ def save_image(image, label, certainty):
         )
         blob.upload_blob(image)
         container_client = blob_connection()
-        properties = (container_client.get_container_properties())
         # update metadata in blob
         try:
             image_count = int(
