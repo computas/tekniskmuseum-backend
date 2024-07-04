@@ -33,6 +33,14 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 All python requirements should be included in `requirements.txt`, and can be installed by running
 * `pip install -r requirements.txt`
 
+## Debugging
+
+There is a launch configuration in .vscode/launch.json that launches the app backend with debugpy. This is super helpful with debugging as you can set breakpoints and inspect variables etc. during runtime. 
+
+**What you probably need to change is the "program" field to the path of your own gunicorn bin file.**
+
+## Format & lint
+Also in .vscode there is a tasks.json file that includes a task for formatting & linting which you should regularly do. The task uses autopep8 and flake8 using the .flake8 configuration files in the repo.
 
 ## **Migration of Images and Training the Model**
 
@@ -160,5 +168,3 @@ _When rebasing, you will go through the commit history in your current branch an
 4. git rebase --continue
 5. git add .
 5. git push --force
-
-## **Development**
