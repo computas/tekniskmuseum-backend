@@ -9,6 +9,7 @@ import os
 import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
+import json
 
 db = SQLAlchemy()
 
@@ -479,11 +480,29 @@ def get_n_labels(n, difficulty_id):
         Reads all rows from database and chooses n random labels in a list.
     """
     try:
+
+        # get labels from three most recent games
+        games = Games.query.filter(
+            Games.difficulty_id <= difficulty_id,
+            difficulty_id
+            - Games.difficulty_id < 2).order_by(
+            Games.date.desc()).limit(3).all()
+        labels_to_filter = [
+            label for game in games for label in json.loads(game.labels)]
+
         # read all english labels in database
         labels = Labels.query.filter(
             Labels.difficulty_id <= difficulty_id).all()
         english_labels = [str(label.english) for label in labels]
+
+        minimum_labels = 6
+        for label in labels_to_filter:
+            if label in english_labels and len(
+                    english_labels) > minimum_labels:
+                english_labels.remove(label)
+
         random_list = random.sample(english_labels, n)
+
         return random_list
 
     except Exception as e:
