@@ -106,7 +106,7 @@ def blob_connection(container_name=setup.CONTAINER_NAME_NEW):
     """
         Helper method for connection to blob service.
     """
-    
+
     connect_str = Keys.get("BLOB_CONNECTION_STRING")
     try:
         # Instantiate a BlobServiceClient using a connection string
@@ -122,6 +122,7 @@ def blob_connection(container_name=setup.CONTAINER_NAME_NEW):
 
     return container_client
 
+
 def get_n_random_images_from_label(n, label):
     """
         Returns n random images from the blob storage container with the given label.
@@ -134,9 +135,11 @@ def get_n_random_images_from_label(n, label):
     for blob in selected_blobs:
         blob_client = container_client.get_blob_client(blob)
         image_data = blob_client.download_blob().readall()
-        decoded_image = image_to_data_url(image_data, blob.content_settings.content_type)
+        decoded_image = image_to_data_url(
+            image_data, blob.content_settings.content_type)
         images.append(decoded_image)
     return images
+
 
 def image_to_data_url(image_data, content_type):
     """
@@ -144,4 +147,3 @@ def image_to_data_url(image_data, content_type):
     """
     base64_image = base64.b64encode(image_data).decode('utf-8')
     return f"data:{content_type};base64,{base64_image}"
-

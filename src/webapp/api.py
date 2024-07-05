@@ -231,6 +231,7 @@ def view_high_score():
     }
     return json.dumps(data), 200
 
+
 @app.route("/getExampleDrawings", methods=["POST"])
 def get_n_drawings_by_label():
     """
@@ -241,7 +242,6 @@ def get_n_drawings_by_label():
 
     images = storage.get_n_random_images_from_label(n, label)
     return json.dumps(images), 200
-
 
 
 @app.route("/auth", methods=["POST"])
@@ -422,4 +422,3 @@ def get_image_resolution(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
-
