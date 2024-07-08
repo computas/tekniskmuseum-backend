@@ -54,6 +54,8 @@ class Scores(db.Model):
     player_id = db.Column(db.NVARCHAR(32), db.ForeignKey("players.player_id"))
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
+    difficulty_id = db.Column(
+        db.Integer, db.ForeignKey("difficulty.id"), default=1)
 
 
 class Players(db.Model):
@@ -174,7 +176,7 @@ def insert_into_games(game_id, labels, date, difficulty_id):
         )
 
 
-def insert_into_scores(player_id, score, date):
+def insert_into_scores(player_id, score, date, difficulty_id):
     """
         Insert values into Scores table.
 
@@ -189,9 +191,11 @@ def insert_into_scores(player_id, score, date):
         isinstance(player_id, str)
         and score_int_or_float
         and isinstance(date, datetime.date)
+        and isinstance(difficulty_id, int)
     ):
         try:
-            score = Scores(player_id=player_id, score=score, date=date)
+            score = Scores(player_id=player_id, score=score,
+                           date=date, difficulty_id=difficulty_id)
             db.session.add(score)
             db.session.commit()
             return True
@@ -200,7 +204,7 @@ def insert_into_scores(player_id, score, date):
     else:
         raise excp.BadRequest(
             "Name has to be string, score can be int or "
-            "float and date has to be datetime.date."
+            "float, difficulty_id has to be an integer 1-4 and date has to be datetime.date."
         )
 
 
@@ -365,7 +369,7 @@ def delete_old_games():
         raise Exception("Couldn't clean up old game records: " + str(e))
 
 
-def get_daily_high_score():
+def get_daily_high_score(difficulty_id):
     """
         Function for reading all daily scores.
 
@@ -375,7 +379,7 @@ def get_daily_high_score():
         today = datetime.date.today()
         # filter by today and sort by score
         top_n_list = (
-            Scores.query.filter_by(date=today)
+            Scores.query.filter_by(date=today, difficulty_id=difficulty_id)
             .order_by(Scores.score.desc())
             .all()
         )
@@ -392,7 +396,7 @@ def get_daily_high_score():
         )
 
 
-def get_top_n_high_score_list(top_n):
+def get_top_n_high_score_list(top_n, difficulty_id):
     """
         Funtion for reading total top n list from database.
 
@@ -403,7 +407,8 @@ def get_top_n_high_score_list(top_n):
     try:
         # read top n high scores
         top_n_list = (
-            Scores.query.order_by(Scores.score.desc()).limit(top_n).all()
+            Scores.query.filter_by(difficulty_id=difficulty_id).order_by(
+                Scores.score.desc()).limit(top_n).all()
         )
         # strucutre data
         new = [
