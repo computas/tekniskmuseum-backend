@@ -204,8 +204,7 @@ def insert_into_scores(player_id, score, date, difficulty_id):
     else:
         raise excp.BadRequest(
             "Name has to be string, score can be int or "
-            "float, difficulty_id has to be an integer 1-4 and date has to be datetime.date."
-        )
+            "float, difficulty_id has to be an integer 1-4 and date has to be datetime.date.")
 
 
 def get_iteration_name():
