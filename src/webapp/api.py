@@ -198,6 +198,7 @@ def post_score():
     data = request.get_json()
     player_id = data.get("player_id")
     score = float(data.get("score"))
+    difficulty_id = int(data.get("difficulty_id"))
 
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
@@ -206,7 +207,7 @@ def post_score():
         raise excp.BadRequest("Game not finished")
 
     today = datetime.today()
-    models.insert_into_scores(player_id, score, today)
+    models.insert_into_scores(player_id, score, today, difficulty_id)
 
     # ! Need to decide if this is needed
     # Clean database for unnecessary data
@@ -221,10 +222,13 @@ def view_high_score():
         Read highscore from database. Return top n of all time and daily high
         scores.
     """
+    difficulty_id = request.values["difficulty_id"]
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
+    top_n_high_scores = models.get_top_n_high_score_list(
+        setup.TOP_N, difficulty_id=difficulty_id)
     # read daily high score
-    daily_high_scores = models.get_daily_high_score()
+    daily_high_scores = models.get_daily_high_score(
+        difficulty_id=difficulty_id)
     data = {
         "daily": daily_high_scores,
         "total": top_n_high_scores,

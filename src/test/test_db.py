@@ -6,6 +6,7 @@ import os
 import uuid
 import time
 import datetime
+from src.utilities.difficulties import DifficultyId
 from webapp import api
 from webapp import models
 from pytest import raises
@@ -45,7 +46,8 @@ def test_insert_into_scores():
         Check that records exists in Scores table after inserting.
     """
     with api.app.app_context():
-        result = models.insert_into_scores("TestUser", 500, TestValues.TODAY)
+        result = models.insert_into_scores(
+            "TestUser", 500, TestValues.TODAY, DifficultyId.Easy)
 
     assert result
 
@@ -79,7 +81,8 @@ def test_illegal_parameter_scores():
         into scores table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_scores(100, "score", "01.01.2020")
+        models.insert_into_scores(
+            100, "score", "01.01.2020", DifficultyId.Medium)
 
 
 def test_illegal_parameter_labels():
@@ -126,6 +129,7 @@ def test_get_daily_high_score_sorted():
     """
         Check that daily high score list is sorted.
     """
+    difficulty = DifficultyId.Hard
     # insert random data into db
     with api.app.app_context():
         for i in range(5):
@@ -133,11 +137,12 @@ def test_get_daily_high_score_sorted():
                 "TestUser",
                 10 + i,
                 datetime.date.today() - datetime.timedelta(days=i),
+                difficulty
             )
             assert result
 
     with api.app.app_context():
-        result = models.get_daily_high_score()
+        result = models.get_daily_high_score(difficulty)
     sorting_check_helper(result)
 
 
