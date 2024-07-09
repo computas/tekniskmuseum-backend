@@ -236,6 +236,18 @@ def view_high_score():
     return json.dumps(data), 200
 
 
+@app.route("/getExampleDrawings", methods=["POST"])
+def get_n_drawings_by_label():
+    """
+        Returns n images from the blob storage container with the given label.
+    """
+    n = request.args.get("n", default=None, type=int)
+    label = request.values["label"]
+
+    images = storage.get_n_random_images_from_label(n, label)
+    return json.dumps(images), 200
+
+
 @app.route("/auth", methods=["POST"])
 def authenticate():
     """
