@@ -125,13 +125,13 @@ class LabelSuccess(db.Model):
     attempt_time = db.Column(db.DateTime)
 
     def get_success_rates_query():
-        return f"""
-                SELECT 
-                    label, 
+        return """
+                SELECT
+                    label,
                 CAST(SUM(CAST(is_success AS INT)) AS FLOAT) / COUNT(*) AS success_rate
-                FROM 
+                FROM
                     label_success
-                GROUP BY 
+                GROUP BY
                     label
                 ORDER BY
                     success_rate
@@ -140,10 +140,10 @@ class LabelSuccess(db.Model):
 
     def insert_mock_data_query(label: str, is_success: bool):
         return f"""
-                INSERT INTO 
+                INSERT INTO
                     label_success (label, is_success, attempt_time)
-                VALUES 
-                    ('{label}', {is_success}, GETDATE()) 
+                VALUES
+                    ('{label}', {is_success}, GETDATE())
                 """
 
 
@@ -208,8 +208,12 @@ def insert_into_games(game_id, labels, date, difficulty_id):
         )
 
 
-def insert_into_label_success(label: str, is_success: bool, date: datetime.datetime):
-    if (isinstance(label, str) and isinstance(is_success, bool) and isinstance(date, datetime.datetime)):
+def insert_into_label_success(
+        label: str,
+        is_success: bool,
+        date: datetime.datetime):
+    if (isinstance(label, str) and isinstance(is_success, bool)
+            and isinstance(date, datetime.datetime)):
         try:
             label_success = LabelSuccess(
                 label=label, is_success=is_success, attempt_time=date)
