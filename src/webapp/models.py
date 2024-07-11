@@ -115,6 +115,38 @@ class Difficulty(db.Model):
     difficulty = db.Column(db.String(32), nullable=False)
 
 
+class LabelSuccess(db.Model):
+    """
+        Model to keep track of success rates on each label
+    """
+    attempt_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    label = db.Column(db.String(32), db.ForeignKey("labels.english"))
+    is_success = db.Column(db.Boolean)
+    attempt_time = db.Column(db.DateTime)
+
+    def get_success_rates_query():
+        return """
+                SELECT
+                    label,
+                CAST(SUM(CAST(is_success AS INT)) AS FLOAT) / COUNT(*) AS success_rate
+                FROM
+                    label_success
+                GROUP BY
+                    label
+                ORDER BY
+                    success_rate
+                DESC
+                """
+
+    def insert_mock_data_query(label: str, is_success: bool):
+        return f"""
+                INSERT INTO
+                    label_success (label, is_success, attempt_time)
+                VALUES
+                    ('{label}', {is_success}, GETDATE())
+                """
+
+
 # Functions to manipulate the tables above
 def create_tables(app):
     """
@@ -174,6 +206,24 @@ def insert_into_games(game_id, labels, date, difficulty_id):
             "game_id has to be string, labels has to be string "
             "and date has to be datetime.datetime."
         )
+
+
+def insert_into_label_success(
+        label: str,
+        is_success: bool,
+        date: datetime.datetime):
+    if (isinstance(label, str) and isinstance(is_success, bool)
+            and isinstance(date, datetime.datetime)):
+        try:
+            label_success = LabelSuccess(
+                label=label, is_success=is_success, attempt_time=date)
+            db.session.add(label_success)
+            db.session.commit()
+            return True
+        except Exception as e:
+            raise Exception("Could not insert label success:" + str(e))
+    else:
+        raise excp.BadRequest("Bad request")
 
 
 def insert_into_scores(player_id, score, date, difficulty_id):

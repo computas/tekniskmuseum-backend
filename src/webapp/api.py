@@ -160,6 +160,9 @@ def classify():
         storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
+        # Insert statistic for label
+        models.insert_into_label_success(
+            label=label, is_success=has_won, date=datetime.now())
     # translate labels into norwegian
     if lang == "NO":
         translation = models.get_translation_dict()
