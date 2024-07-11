@@ -3,7 +3,6 @@
 
 # Compute number of gunicorn workers
 ncores=$(nproc)
-ncores=$(sysctl -n hw.logicalcpu)
 nworkers=$(((2*$ncores)+1))
 if [[ $nworkers -gt 12 ]]; then
     nworkers=12
