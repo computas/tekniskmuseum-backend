@@ -565,6 +565,17 @@ def get_translation_dict():
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
 
+def get_norwegian_to_english_dict():
+    """
+        Reads all labels from database and create dictionary
+        that translates from norwegian to english.
+    """
+    try:
+        labels = Labels.query.all()
+        return dict([(str(label.norwegian), str(label.english))
+                    for label in labels])
+    except Exception as e:
+        raise Exception("Could not read Labels table: " + str(e))
 
 def delete_all_tables(app):
     """

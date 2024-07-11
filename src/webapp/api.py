@@ -243,6 +243,11 @@ def get_n_drawings_by_label():
     """
     n = request.args.get("n", default=None, type=int)
     label = request.values["label"]
+    lang = request.values["lang"]
+
+    if lang == "NO":
+        translations = models.get_norwegian_to_english_dict()
+        label = translations[label]
 
     images = storage.get_n_random_images_from_label(n, label)
     return json.dumps(images), 200
