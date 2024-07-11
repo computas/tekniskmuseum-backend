@@ -553,9 +553,10 @@ def to_norwegian(english_label):
             "Could not find translation in Labels table: " + str(e)
         )
 
+
 def to_english(norwegian_label):
     """
-        Reads the labels table and return the english translation of the norwegian label 
+        Reads the labels table and return the english translation of the norwegian label
     """
     try:
         query = Labels.query.filter(Labels.norwegian == norwegian_label)[0]
@@ -565,6 +566,7 @@ def to_english(norwegian_label):
         raise AttributeError(
             "Could not find translation in Labels table: " + str(e)
         )
+
 
 def get_translation_dict():
     """
@@ -576,6 +578,7 @@ def get_translation_dict():
                     for label in labels])
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
+
 
 def delete_all_tables(app):
     """
