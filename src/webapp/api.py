@@ -247,8 +247,7 @@ def get_n_drawings_by_label():
     lang = data["lang"]
 
     if lang == "NO":
-        translations = models.get_norwegian_to_english_dict()
-        label = translations[label]
+        label = models.to_english(label)
 
     images = storage.get_n_random_images_from_label(n, label)
     return json.dumps(images), 200
