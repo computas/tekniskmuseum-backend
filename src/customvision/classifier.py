@@ -359,6 +359,17 @@ class Classifier:
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
 
+    def delete_all_tags(self) -> None:
+        """
+            Function for deleting all tags in Custom Vision.
+        """
+        try:
+            tags = self.trainer.get_tags(self.project_id)
+            for tag in tags:
+                self.trainer.delete_tag(self.project_id, tag.id)
+        except Exception as e:
+            raise Exception("Could not delete all tags" + str(e))
+
     def retrain(self):
         """
             Train model on all labels and update iteration.
