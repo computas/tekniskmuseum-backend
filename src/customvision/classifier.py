@@ -368,7 +368,7 @@ class Classifier:
             for tag in tags:
                 self.trainer.delete_tag(self.project_id, tag.id)
         except Exception as e:
-            raise Exception("Could not delete all tags")
+            raise Exception("Could not delete all tags" + str(e))
 
     def retrain(self):
         """

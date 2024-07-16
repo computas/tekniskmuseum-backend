@@ -151,7 +151,7 @@ def image_to_data_url(image_data, content_type):
 
 def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
     """
-        Method for removing all images from a container    
+        Method for removing all images from a container.
     """
     container_client = blob_connection(container_name)
     blobs = container_client.list_blobs()
