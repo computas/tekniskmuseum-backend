@@ -147,3 +147,15 @@ def image_to_data_url(image_data, content_type):
     """
     base64_image = base64.b64encode(image_data).decode('utf-8')
     return f"data:{content_type};base64,{base64_image}"
+
+def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
+    """
+        Method for removing all images from a container    
+    """
+    container_client = blob_connection(container_name)
+    blobs = container_client.list_blobs()
+    for blob in blobs:
+        container_client.delete_blob(blob)
+    metadata = {"image_count": "0"}
+    container_client.set_container_metadata(metadata=metadata)
+    return True
