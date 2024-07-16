@@ -358,7 +358,7 @@ class Classifier:
             )
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
-    
+
     def delete_all_tags(self) -> None:
         """
             Function for deleting all tags in Custom Vision.
