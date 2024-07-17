@@ -23,13 +23,6 @@ correct csv file with updated words.
 
 def main():
     app = Flask(__name__)
-    if Keys.exists("CORS_ALLOWED_ORIGIN"):
-        cors = CORS(app,
-                    resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
-                                       "supports_credentials": True}})
-    else:
-        cors = CORS(app, resources={
-                    r"/*": {"origins": "*", "supports_credentials": True}})
     app.config.from_object("utilities.setup.Flask_config")
 
 # Set up DB and models

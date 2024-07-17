@@ -680,7 +680,8 @@ def get_n_random_example_images(label, number_of_images):
     except Exception as e:
         raise Exception("Could not read ExampleImages table: " + str(e)
                         )
-    
+
+
 def populate_example_images(app):
     """
         Function for populating example images table with exported csv data. Used so you dont need to 
@@ -696,4 +697,5 @@ def populate_example_images(app):
                     db.session.add(example_image)
                 db.session.commit()
         except Exception as e:
-            raise Exception("Could not insert into ExampleImages table: " + str(e))
+            raise Exception(
+                "Could not insert into ExampleImages table: " + str(e))
