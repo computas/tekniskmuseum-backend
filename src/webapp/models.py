@@ -684,7 +684,7 @@ def get_n_random_example_images(label, number_of_images):
 
 def populate_example_images(app):
     """
-        Function for populating example images table with exported csv data. Used so you dont need to 
+        Function for populating example images table with exported csv data. Used so you dont need to
         run the prediction job twice
     """
     with app.app_context():
