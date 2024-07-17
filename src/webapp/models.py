@@ -659,3 +659,17 @@ def insert_into_example_images(images, label):
             raise Exception("Could not insert into ExampleImages table: " + str(e))
     else:
         raise excp.BadRequest("Invalid type of parameters.")
+    
+
+def get_n_random_example_images(label, number_of_images):
+    """
+        Returns n random example images for the given label.
+    """
+    try:
+        example_images = ExampleImages.query.filter_by(label=label).all()
+        selected_images = random.sample(example_images, min(number_of_images, len(example_images)))
+        images = [image.image for image in selected_images]
+        return images
+    except Exception as e:
+        raise Exception("Could not read ExampleImages table: " + str(e)
+        )
