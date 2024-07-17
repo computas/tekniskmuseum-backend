@@ -146,6 +146,12 @@ class LabelSuccess(db.Model):
                     ('{label}', {is_success}, GETDATE())
                 """
 
+class ExampleImages(db.Model):
+    """
+        Model for storing example image urls that the model has predicted correctly.
+    """
+    image = db.Column(db.String(256), primary_key=True)
+    label = db.Column(db.String(32), db.ForeignKey("labels.english"))
 
 # Functions to manipulate the tables above
 def create_tables(app):
@@ -638,3 +644,18 @@ def delete_all_tables(app):
     with app.app_context():
         db.drop_all()
     return True
+
+def insert_into_example_images(images, label):
+    """
+        Insert values into ExampleImages table.
+    """
+    if isinstance(images, list) and isinstance(label, str):
+        try:
+            for image in images:
+                example_image = ExampleImages(image=image, label=label)
+                db.session.add(example_image)
+            db.session.commit()
+        except Exception as e:
+            raise Exception("Could not insert into ExampleImages table: " + str(e))
+    else:
+        raise excp.BadRequest("Invalid type of parameters.")
