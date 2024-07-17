@@ -15,6 +15,9 @@ This is an important measure as not all the words from the google quickdraw data
 inappropriate content could appear in the dataset. As those drawings in general look nothing like the rest of the 
 drawings in the dataset, they could be filtered out by prediction
 
+
+WARNING: This script is very slow and isn't cheap, so it should be used thoughtfully. Also remember to point to the 
+correct csv file with updated words.
 """
 def main():
     app = Flask(__name__)
