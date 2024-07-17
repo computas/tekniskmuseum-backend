@@ -404,14 +404,15 @@ class Classifier:
             msg = "No changes since last training"
             print(e, "exiting...")
             raise excp.BadRequest(msg)
-        
+
     def classify_images_by_label(self, label, number_of_examples):
         """
             Classifies images by label and returns a list of correctly classified images.
         """
         # Load the blob service client
-        container_client = self.blob_service_client.get_container_client(setup.CONTAINER_NAME_ORIGINAL)
-        
+        container_client = self.blob_service_client.get_container_client(
+            setup.CONTAINER_NAME_ORIGINAL)
+
         blob_prefix = f"{label}/"
 
         # List all blobs in the container
@@ -422,7 +423,7 @@ class Classifier:
         for blob in blobs:
             blob_client = container_client.get_blob_client(blob)
             image_url = blob_client.url
-            
+
             pred_kv, best_guess = self.predict_image_url(image_url)
 
             if pred_kv[best_guess] > 0.7:

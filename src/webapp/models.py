@@ -146,6 +146,7 @@ class LabelSuccess(db.Model):
                     ('{label}', {is_success}, GETDATE())
                 """
 
+
 class ExampleImages(db.Model):
     """
         Model for storing example image urls that the model has predicted correctly.
@@ -154,6 +155,8 @@ class ExampleImages(db.Model):
     label = db.Column(db.String(32), db.ForeignKey("labels.english"))
 
 # Functions to manipulate the tables above
+
+
 def create_tables(app):
     """
         The tables will be created if they do not already exist.
@@ -645,6 +648,7 @@ def delete_all_tables(app):
         db.drop_all()
     return True
 
+
 def insert_into_example_images(images, label):
     """
         Insert values into ExampleImages table.
@@ -656,10 +660,11 @@ def insert_into_example_images(images, label):
                 db.session.add(example_image)
             db.session.commit()
         except Exception as e:
-            raise Exception("Could not insert into ExampleImages table: " + str(e))
+            raise Exception(
+                "Could not insert into ExampleImages table: " + str(e))
     else:
         raise excp.BadRequest("Invalid type of parameters.")
-    
+
 
 def get_n_random_example_images(label, number_of_images):
     """
@@ -667,9 +672,11 @@ def get_n_random_example_images(label, number_of_images):
     """
     try:
         example_images = ExampleImages.query.filter_by(label=label).all()
-        selected_images = random.sample(example_images, min(number_of_images, len(example_images)))
+        selected_images = random.sample(
+            example_images, min(
+                number_of_images, len(example_images)))
         images = [image.image for image in selected_images]
         return images
     except Exception as e:
         raise Exception("Could not read ExampleImages table: " + str(e)
-        )
+                        )

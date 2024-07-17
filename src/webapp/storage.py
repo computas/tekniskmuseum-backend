@@ -161,6 +161,7 @@ def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
     container_client.set_container_metadata(metadata=metadata)
     return True
 
+
 def get_images_from_relative_url(image_urls):
     """
         Returns a list of images from a list of relative URLs.
@@ -169,7 +170,7 @@ def get_images_from_relative_url(image_urls):
     images = []
     for image in image_urls:
         blob_client = container_client.get_blob_client(image)
-        
+
         image_data = blob_client.download_blob().readall()
         decoded_image = image_to_data_url(
             image_data, "application/octet-stream")
