@@ -248,11 +248,11 @@ def get_n_drawings_by_label():
     number_of_images = data["number_of_images"]
     label = data["label"]
     lang = data["lang"]
-
     if lang == "NO":
         label = models.to_english(label)
 
-    images = storage.get_n_random_images_from_label(number_of_images, label)
+    image_urls = models.get_n_random_example_images(label, number_of_images)
+    images = storage.get_images_from_relative_url(image_urls)
     return json.dumps(images), 200
 
 

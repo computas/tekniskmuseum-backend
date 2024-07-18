@@ -405,6 +405,34 @@ class Classifier:
             print(e, "exiting...")
             raise excp.BadRequest(msg)
 
+    def classify_images_by_label(self, label, number_of_examples):
+        """
+            Classifies images by label and returns a list of correctly classified images.
+        """
+        # Load the blob service client
+        container_client = self.blob_service_client.get_container_client(
+            setup.CONTAINER_NAME_ORIGINAL)
+
+        blob_prefix = f"{label}/"
+
+        # List all blobs in the container
+        blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
+
+        # List to store correctly classified images
+        images = []
+        for blob in blobs:
+            blob_client = container_client.get_blob_client(blob)
+            image_url = blob_client.url
+
+            pred_kv, best_guess = self.predict_image_url(image_url)
+
+            if pred_kv[best_guess] > 0.7:
+                images.append(blob["name"])
+            # Check if the image is classified correctly
+            if len(images) >= number_of_examples:
+                return images
+        return images
+
 
 def main():
     """
