@@ -93,12 +93,9 @@ class Classifier:
 
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
-        """
-            Predicts label(s) of Image read from URL.
-
+        """Predicts label(s) of Image read from URL.
             Parameters:
             img_url: Image URL
-
             Returns:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
