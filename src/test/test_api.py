@@ -15,6 +15,7 @@ from utilities import setup
 from werkzeug import exceptions as excp
 from PIL import Image
 
+
 @pytest.fixture
 def client():
     """
