@@ -28,6 +28,11 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 #### Run the tests with the following command:
 * `bash startapp.sh -t`
 
+### **Create a Virtual Environment**
+
+* `python3 -m venv venv`
+* `source venv/bin/activate`
+
 ### **Required Installation**
 
 All python requirements should be included in `requirements.txt`, and can be installed by running
