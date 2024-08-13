@@ -1,12 +1,4 @@
 import pytest
-import sys
-import os
-
-
-#Change sys.path
-current_dir = os.path.dirname(__file__)
-project_root = os.path.abspath(os.path.join(current_dir, '..'))
-sys.path.insert(0, project_root)
 from webapp.api import app
 
 
