@@ -10,3 +10,4 @@ config.json
 !.vscode/launch.json
 !.vscode/tasks.json
 .venv
+venv
