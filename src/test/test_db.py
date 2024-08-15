@@ -19,6 +19,7 @@ class TestValues:
     GAME_ID = uuid.uuid4().hex
     TODAY = datetime.datetime.today()
     CV_ITERATION_NAME_LENGTH = 36
+    DIFFICULTY_ID = DifficultyId.Easy
 
 
 def test_create_tables():
@@ -35,7 +36,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            TestValues.GAME_ID, cfg.LABELS, TestValues.TODAY
+            TestValues.GAME_ID, cfg.LABELS, TestValues.TODAY, TestValues.DIFFICULTY_ID
         )
 
     assert result
@@ -47,7 +48,7 @@ def test_insert_into_scores():
     """
     with api.app.app_context():
         result = models.insert_into_scores(
-            "TestUser", 500, TestValues.TODAY, DifficultyId.Easy)
+            TestValues.PLAYER_ID, 500, TestValues.TODAY, TestValues.DIFFICULTY_ID)
 
     assert result
 
@@ -71,7 +72,7 @@ def test_illegal_parameter_games():
     """
     with raises(excp.BadRequest):
         models.insert_into_games(
-            10, ["label1", "label2", "label3"], "date_time"
+            10, ["label1", "label2", "label3"], "date_time", "diff_id"
         )
 
 
@@ -91,7 +92,7 @@ def test_illegal_parameter_labels():
         into games table.
     """
     with raises(excp.BadRequest):
-        models.insert_into_labels(1, None)
+        models.insert_into_labels(1, None, TestValues.DIFFICULTY_ID)
 
 
 def test_illegal_parameter_players():
@@ -129,7 +130,6 @@ def test_get_daily_high_score_sorted():
     """
         Check that daily high score list is sorted.
     """
-    difficulty = DifficultyId.Hard
     # insert random data into db
     with api.app.app_context():
         for i in range(5):
@@ -137,12 +137,12 @@ def test_get_daily_high_score_sorted():
                 "TestUser",
                 10 + i,
                 datetime.date.today() - datetime.timedelta(days=i),
-                difficulty
+                TestValues.DIFFICULTY_ID
             )
             assert result
 
     with api.app.app_context():
-        result = models.get_daily_high_score(difficulty)
+        result = models.get_daily_high_score(TestValues.DIFFICULTY_ID)
     sorting_check_helper(result)
 
 
@@ -151,7 +151,7 @@ def test_get_top_n_high_score_list_sorted():
         Check that total high score list is sorted.
     """
     with api.app.app_context():
-        result = models.get_top_n_high_score_list(10)
+        result = models.get_top_n_high_score_list(10, TestValues.DIFFICULTY_ID)
 
     sorting_check_helper(result)
 
@@ -171,7 +171,7 @@ def test_get_daily_high_score_structure():
         Check that highscore data has correct attributes: score and name
     """
     with api.app.app_context():
-        result = models.get_daily_high_score()
+        result = models.get_daily_high_score(TestValues.DIFFICULTY_ID)
 
     for player in result:
         assert "score" in player
@@ -183,7 +183,7 @@ def test_get_top_n_high_score_list_structure():
         Check that highscore data has correct attributes: score and name
     """
     with api.app.app_context():
-        result = models.get_top_n_high_score_list(10)
+        result = models.get_top_n_high_score_list(10, TestValues.DIFFICULTY_ID)
 
     for player in result:
         assert "score" in player
@@ -205,12 +205,12 @@ def test_get_n_labels_correct_size():
         Test that get_n_labels return lists of correct sizes
     """
     with api.app.app_context():
-        for i in range(5):
-            result = models.get_n_labels(i)
+        for i in range(1, 5):
+            result = models.get_n_labels(i, TestValues.DIFFICULTY_ID)
             assert len(result) == i
 
 
-def test_get_n_labels_bad_reqeust():
+def test_get_n_labels_bad_request():
     """
         Test that get_n_labels raises exeption if n is larger than number of labels
     """
