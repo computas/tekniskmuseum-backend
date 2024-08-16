@@ -42,6 +42,18 @@ def test_insert_into_games():
     assert result
 
 
+def test_insert_into_players():
+    """
+        Check that record exists in PlayerInGame table after inserting.
+    """
+    with api.app.app_context():
+        result = models.insert_into_players(
+            TestValues.PLAYER_ID, TestValues.GAME_ID, cfg.STATE
+        )
+
+    assert result
+
+
 def test_insert_into_scores():
     """
         Check that records exists in Scores table after inserting.
@@ -53,16 +65,7 @@ def test_insert_into_scores():
     assert result
 
 
-def test_insert_into_players():
-    """
-        Check that record exists in PlayerInGame table after inserting.
-    """
-    with api.app.app_context():
-        result = models.insert_into_players(
-            TestValues.PLAYER_ID, TestValues.GAME_ID, cfg.STATE
-        )
 
-    assert result
 
 
 def test_illegal_parameter_games():
@@ -134,7 +137,7 @@ def test_get_daily_high_score_sorted():
     with api.app.app_context():
         for i in range(5):
             result = models.insert_into_scores(
-                "TestUser",
+                TestValues.PLAYER_ID,
                 10 + i,
                 datetime.date.today() - datetime.timedelta(days=i),
                 TestValues.DIFFICULTY_ID
@@ -175,7 +178,7 @@ def test_get_daily_high_score_structure():
 
     for player in result:
         assert "score" in player
-        assert "name" in player
+        assert "id" in player
 
 
 def test_get_top_n_high_score_list_structure():
@@ -187,7 +190,7 @@ def test_get_top_n_high_score_list_structure():
 
     for player in result:
         assert "score" in player
-        assert "name" in player
+        assert "id" in player
 
 
 def test_get_iteration_name_is_string():
@@ -228,7 +231,6 @@ def test_to_norwegian_correct_translation():
     with api.app.app_context():
         for i in range(0, len(english_words)):
             translation = models.to_norwegian(english_words[i])
-            print(translation)
             assert translation == norwgian_words[i]
 
 
