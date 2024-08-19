@@ -24,7 +24,7 @@ CV_TEST_IMAGE = "cv_testfile.png"
 API_PATH_DATA = ["..", "data"]
 
 # Name of the labels for the DB tests
-LABELS = "label1, label2, label3"
+LABELS = ["bird", "tree", "house"]
 
 # How long the test games last
 STATE = "playing"
