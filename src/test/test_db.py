@@ -65,9 +65,6 @@ def test_insert_into_scores():
     assert result
 
 
-
-
-
 def test_illegal_parameter_games():
     """
         Check that exception is raised when illegal arguments is passed
