@@ -7,8 +7,8 @@ import json
 ENVIRON = os.environ
 if "IS_PRODUCTION" in ENVIRON:
     keys = ENVIRON
-elif os.path.isfile("./config.json"):
-    with open("./config.json") as configFile:
+elif os.path.isfile("config.json"):
+    with open("config.json") as configFile:
         keys = json.load(configFile)
     keys["IS_PRODUCTION"] = "false"
 else:

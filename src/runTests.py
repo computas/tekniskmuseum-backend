@@ -23,5 +23,5 @@ for keydict in KEYLIST:
 # clear cli arguments as pytest reads them
 sys.argv = [sys.argv[0]]
 # run pytets
-TEST_RESULT = pytest.main()
+TEST_RESULT = pytest.main(["tests/"])
 assert TEST_RESULT == 0

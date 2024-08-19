@@ -16,16 +16,6 @@ from werkzeug import exceptions as excp
 from PIL import Image
 
 
-@pytest.fixture
-def client():
-    """
-        Pytest fixture which configures application for testing.
-    """
-    api.app.config["TESTING"] = True
-    with api.app.test_client() as client:
-        yield client
-
-
 def test_root_example(client):
     """
         Use GET request on root and check if the response is correct.
@@ -48,7 +38,7 @@ def test_start_game_correct(client):
     """
         Ensure that the API doesn't return error when sumitting a GET request.
     """
-    res = client.get("/startGame", data=dict())
+    res = client.get("/startGame", query_string=dict(difficulty_id=1))
     # Ensure that the returned dictionary contains a player_id
     assert (b"player_id" in res.data)
 
@@ -101,7 +91,7 @@ def test_classify_white_image_data(client):
     time = 0
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame")
+    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
@@ -125,7 +115,7 @@ def test_classify_white_image_done(client):
     time = 0
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame")
+    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
@@ -144,7 +134,7 @@ def test_classify_white_image_not_done(client):
     time = 1
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame")
+    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
@@ -164,7 +154,7 @@ def test_classify_correct(client):
     name = "testing_api"
     time = 0
     # Need to start a new game to get a player_id we can submit
-    res1 = client.get("/startGame")
+    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     player_id = response["player_id"]
@@ -266,6 +256,7 @@ def classify_helper(client, data_path, image, time, player_id, user):
         img_string = io.BytesIO(f.read())
 
     answer = {
+        "lang": "NO",
         "image": (img_string, image),
         "player_id": player_id,
         "time": time
@@ -297,7 +288,7 @@ def test_view_highscore(client):
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
     # get response
-    res = client.get("/viewHighScore")
+    res = client.get("/viewHighScore", query_string=dict(difficulty_id=1))
     response = json.loads(res.data)
     # check that data structure is correct
     if response["total"]:
@@ -326,7 +317,7 @@ def test_white_image_false():
         compeltely white.
     """
     dir_path = construct_path(cfg.API_PATH_DATA)
-    path = os.path.join(dir_path, cfg.API_IMAGE1)
+    path = os.path.join(dir_path, cfg.API_IMAGE6)
     img = Image.open(path)
     white = api.white_image(img)
     assert (white is False)
@@ -367,7 +358,7 @@ def test_white_image_data_done(client):
         Test if the white_image_data function returns the correct data and
         that state is "done" when time_left parameter is zero.
     """
-    res = client.get("/startGame")
+    res = client.get("/startGame", query_string=dict(difficulty_id=1))
     player_id = json.loads(res.data)["player_id"]
     game_id = models.get_player(player_id).game_id
     label = ""
