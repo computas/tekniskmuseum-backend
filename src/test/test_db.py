@@ -11,15 +11,8 @@ from webapp import api
 from webapp import models
 from pytest import raises
 from werkzeug import exceptions as excp
-from test import config as cfg
-
-
-class TestValues:
-    PLAYER_ID = uuid.uuid4().hex
-    GAME_ID = uuid.uuid4().hex
-    TODAY = datetime.datetime.today()
-    CV_ITERATION_NAME_LENGTH = 36
-    DIFFICULTY_ID = DifficultyId.Easy
+import json
+from test.conftest import TestValues
 
 
 def test_create_tables():
@@ -36,7 +29,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            TestValues.GAME_ID, cfg.LABELS, TestValues.TODAY, TestValues.DIFFICULTY_ID
+            str(TestValues.GAME_ID), json.dumps(TestValues.LABELS), TestValues.TODAY, TestValues.DIFFICULTY_ID
         )
 
     assert result
@@ -48,7 +41,7 @@ def test_insert_into_players():
     """
     with api.app.app_context():
         result = models.insert_into_players(
-            TestValues.PLAYER_ID, TestValues.GAME_ID, cfg.STATE
+            TestValues.PLAYER_ID, TestValues.GAME_ID, TestValues.STATE
         )
 
     assert result
@@ -104,15 +97,14 @@ def test_illegal_parameter_players():
         models.insert_into_players(100, 200, 11)
 
 
-def test_query_euqals_insert_games():
+def test_query_equals_insert_games():
     """
         Check that inserted record is the same as record catched by query.
     """
     with api.app.app_context():
         result = models.get_game(TestValues.GAME_ID)
 
-    assert result.labels == cfg.LABELS
-    # Datetime assertion can't be done due to millisec differents
+    assert result.labels == json.dumps(TestValues.LABELS)    # Datetime assertion can't be done due to millisec differents
 
 
 def test_query_equals_insert_players():
@@ -123,7 +115,7 @@ def test_query_equals_insert_players():
         result = models.get_player(TestValues.PLAYER_ID)
 
     assert result.game_id == TestValues.GAME_ID
-    assert result.state == cfg.STATE
+    assert result.state == TestValues.STATE
 
 
 def test_get_daily_high_score_sorted():
@@ -245,8 +237,7 @@ def test_get_iteration_name_length():
     """
     with api.app.app_context():
         iteration_name = models.get_iteration_name()
-
-    assert len(iteration_name) == TestValues.CV_ITERATION_NAME_LENGTH
+    assert iteration_name == TestValues.CV_ITERATION_NAME
 
 
 def test_high_score_cleared():
