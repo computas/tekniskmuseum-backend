@@ -12,15 +12,7 @@ from webapp import models
 from pytest import raises
 from werkzeug import exceptions as excp
 import json
-from test import config as cfg
-
-
-class TestValues:
-    PLAYER_ID = uuid.uuid4().hex
-    GAME_ID = uuid.uuid4().hex
-    TODAY = datetime.datetime.today()
-    CV_ITERATION_NAME = "Iteration5"
-    DIFFICULTY_ID = DifficultyId.Easy
+from test.conftest import TestValues
 
 
 def test_create_tables():
@@ -37,7 +29,7 @@ def test_insert_into_games():
     """
     with api.app.app_context():
         result = models.insert_into_games(
-            str(TestValues.GAME_ID), json.dumps(cfg.LABELS), TestValues.TODAY, TestValues.DIFFICULTY_ID
+            str(TestValues.GAME_ID), json.dumps(TestValues.LABELS), TestValues.TODAY, TestValues.DIFFICULTY_ID
         )
 
     assert result
@@ -49,7 +41,7 @@ def test_insert_into_players():
     """
     with api.app.app_context():
         result = models.insert_into_players(
-            TestValues.PLAYER_ID, TestValues.GAME_ID, cfg.STATE
+            TestValues.PLAYER_ID, TestValues.GAME_ID, TestValues.STATE
         )
 
     assert result
@@ -112,7 +104,7 @@ def test_query_equals_insert_games():
     with api.app.app_context():
         result = models.get_game(TestValues.GAME_ID)
 
-    assert result.labels == json.dumps(cfg.LABELS)    # Datetime assertion can't be done due to millisec differents
+    assert result.labels == json.dumps(TestValues.LABELS)    # Datetime assertion can't be done due to millisec differents
 
 
 def test_query_equals_insert_players():
@@ -123,7 +115,7 @@ def test_query_equals_insert_players():
         result = models.get_player(TestValues.PLAYER_ID)
 
     assert result.game_id == TestValues.GAME_ID
-    assert result.state == cfg.STATE
+    assert result.state == TestValues.STATE
 
 
 def test_get_daily_high_score_sorted():
