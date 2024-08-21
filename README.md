@@ -15,6 +15,8 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 ### **Development**
 * Clone repository.
 * Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15). Download version 17.
+* Create virtual enviroment: `python3 -m venv venv`
+* Activate virtual enviroment: `source venv/bin/activate`
 * Install python requirements with pip: `pip install -r requirements.txt`.
 * Save the secret keys as a json object in: `src/config.json`.
 1. Head to portal.azure.com
@@ -27,11 +29,6 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 ### **Tests**
 #### Run the tests with the following command:
 * `bash startapp.sh -t`
-
-### **Create a Virtual Environment**
-
-* `python3 -m venv venv`
-* `source venv/bin/activate`
 
 ### **Required Installation**
 
