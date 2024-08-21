@@ -65,6 +65,7 @@ runTests() {
         else
             printHeadline red 'linting failed'
         fi
+        cd src
         python -m pytest
     fi
 }
