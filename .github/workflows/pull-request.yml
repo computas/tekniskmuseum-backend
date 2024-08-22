@@ -36,6 +36,6 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
-      pwd
-      python3 src/runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
+        pwd
+        python3 src/runTests.py --keys='${{ secrets.TEST_SETTINGS }}'
       
