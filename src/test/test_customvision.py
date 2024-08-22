@@ -5,6 +5,12 @@ from test.test_api import construct_path
 from test.conftest import TestValues
 
 
+current_directory = os.path.dirname(os.path.abspath(__file__))
+src_directory = os.path.dirname(current_directory)
+root_directory = os.path.dirname(src_directory)
+data_directory = os.path.join(root_directory, "data")
+
+
 @pytest.fixture
 def classifier():
     """
@@ -17,7 +23,7 @@ def test_prediction_image_does_not_crash(classifier):
     """
         assert classifier is able to get a predicition without crashing.
     """
-    path = construct_path(TestValues.API_PATH_DATA)
+    path = data_directory
     path = os.path.join(path, TestValues.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
         try:
@@ -31,7 +37,7 @@ def test_best_guess_is_string(classifier):
     """
         Test that the best guess from the classifier is a string.
     """
-    path = construct_path(TestValues.API_PATH_DATA)
+    path = data_directory
     path = os.path.join(path, TestValues.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
         probabilities, best_guess = classifier.predict_image(fh)

@@ -50,7 +50,10 @@ models.db.init_app(app)
 models.create_tables(app)
 models.populate_difficulty(app)
 # Point to correct CSV file
-models.seed_labels(app, "dict_eng_to_nor_difficulties_v2.csv")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+csv_file_path = os.path.join(base_dir, "..", "dict_eng_to_nor_difficulties_v2.csv")
+
+models.seed_labels(app, csv_file_path)
 
 # Initialize CV classifier
 classifier = Classifier()

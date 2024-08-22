@@ -12,6 +12,13 @@ from PIL import Image
 from test.conftest import TestValues
 
 
+# Get path to test folder
+current_directory = os.path.dirname(os.path.abspath(__file__))
+src_directory = os.path.dirname(current_directory)
+root_directory = os.path.dirname(src_directory)
+data_directory = os.path.join(root_directory, "data")
+
+
 def test_root_example(client):
     """
         Use GET request on root and check if the response is correct.
@@ -216,7 +223,7 @@ def allowed_file_helper(filename, expected_result, content_type):
         Helper function for the allowedFile function tests.
     """
     # Construct path to the directory with the images
-    dir_path = construct_path(TestValues.API_PATH_DATA)
+    dir_path = data_directory
     # The path is only valid if the program runs from the src directory
     path = os.path.join(dir_path, filename)
     with open(path, "rb") as f:
@@ -245,7 +252,7 @@ def classify_helper(client, data_path, image, time, player_id, user):
         user: username of the player
     """
     # Construct path to the directory storing the test data
-    dir_path = construct_path(data_path)
+    dir_path = data_directory
     path = os.path.join(dir_path, image)
     # Open image and retrieve bytes stream
     with open(path, "rb") as f:
@@ -300,7 +307,7 @@ def test_white_image_true():
         Test if the white_image function returns True if the image is
         completely white.
     """
-    dir_path = construct_path(TestValues.API_PATH_DATA)
+    dir_path = data_directory
     path = os.path.join(dir_path, TestValues.API_IMAGE5)
     img = Image.open(path)
     white = api.white_image(img)
@@ -312,7 +319,7 @@ def test_white_image_false():
         Test if the white_image function returns False if the image isn't
         compeltely white.
     """
-    dir_path = construct_path(TestValues.API_PATH_DATA)
+    dir_path = data_directory
     path = os.path.join(dir_path, TestValues.API_IMAGE6)
     img = Image.open(path)
     white = api.white_image(img)
