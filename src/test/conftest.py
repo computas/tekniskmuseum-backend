@@ -3,6 +3,7 @@ from webapp.api import app, models
 import uuid
 import datetime
 from src.utilities.difficulties import DifficultyId
+import os
 
 
 class TestValues:
@@ -25,9 +26,6 @@ class TestValues:
     API_IMAGE6 = "allowedFile_test6.png"
     # test file for customvision module
     CV_TEST_IMAGE = "cv_testfile.png"
-    # Contains in-order sequence to the directory with images used to test
-    # the allowedFile function
-    API_PATH_DATA = ["..", "data"]
     # Name of the labels for the DB tests
     LABELS = ["bird", "tree", "house"]
     # How long the test games last
@@ -58,3 +56,13 @@ def db():
     yield
 
     models.delete_all_tables()
+
+
+#Return path to data folder where images for testing are saved
+def get_data_folder_path():
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    src_directory = os.path.dirname(current_directory)
+    root_directory = os.path.dirname(src_directory)
+    data_directory = os.path.join(root_directory, "data")
+
+    return data_directory
