@@ -3,6 +3,9 @@ name: Lint and test pull-request - tekniskback
 
 # Run the workflow on every pull-request
 on:
+  push:
+    branches:
+      - develop
   workflow_dispatch:
 
 jobs:
