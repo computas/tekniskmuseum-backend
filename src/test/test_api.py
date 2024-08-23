@@ -74,7 +74,7 @@ def test_classify_wrong_image(client):
     player_id, user = "", ""
     # Submit answer with the given parameters and get results
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE1, time, player_id, user
+        client, TestValues.API_IMAGE1, time, player_id, user
     )
     assert b"415 Unsupported Media Type" in res.data
 
@@ -92,7 +92,7 @@ def test_classify_white_image_data(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     assert (res.status == "200 OK")
     data = json.loads(res.data.decode("utf-8"))
@@ -116,7 +116,7 @@ def test_classify_white_image_done(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
     assert (data["gameState"] == "Done")
@@ -135,7 +135,7 @@ def test_classify_white_image_not_done(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
     assert (data["gameState"] == "Playing")
@@ -156,7 +156,7 @@ def test_classify_correct(client):
     player_id = response["player_id"]
     # submit answer with parameters and retrieve results
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE4, time, player_id, name
+        client, TestValues.API_IMAGE4, time, player_id, name
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
@@ -230,7 +230,7 @@ def allowed_file_helper(filename, expected_result, content_type):
         return api.allowed_file(image)
 
 
-def classify_helper(client, data_path, image, time, player_id, user):
+def classify_helper(client, image, time, player_id, user):
     """
         Helper function which sends post request to client on /classify.
         The function returns the response given from the client
