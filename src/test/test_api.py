@@ -215,7 +215,6 @@ def allowed_file_helper(filename, expected_result, content_type):
     """
         Helper function for the allowedFile function tests.
     """
-    
     # The path is only valid if the program runs from the src directory
     path = os.path.join(get_data_folder_path(), filename)
     with open(path, "rb") as f:
