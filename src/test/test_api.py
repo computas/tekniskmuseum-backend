@@ -9,7 +9,7 @@ from webapp import models
 from utilities import setup
 from werkzeug import exceptions as excp
 from PIL import Image
-from test.conftest import TestValues
+from test.conftest import TestValues, get_data_folder_path
 
 
 def test_root_example(client):
@@ -74,7 +74,7 @@ def test_classify_wrong_image(client):
     player_id, user = "", ""
     # Submit answer with the given parameters and get results
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE1, time, player_id, user
+        client, TestValues.API_IMAGE1, time, player_id, user
     )
     assert b"415 Unsupported Media Type" in res.data
 
@@ -92,7 +92,7 @@ def test_classify_white_image_data(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     assert (res.status == "200 OK")
     data = json.loads(res.data.decode("utf-8"))
@@ -116,7 +116,7 @@ def test_classify_white_image_done(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
     assert (data["gameState"] == "Done")
@@ -135,7 +135,7 @@ def test_classify_white_image_not_done(client):
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE5, time, token, user
+        client, TestValues.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
     assert (data["gameState"] == "Playing")
@@ -156,7 +156,7 @@ def test_classify_correct(client):
     player_id = response["player_id"]
     # submit answer with parameters and retrieve results
     res = classify_helper(
-        client, TestValues.API_PATH_DATA, TestValues.API_IMAGE4, time, player_id, name
+        client, TestValues.API_IMAGE4, time, player_id, name
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
@@ -215,10 +215,8 @@ def allowed_file_helper(filename, expected_result, content_type):
     """
         Helper function for the allowedFile function tests.
     """
-    # Construct path to the directory with the images
-    dir_path = construct_path(TestValues.API_PATH_DATA)
     # The path is only valid if the program runs from the src directory
-    path = os.path.join(dir_path, filename)
+    path = os.path.join(get_data_folder_path(), filename)
     with open(path, "rb") as f:
         data_stream = f.read()
         # Create temporary file and reset seek to avoid EOF errors
@@ -232,7 +230,7 @@ def allowed_file_helper(filename, expected_result, content_type):
         return api.allowed_file(image)
 
 
-def classify_helper(client, data_path, image, time, player_id, user):
+def classify_helper(client, image, time, player_id, user):
     """
         Helper function which sends post request to client on /classify.
         The function returns the response given from the client
@@ -245,8 +243,7 @@ def classify_helper(client, data_path, image, time, player_id, user):
         user: username of the player
     """
     # Construct path to the directory storing the test data
-    dir_path = construct_path(data_path)
-    path = os.path.join(dir_path, image)
+    path = os.path.join(get_data_folder_path(), image)
     # Open image and retrieve bytes stream
     with open(path, "rb") as f:
         img_string = io.BytesIO(f.read())
@@ -300,8 +297,7 @@ def test_white_image_true():
         Test if the white_image function returns True if the image is
         completely white.
     """
-    dir_path = construct_path(TestValues.API_PATH_DATA)
-    path = os.path.join(dir_path, TestValues.API_IMAGE5)
+    path = os.path.join(get_data_folder_path(), TestValues.API_IMAGE5)
     img = Image.open(path)
     white = api.white_image(img)
     assert (white is True)
@@ -312,8 +308,7 @@ def test_white_image_false():
         Test if the white_image function returns False if the image isn't
         compeltely white.
     """
-    dir_path = construct_path(TestValues.API_PATH_DATA)
-    path = os.path.join(dir_path, TestValues.API_IMAGE6)
+    path = os.path.join(get_data_folder_path(), TestValues.API_IMAGE6)
     img = Image.open(path)
     white = api.white_image(img)
     assert (white is False)

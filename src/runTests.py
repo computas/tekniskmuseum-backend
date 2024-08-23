@@ -17,8 +17,8 @@ parser.add_argument('--keys', action='store', type=str,
 ARGUMENTS = parser.parse_args()
 # export keys
 KEYLIST = json.loads(ARGUMENTS.keys)
-for keydict in KEYLIST:
-    os.environ[keydict["name"]] = keydict["value"]
+for key, value in KEYLIST.items():
+    os.environ[key] = value
 
 # clear cli arguments as pytest reads them
 sys.argv = [sys.argv[0]]

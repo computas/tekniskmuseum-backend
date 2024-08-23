@@ -50,6 +50,11 @@ class Flask_config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = "mssql+pyodbc://%s" % con_str
 
+    #Use sqlite to run tests instead
+    workflow_name = os.getenv('GITHUB_WORKFLOW')
+    if workflow_name == "Lint and test pull-request - tekniskback":
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///mydatabase.db'
+
     # secret key for cookie encryption
     SECRET_KEY = Keys.get("SECRET_KEY")
 
