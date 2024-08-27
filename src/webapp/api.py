@@ -278,7 +278,6 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
-
 @app.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
     """
@@ -321,10 +320,23 @@ def admin_page(action):
 
     elif action == "ping":
         return json.dumps({"success": "pong"}), 200
+    
+    elif action == "logging":
+        return json.dumps({"hei"}), 200
 
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
+@app.route("/errorlogs")
+def get_error_logs():
+    try:
+        f = open(base_dir + "/logging.txt", "r")
+        data = f.read()
+        return json.dumps(data), 200
+    except Exception as e:
+        app.logger.error(f"Failed to read log file: {e}")
+        return "Failed to read log file", 500
+    
 
 @app.errorhandler(Exception)
 def handle_exception(error):
