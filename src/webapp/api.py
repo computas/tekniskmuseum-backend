@@ -9,11 +9,9 @@
         /viewHighScore : Provide clien with the highscore from the game
 """
 import uuid
-import random
-import time
-import sys
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime, timezone, timedelta
 from PIL import Image
@@ -44,6 +42,16 @@ else:
     cors = CORS(app, resources={
                 r"/*": {"origins": "*", "supports_credentials": True}})
 app.config.from_object("utilities.setup.Flask_config")
+
+#Config logging
+logging.basicConfig(filename='record.log')
+#max file size 4 MB
+handler = RotatingFileHandler(
+    filename='record.log',
+    maxBytes=4 * 1024 * 1024,
+    backupCount=5
+)
+logging.getLogger().addHandler(handler)
 
 # Set up DB and models
 models.db.init_app(app)
