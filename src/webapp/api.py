@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-    API with endpoints runned by Flask. Contains three endpoints:
+    API with endpoints runned by Flask. Contains these endpoints:
         / : Responds if the API is up
         /startGame : Provide client with unique player_id used for identification
         /getLabel : Provide client with a new word
@@ -320,19 +320,19 @@ def admin_page(action):
 
     elif action == "ping":
         return json.dumps({"success": "pong"}), 200
-    
-    elif action == "logging":
-        return json.dumps({"hei"}), 200
 
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
-@app.route("/errorlogs")
+@app.route("/admin/logging")
 def get_error_logs():
     try:
-        f = open(base_dir + "/logging.txt", "r")
-        data = f.read()
-        return json.dumps(data), 200
+        #is_authenticated()
+        log_file = base_dir.replace("src/webapp", "")
+        f = open(log_file + "logging.txt", "r")
+        json_data = json.load(f)
+    
+        return json.dumps(json_data), 200
     except Exception as e:
         app.logger.error(f"Failed to read log file: {e}")
         return "Failed to read log file", 500
