@@ -349,7 +349,7 @@ def get_error_logs():
         path = base_dir.replace("webapp", "")
         log_name = path + "record.log"
 
-        data =[]
+        data = []
 
         for line in readlines_reverse(log_name):
             match = re.match(log_pattern, line)
