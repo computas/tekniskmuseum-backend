@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-    API with endpoints runned by Flask. Contains three endpoints:
+    API with endpoints runned by Flask. Contains these endpoints:
         / : Responds if the API is up
         /startGame : Provide client with unique player_id used for identification
         /getLabel : Provide client with a new word
@@ -11,6 +11,7 @@
 import uuid
 import os
 import logging
+import re
 from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime, timezone, timedelta
@@ -44,14 +45,17 @@ else:
 app.config.from_object("utilities.setup.Flask_config")
 
 #Config logging
-logging.basicConfig(filename='record.log', level=logging.INFO)
+logging.basicConfig(filename='record.log', level=logging.INFO, filemode="w", format="%(asctime)s %(levelname)s %(message)s")
+log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
+
 #max file size 4 MB
 handler = RotatingFileHandler(
     filename='record.log',
     maxBytes=4 * 1024 * 1024,
     backupCount=5
 )
-logging.getLogger().addHandler(handler)
+
+app.logger.addHandler(handler)
 
 try:
     # Set up DB and models
@@ -292,7 +296,6 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
-
 @app.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
     """
@@ -339,6 +342,25 @@ def admin_page(action):
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
+@app.route("/admin/logging")
+def get_error_logs():
+    try:
+        #is_authenticated()
+        path = base_dir.replace("webapp", "")
+        log_name = path + "record.log"
+
+        data = []
+
+        for line in readlines_reverse(log_name):
+            match = re.match(log_pattern, line)
+            if match:
+                log_dict = match.groupdict()
+                data.append(log_dict)
+    
+        return json.dumps(data), 200
+    except Exception as e:
+        app.logger.error(f"Failed to read log file: {e}")
+        return "Failed to read log file", 500
 
 @app.errorhandler(Exception)
 def handle_exception(error):
@@ -451,3 +473,20 @@ def get_image_resolution(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
+
+
+def readlines_reverse(filename):
+    with open(filename) as qfile:
+        qfile.seek(0, os.SEEK_END)
+        position = qfile.tell()
+        line = ''
+        while position >= 0:
+            qfile.seek(position)
+            next_char = qfile.read(1)
+            if next_char == "\n":
+                yield line[::-1]
+                line = ''
+            else:
+                line += next_char
+            position -= 1
+        yield line[::-1]
