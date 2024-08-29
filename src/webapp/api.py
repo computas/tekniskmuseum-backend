@@ -68,8 +68,8 @@ try:
     models.seed_labels(app, csv_file_path)
     app.logger.info("Backend was able to communicate with DB. ")
 
-except Exception:
-    #error is raised by handle_exception()
+except Exception as e:
+    app.logger.error(f"Error when contacting DB in Azure: {e}")
     print("Error when contacting DB in Azure")
     
 
@@ -96,18 +96,26 @@ def start_game():
     # start a game and insert it into the games table
     difficulty_id = request.args.get("difficulty_id", default=None, type=int)
     if difficulty_id is None:
+        app.logger.error("No difficulty_id provided")
         return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
     labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
     today = datetime.today()
-    models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
-    models.insert_into_players(player_id, game_id, "Playing")
-    # return game data as json object
-    data = {
-        "player_id": player_id,
-    }
-    return json.dumps(data), 200
+
+    try: 
+        models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
+        models.insert_into_players(player_id, game_id, "Playing")
+        # return game data as json object
+        data = {
+            "player_id": player_id,
+        }
+            
+        return json.dumps(data), 200
+
+    except Exception as e:
+        app.logger.error(f"Failed to start game: {e}")
+        return "Failed to start game", 500
 
 
 @app.route("/getLabel", methods=["POST"])
@@ -117,22 +125,26 @@ def get_label():
     """
     player_id = request.values["player_id"]
     lang = request.values["lang"]
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+    try: 
+        player = models.get_player(player_id)
+        game = models.get_game(player.game_id)
 
-    # Check if game complete
-    if game.session_num > setup.NUM_GAMES:
-        raise excp.BadRequest("Number of games exceeded")
+        # Check if game complete
+        if game.session_num > setup.NUM_GAMES:
+            raise excp.BadRequest("Number of games exceeded")
 
-    labels = json.loads(game.labels)
-    label = labels[game.session_num - 1]
-    if lang == "NO":
-        norwegian_label = models.to_norwegian(label)
-        data = {"label": norwegian_label}
-        return json.dumps(data), 200
-    else:
-        data = {"label": label}
-        return json.dumps(data), 200
+        labels = json.loads(game.labels)
+        label = labels[game.session_num - 1]
+        if lang == "NO":
+            norwegian_label = models.to_norwegian(label)
+            data = {"label": norwegian_label}
+            return json.dumps(data), 200
+        else:
+            data = {"label": label}
+            return json.dumps(data), 200
+    except Exception as e:
+        app.logger.error("Failed to get word to draw: {e}")
+        return "Failed to get label to draw", 500
 
 
 @app.route("/classify", methods=["POST"])
@@ -142,76 +154,80 @@ def classify():
     """
     game_state = "Playing"
     # Check if image submitted correctly
-    if "image" not in request.files:
-        raise excp.BadRequest("No image submitted")
+    try:
+        if "image" not in request.files:
+            raise excp.BadRequest("No image submitted")
 
-    # Retrieve the image and check if it satisfies constraints
-    lang = request.values["lang"]
-    image = request.files["image"]
-    allowed_file(image)
-    # use player_id submitted by player to find game
-    player_id = request.values["player_id"]
-    # Get time from POST request
-    time_left = float(request.values["time"])
-    # Get label for game session
-    player = models.get_player(player_id)
+        # Retrieve the image and check if it satisfies constraints
+        lang = request.values["lang"]
+        image = request.files["image"]
+        allowed_file(image)
+        # use player_id submitted by player to find game
+        player_id = request.values["player_id"]
+        # Get time from POST request
+        time_left = float(request.values["time"])
+        # Get label for game session
+        player = models.get_player(player_id)
 
-    clientRound = request.values.get("client_round_num", None)
-    game = models.get_game(player.game_id)
-    server_round = game.session_num
-    if clientRound is not None and int(clientRound) < game.session_num:
-        raise excp.BadRequest(
-            "Server-round number larger than request/client. Probably a request processed out of order")
-    labels = json.loads(game.labels)
-    label = labels[game.session_num - 1]
+        clientRound = request.values.get("client_round_num", None)
+        game = models.get_game(player.game_id)
+        server_round = game.session_num
+        if clientRound is not None and int(clientRound) < game.session_num:
+            raise excp.BadRequest(
+                "Server-round number larger than request/client. Probably a request processed out of order")
+        labels = json.loads(game.labels)
+        label = labels[game.session_num - 1]
 
-    certainty, best_guess = classifier.predict_image_by_post(image)
-    best_certainty = certainty[best_guess]
-    # The player has won if the game is completed within the time limit
-    has_won = (
-        time_left > 0
-        and best_guess == label
-        and best_certainty >= setup.CERTAINTY_THRESHOLD
-    )
-    # End game if player win or loose
-    if has_won or time_left <= 0:
-        # Update session_num in game and state for player
-        models.update_game_for_player(player.game_id, player_id, 1, "Done")
-        # save image
-        storage.save_image(image, label, best_certainty)
-        # Update game state to be done
-        game_state = "Done"
-        # Insert statistic for label
-        models.insert_into_label_success(
-            label=label, is_success=has_won, date=datetime.now())
-    # translate labels into norwegian
-    if lang == "NO":
-        translation = models.get_translation_dict()
-        certainty_translated = dict(
-            [
-                (translation[label], probability)
-                for label, probability in certainty.items()
-            ]
+        certainty, best_guess = classifier.predict_image_by_post(image)
+        best_certainty = certainty[best_guess]
+        # The player has won if the game is completed within the time limit
+        has_won = (
+            time_left > 0
+            and best_guess == label
+            and best_certainty >= setup.CERTAINTY_THRESHOLD
         )
-        data = {
-            "certainty": certainty_translated,
-            "guess": translation[best_guess],
-            "correctLabel": translation[label],
-            "hasWon": has_won,
-            "gameState": game_state,
-            "serverRound": server_round,
-        }
-    else:
-        data = {
-            "certainty": certainty,
-            "guess": best_guess,
-            "correctLabel": label,
-            "hasWon": has_won,
-            "gameState": game_state,
-            "serverRound": server_round,
-        }
+        # End game if player win or loose
+        if has_won or time_left <= 0:
+            # Update session_num in game and state for player
+            models.update_game_for_player(player.game_id, player_id, 1, "Done")
+            # save image
+            storage.save_image(image, label, best_certainty)
+            # Update game state to be done
+            game_state = "Done"
+            # Insert statistic for label
+            models.insert_into_label_success(
+                label=label, is_success=has_won, date=datetime.now())
+        # translate labels into norwegian
+        if lang == "NO":
+            translation = models.get_translation_dict()
+            certainty_translated = dict(
+                [
+                    (translation[label], probability)
+                    for label, probability in certainty.items()
+                ]
+            )
+            data = {
+                "certainty": certainty_translated,
+                "guess": translation[best_guess],
+                "correctLabel": translation[label],
+                "hasWon": has_won,
+                "gameState": game_state,
+                "serverRound": server_round,
+            }
+        else:
+            data = {
+                "certainty": certainty,
+                "guess": best_guess,
+                "correctLabel": label,
+                "hasWon": has_won,
+                "gameState": game_state,
+                "serverRound": server_round,
+            }
 
-    return json.dumps(data), 200
+        return json.dumps(data), 200
+    except Exception as e:
+        app.logger.error(f"Failed to classify model: {e}")
+        return "Failed to classify model", 500
 
 
 @app.route("/postScore", methods=["POST"])
@@ -219,25 +235,29 @@ def post_score():
     """
         Endpoint for ending game consisting of NUM_GAMES sessions.
     """
-    data = request.get_json()
-    player_id = data.get("player_id")
-    score = float(data.get("score"))
-    difficulty_id = int(data.get("difficulty_id"))
+    try:
+        data = request.get_json()
+        player_id = data.get("player_id")
+        score = float(data.get("score"))
+        difficulty_id = int(data.get("difficulty_id"))
 
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+        player = models.get_player(player_id)
+        game = models.get_game(player.game_id)
 
-    if game.session_num != setup.NUM_GAMES + 1:
-        raise excp.BadRequest("Game not finished")
+        if game.session_num != setup.NUM_GAMES + 1:
+            raise excp.BadRequest("Game not finished")
 
-    today = datetime.today()
-    models.insert_into_scores(player_id, score, today, difficulty_id)
+        today = datetime.today()
+        models.insert_into_scores(player_id, score, today, difficulty_id)
 
-    # ! Need to decide if this is needed
-    # Clean database for unnecessary data
-    # models.delete_session_from_game(player.game_id)
-    # models.delete_old_games()
-    return json.dumps({"success": "OK"}), 200
+        # ! Need to decide if this is needed
+        # Clean database for unnecessary data
+        # models.delete_session_from_game(player.game_id)
+        # models.delete_old_games()
+        return json.dumps({"success": "OK"}), 200
+    except Exception as e:
+        app.logger.error(f"Failed to post score {e}")
+        return "Failed to post score", 500
 
 
 @app.route("/viewHighScore")
@@ -246,18 +266,22 @@ def view_high_score():
         Read highscore from database. Return top n of all time and daily high
         scores.
     """
-    difficulty_id = request.values["difficulty_id"]
-    # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(
-        setup.TOP_N, difficulty_id=difficulty_id)
-    # read daily high score
-    daily_high_scores = models.get_daily_high_score(
-        difficulty_id=difficulty_id)
-    data = {
-        "daily": daily_high_scores,
-        "total": top_n_high_scores,
-    }
-    return json.dumps(data), 200
+    try: 
+        difficulty_id = request.values["difficulty_id"]
+        # read top n overall high score
+        top_n_high_scores = models.get_top_n_high_score_list(
+            setup.TOP_N, difficulty_id=difficulty_id)
+        # read daily high score
+        daily_high_scores = models.get_daily_high_score(
+            difficulty_id=difficulty_id)
+        data = {
+            "daily": daily_high_scores,
+            "total": top_n_high_scores,
+        }
+        return json.dumps(data), 200
+    except Exception as e:
+        app.logger.error(f"Failed to view highscore: {e}")
+        return "Failed to view highscore", 500
 
 
 @app.route("/getExampleDrawings", methods=["POST"])
@@ -265,17 +289,20 @@ def get_n_drawings_by_label():
     """
         Returns n images from the blob storage container with the given label.
     """
-    data = request.get_json()
-    number_of_images = data["number_of_images"]
-    label = data["label"]
-    lang = data["lang"]
-    if lang == "NO":
-        label = models.to_english(label)
+    try:
+        data = request.get_json()
+        number_of_images = data["number_of_images"]
+        label = data["label"]
+        lang = data["lang"]
+        if lang == "NO":
+            label = models.to_english(label)
 
-    image_urls = models.get_n_random_example_images(label, number_of_images)
-    images = storage.get_images_from_relative_url(image_urls)
-    return json.dumps(images), 200
-
+        image_urls = models.get_n_random_example_images(label, number_of_images)
+        images = storage.get_images_from_relative_url(image_urls)
+        return json.dumps(images), 200
+    except Exception as e:
+        app.logger.error(f"Failed to get images from blob storage: {e}")
+        return "Failed to get drawings from blob storage", 500
 
 @app.route("/auth", methods=["POST"])
 def authenticate():
@@ -283,18 +310,22 @@ def authenticate():
         Endpoint for admin authentication. Returns encrypted cookie with login
         time and username.
     """
-    username = request.values["username"]
-    password = request.values["password"]
+    try:
+        username = request.values["username"]
+        password = request.values["password"]
 
-    user = models.get_user(username)
+        user = models.get_user(username)
 
-    if user is None or not check_password_hash(user.password, password):
-        raise excp.Unauthorized("Invalid username or password")
+        if user is None or not check_password_hash(user.password, password):
+            raise excp.Unauthorized("Invalid username or password")
 
-    session["last_login"] = datetime.now(timezone.utc)
-    session["username"] = username
+        session["last_login"] = datetime.now(timezone.utc)
+        session["username"] = username
 
-    return json.dumps({"success": "OK"}), 200
+        return json.dumps({"success": "OK"}), 200
+    except Exception as e:
+        app.logger.error(f"Failed to authenticate: {e}")
+        return "Failed to read authenticate", 500
 
 @app.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
@@ -306,41 +337,72 @@ def admin_page(action):
     is_authenticated()
 
     if action == "clearHighScore":
-        models.clear_highscores()
-        return json.dumps({"success": "High scores cleared"}), 200
+        try:
+            models.clear_highscores()
+            return json.dumps({"success": "High scores cleared"}), 200
+        except Exception as e:
+            app.logger.error(f"Failed to clear high scores: {e}")
+            return "Failed to clear high scores", 500
 
     elif action == "trainML":
-        # Run training asynchronously
-        Thread(target=classifier.retrain).start()
-        return json.dumps({"success": "Training started"}), 200
+        try:
+            # Run training asynchronously
+            Thread(target=classifier.retrain).start()
+            return json.dumps({"success": "Training started"}), 200
+        
+        except Exception as e:
+            app.logger.error(f"Failed to train Customvision: {e}")
+            return "Failed to train CustomVision", 500
 
     elif action == "hardReset":
-        # Delete all images in CV, upload all orignal images and retrain
-        classifier.delete_all_images()
-        storage.clear_dataset()
-        Thread(target=classifier.hard_reset_retrain).start()
-        response = {"success": "All images deleted, nodel now training"}
-        return json.dumps(response), 200
+        try:
+            # Delete all images in CV, upload all orignal images and retrain
+            classifier.delete_all_images()
+            storage.clear_dataset()
+            Thread(target=classifier.hard_reset_retrain).start()
+            response = {"success": "All images deleted, nodel now training"}
+            return json.dumps(response), 200
+        
+        except Exception as e:
+            app.logger.error(f"Failed to delete all the images: {e}")
+            return "Failed to delete all the images", 500
 
     elif action == "status":
-        new_blob_image_count = storage.image_count()
-        iteration = classifier.get_iteration()
-        data = {
-            "CV_iteration_name": iteration.name,
-            "CV_time_created": str(iteration.created),
-            "BLOB_image_count": new_blob_image_count,
-        }
-        return json.dumps(data), 200
+        try:
+            new_blob_image_count = storage.image_count()
+            iteration = classifier.get_iteration()
+            data = {
+                "CV_iteration_name": iteration.name,
+                "CV_time_created": str(iteration.created),
+                "BLOB_image_count": new_blob_image_count,
+            }
+            return json.dumps(data), 200
+
+        except Exception as e:
+            app.logger.error(f"Failed to get the status: {e}")
+            return "Failed to get the status", 500
 
     elif action == "logout":
-        session.clear()
-        return json.dumps({"success": "Session cleared"}), 200
+        try:
+            session.clear()
+            return json.dumps({"success": "Session cleared"}), 200
+
+        except Exception as e:
+            app.logger.error(f"Failed to log out: {e}")
+            return "Failed to log out", 500
 
     elif action == "ping":
-        return json.dumps({"success": "pong"}), 200
+        try:
+            return json.dumps({"success": "pong"}), 200
+
+        except Exception as e:
+            app.logger.error(f"Failed to communicate with frontend: {e}")
+            return "Failed to contact frontend", 500
 
     else:
+        app.logger.error(f"Failed to get admin action: {e}")
         return json.dumps({"error": "Admin action unspecified"}), 400
+
 
 @app.route("/admin/logging")
 def get_error_logs():
@@ -355,7 +417,8 @@ def get_error_logs():
             match = re.match(log_pattern, line)
             if match:
                 log_dict = match.groupdict()
-                data.append(log_dict)
+                if log_dict["level"] == "INFO":
+                    data.append(log_dict)
     
         return json.dumps(data), 200
     except Exception as e:
