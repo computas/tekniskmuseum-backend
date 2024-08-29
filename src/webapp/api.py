@@ -417,7 +417,7 @@ def get_error_logs():
             match = re.match(log_pattern, line)
             if match:
                 log_dict = match.groupdict()
-                if log_dict["level"] == "INFO":
+                if log_dict["level"] == "ERROR":
                     data.append(log_dict)
     
         return json.dumps(data), 200
