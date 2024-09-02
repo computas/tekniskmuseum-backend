@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-    API with endpoints runned by Flask. Contains these endpoints:
+    API with endpoints runned by Flask. Contains three endpoints:
         / : Responds if the API is up
         /startGame : Provide client with unique player_id used for identification
         /getLabel : Provide client with a new word
@@ -9,12 +9,13 @@
         /viewHighScore : Provide clien with the highscore from the game
 """
 import uuid
+import random
+import time
+import sys
 import os
 import logging
-import re
-from logging.handlers import RotatingFileHandler
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime,timezone, timedelta
 from PIL import Image
 from PIL import ImageChops
 from threading import Thread
@@ -36,42 +37,15 @@ from utilities.keys import Keys
 # Initialization app
 app = Flask(__name__)
 if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app,
-                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
-                                   "supports_credentials": True}})
-else:
-    cors = CORS(app, resources={
-                r"/*": {"origins": "*", "supports_credentials": True}})
+    cors = CORS(app, resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"), "supports_credentials": True}})
+else :
+    cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 app.config.from_object("utilities.setup.Flask_config")
 
-#Config logging
-logging.basicConfig(filename='record.log', level=logging.INFO, filemode="w", format="%(asctime)s %(levelname)s %(message)s")
-log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
-
-#max file size 4 MB
-handler = RotatingFileHandler(
-    filename='record.log',
-    maxBytes=4 * 1024 * 1024,
-    backupCount=5
-)
-
-app.logger.addHandler(handler)
-
-try:
-    # Set up DB and models
-    models.db.init_app(app)
-    models.create_tables(app)
-    models.populate_difficulty(app)
-    # Point to correct CSV file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_file_path = os.path.join(base_dir, "..", "dict_eng_to_nor_difficulties_v2.csv")
-    models.seed_labels(app, csv_file_path)
-    app.logger.info("Backend was able to communicate with DB. ")
-
-except Exception:
-    #error is raised by handle_exception()
-    print("Error when contacting DB in Azure")
-    
+# Set up DB and models
+models.db.init_app(app)
+models.create_tables(app)
+models.seed_labels(app, "./dict_eng_to_nor.csv")
 
 # Initialize CV classifier
 classifier = Classifier()
@@ -94,14 +68,11 @@ def start_game():
         Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
-    difficulty_id = request.args.get("difficulty_id", default=None, type=int)
-    if difficulty_id is None:
-        return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
-    labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
+    labels = models.get_n_labels(setup.NUM_GAMES)
     today = datetime.today()
-    models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
+    models.insert_into_games(game_id, json.dumps(labels), today)
     models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
@@ -116,7 +87,6 @@ def get_label():
         Provides the client with a new word.
     """
     player_id = request.values["player_id"]
-    lang = request.values["lang"]
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
 
@@ -126,13 +96,9 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-    if lang == "NO":
-        norwegian_label = models.to_norwegian(label)
-        data = {"label": norwegian_label}
-        return json.dumps(data), 200
-    else:
-        data = {"label": label}
-        return json.dumps(data), 200
+    norwegian_label = models.to_norwegian(label)
+    data = {"label": norwegian_label}
+    return json.dumps(data), 200
 
 
 @app.route("/classify", methods=["POST"])
@@ -144,9 +110,8 @@ def classify():
     # Check if image submitted correctly
     if "image" not in request.files:
         raise excp.BadRequest("No image submitted")
-
+    
     # Retrieve the image and check if it satisfies constraints
-    lang = request.values["lang"]
     image = request.files["image"]
     allowed_file(image)
     # use player_id submitted by player to find game
@@ -160,8 +125,7 @@ def classify():
     game = models.get_game(player.game_id)
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
-        raise excp.BadRequest(
-            "Server-round number larger than request/client. Probably a request processed out of order")
+        raise excp.BadRequest("Server-round number larger than request/client. Probably a request processed out of order")
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
 
@@ -181,49 +145,33 @@ def classify():
         storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
-        # Insert statistic for label
-        models.insert_into_label_success(
-            label=label, is_success=has_won, date=datetime.now())
     # translate labels into norwegian
-    if lang == "NO":
-        translation = models.get_translation_dict()
-        certainty_translated = dict(
-            [
-                (translation[label], probability)
-                for label, probability in certainty.items()
-            ]
-        )
-        data = {
-            "certainty": certainty_translated,
-            "guess": translation[best_guess],
-            "correctLabel": translation[label],
-            "hasWon": has_won,
-            "gameState": game_state,
-            "serverRound": server_round,
-        }
-    else:
-        data = {
-            "certainty": certainty,
-            "guess": best_guess,
-            "correctLabel": label,
-            "hasWon": has_won,
-            "gameState": game_state,
-            "serverRound": server_round,
-        }
-
+    translation = models.get_translation_dict()
+    certainty_translated = dict(
+        [
+            (translation[label], probability)
+            for label, probability in certainty.items()
+        ]
+    )
+    data = {
+        "certainty": certainty_translated,
+        "guess": translation[best_guess],
+        "correctLabel": translation[label],
+        "hasWon": has_won,
+        "gameState": game_state,
+        "serverRound": server_round,
+    }
     return json.dumps(data), 200
 
 
-@app.route("/postScore", methods=["POST"])
-def post_score():
+@app.route("/endGame", methods=["POST"])
+def end_game():
     """
         Endpoint for ending game consisting of NUM_GAMES sessions.
     """
-    data = request.get_json()
-    player_id = data.get("player_id")
-    score = float(data.get("score"))
-    difficulty_id = int(data.get("difficulty_id"))
-
+    player_id = request.values["player_id"]
+    name = request.values["name"]
+    score = float(request.values["score"])
     player = models.get_player(player_id)
     game = models.get_game(player.game_id)
 
@@ -231,12 +179,11 @@ def post_score():
         raise excp.BadRequest("Game not finished")
 
     today = datetime.today()
-    models.insert_into_scores(player_id, score, today, difficulty_id)
+    models.insert_into_scores(name, score, today)
 
-    # ! Need to decide if this is needed
     # Clean database for unnecessary data
-    # models.delete_session_from_game(player.game_id)
-    # models.delete_old_games()
+    models.delete_session_from_game(player.game_id)
+    models.delete_old_games()
     return json.dumps({"success": "OK"}), 200
 
 
@@ -246,35 +193,15 @@ def view_high_score():
         Read highscore from database. Return top n of all time and daily high
         scores.
     """
-    difficulty_id = request.values["difficulty_id"]
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(
-        setup.TOP_N, difficulty_id=difficulty_id)
+    top_n_high_scores = models.get_top_n_high_score_list(setup.TOP_N)
     # read daily high score
-    daily_high_scores = models.get_daily_high_score(
-        difficulty_id=difficulty_id)
+    daily_high_scores = models.get_daily_high_score()
     data = {
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
     return json.dumps(data), 200
-
-
-@app.route("/getExampleDrawings", methods=["POST"])
-def get_n_drawings_by_label():
-    """
-        Returns n images from the blob storage container with the given label.
-    """
-    data = request.get_json()
-    number_of_images = data["number_of_images"]
-    label = data["label"]
-    lang = data["lang"]
-    if lang == "NO":
-        label = models.to_english(label)
-
-    image_urls = models.get_n_random_example_images(label, number_of_images)
-    images = storage.get_images_from_relative_url(image_urls)
-    return json.dumps(images), 200
 
 
 @app.route("/auth", methods=["POST"])
@@ -295,6 +222,7 @@ def authenticate():
     session["username"] = username
 
     return json.dumps({"success": "OK"}), 200
+
 
 @app.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
@@ -342,25 +270,6 @@ def admin_page(action):
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
-@app.route("/admin/logging")
-def get_error_logs():
-    try:
-        #is_authenticated()
-        path = base_dir.replace("webapp", "")
-        log_name = path + "record.log"
-
-        data = []
-
-        for line in readlines_reverse(log_name):
-            match = re.match(log_pattern, line)
-            if match:
-                log_dict = match.groupdict()
-                data.append(log_dict)
-    
-        return json.dumps(data), 200
-    except Exception as e:
-        app.logger.error(f"Failed to read log file: {e}")
-        return "Failed to read log file", 500
 
 @app.errorhandler(Exception)
 def handle_exception(error):
@@ -473,20 +382,3 @@ def get_image_resolution(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
-
-
-def readlines_reverse(filename):
-    with open(filename) as qfile:
-        qfile.seek(0, os.SEEK_END)
-        position = qfile.tell()
-        line = ''
-        while position >= 0:
-            qfile.seek(position)
-            next_char = qfile.read(1)
-            if next_char == "\n":
-                yield line[::-1]
-                line = ''
-            else:
-                line += next_char
-            position -= 1
-        yield line[::-1]

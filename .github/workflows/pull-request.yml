@@ -3,27 +3,21 @@ name: Lint and test pull-request - tekniskback
 
 # Run the workflow on every pull-request
 on:
-  push:
-    branches:
-      - develop
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   run-linter:
    name: Run linter
-   runs-on: ubuntu-22.04
-   env: 
-    TESTING: "true"
-    IS_PRODUCTION: "false"
+   runs-on: ubuntu-latest
    
    steps:
     - name: Checkout out git repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
 
     - name: Set up Python version
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v1
       with:
-        python-version: '3.11'
+        python-version: '3.7'
 
     - name: Install dependencies
       run: pip install flake8
@@ -31,16 +25,22 @@ jobs:
     - name: Run linter
       run: flake8
 
-    - name: Create and start virtual environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+  run-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
     
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+    steps:
+    - name: Check out git repo
+      uses: actions/checkout@v2
 
+    - name: Set up Python version
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+      
     - name: Run tests
       shell: bash
-      run: python3 src/runTests.py --keys='${{ secrets.TEST_SETTINGS2 }}'
-      
+      run: ./startapp.sh --test --keys='${{ secrets.TEST_SETTINGS }}'

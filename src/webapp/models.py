@@ -9,7 +9,6 @@ import os
 import random
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug import exceptions as excp
-import json
 
 db = SQLAlchemy()
 
@@ -33,8 +32,7 @@ class Games(db.Model):
     session_num = db.Column(db.Integer, default=1)
     labels = db.Column(db.String(64))
     date = db.Column(db.DateTime)
-    difficulty_id = db.Column(
-        db.Integer, db.ForeignKey("difficulty.id"), default=1)
+
     players = db.relationship(
         "Players", uselist=False, back_populates="game", cascade="all, delete"
     )
@@ -51,11 +49,9 @@ class Scores(db.Model):
     """
 
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    player_id = db.Column(db.NVARCHAR(32), db.ForeignKey("players.player_id"))
+    name = db.Column(db.String(32))
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
-    difficulty_id = db.Column(
-        db.Integer, db.ForeignKey("difficulty.id"), default=1)
 
 
 class Players(db.Model):
@@ -65,8 +61,7 @@ class Players(db.Model):
     """
 
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey(
-        "games.game_id"), nullable=False)
+    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False)
     state = db.Column(db.String(32), nullable=False)
 
     game = db.relationship("Games", back_populates="players")
@@ -82,7 +77,6 @@ class MulitPlayer(db.Model):
     )
     player_1 = db.Column(db.NVARCHAR(32))
     player_2 = db.Column(db.NVARCHAR(32))
-    pair_id = db.Column(db.NVARCHAR(32))
 
     game = db.relationship("Games", back_populates="mulitplay")
 
@@ -97,8 +91,6 @@ class Labels(db.Model):
 
     english = db.Column(db.String(32), primary_key=True)
     norwegian = db.Column(db.String(32))
-    difficulty_id = db.Column(
-        db.Integer, db.ForeignKey("difficulty.id"), default=1)
 
 
 class User(db.Model):
@@ -110,53 +102,7 @@ class User(db.Model):
     password = db.Column(db.String(256))
 
 
-class Difficulty(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    difficulty = db.Column(db.String(32), nullable=False)
-
-
-class LabelSuccess(db.Model):
-    """
-        Model to keep track of success rates on each label
-    """
-    attempt_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(32), db.ForeignKey("labels.english"))
-    is_success = db.Column(db.Boolean)
-    attempt_time = db.Column(db.DateTime)
-
-    def get_success_rates_query():
-        return """
-                SELECT
-                    label,
-                CAST(SUM(CAST(is_success AS INT)) AS FLOAT) / COUNT(*) AS success_rate
-                FROM
-                    label_success
-                GROUP BY
-                    label
-                ORDER BY
-                    success_rate
-                DESC
-                """
-
-    def insert_mock_data_query(label: str, is_success: bool):
-        return f"""
-                INSERT INTO
-                    label_success (label, is_success, attempt_time)
-                VALUES
-                    ('{label}', {is_success}, GETDATE())
-                """
-
-
-class ExampleImages(db.Model):
-    """
-        Model for storing example image urls that the model has predicted correctly.
-    """
-    image = db.Column(db.String(256), primary_key=True)
-    label = db.Column(db.String(32), db.ForeignKey("labels.english"))
-
 # Functions to manipulate the tables above
-
-
 def create_tables(app):
     """
         The tables will be created if they do not already exist.
@@ -167,27 +113,7 @@ def create_tables(app):
     return True
 
 
-def populate_difficulty(app):
-    """
-        Insert values into Difficulty table.
-    """
-    with app.app_context():
-        if Difficulty.query.count() == 0:
-            try:
-                difficulty = Difficulty(difficulty="easy")
-                db.session.add(difficulty)
-                difficulty = Difficulty(difficulty="medium")
-                db.session.add(difficulty)
-                difficulty = Difficulty(difficulty="hard")
-                db.session.add(difficulty)
-                db.session.commit()
-                return True
-            except Exception as e:
-                raise Exception(
-                    "Could not insert into Difficulty table: " + str(e))
-
-
-def insert_into_games(game_id, labels, date, difficulty_id):
+def insert_into_games(game_id, labels, date):
     """
         Insert values into Games table.
 
@@ -203,8 +129,7 @@ def insert_into_games(game_id, labels, date, difficulty_id):
     ):
 
         try:
-            game = Games(game_id=game_id, labels=labels,
-                         date=date, difficulty_id=difficulty_id)
+            game = Games(game_id=game_id, labels=labels, date=date)
             db.session.add(game)
             db.session.commit()
             return True
@@ -217,44 +142,24 @@ def insert_into_games(game_id, labels, date, difficulty_id):
         )
 
 
-def insert_into_label_success(
-        label: str,
-        is_success: bool,
-        date: datetime.datetime):
-    if (isinstance(label, str) and isinstance(is_success, bool)
-            and isinstance(date, datetime.datetime)):
-        try:
-            label_success = LabelSuccess(
-                label=label, is_success=is_success, attempt_time=date)
-            db.session.add(label_success)
-            db.session.commit()
-            return True
-        except Exception as e:
-            raise Exception("Could not insert label success:" + str(e))
-    else:
-        raise excp.BadRequest("Bad request")
-
-
-def insert_into_scores(player_id, score, date, difficulty_id):
+def insert_into_scores(name, score, date):
     """
         Insert values into Scores table.
 
         Parameters:
-        player_id: player id, string
+        name: user name, string
         score: float
         date: datetime.date
     """
     score_int_or_float = isinstance(score, float) or isinstance(score, int)
 
     if (
-        isinstance(player_id, str)
+        isinstance(name, str)
         and score_int_or_float
         and isinstance(date, datetime.date)
-        and isinstance(difficulty_id, int)
     ):
         try:
-            score = Scores(player_id=player_id, score=score,
-                           date=date, difficulty_id=difficulty_id)
+            score = Scores(name=name, score=score, date=date)
             db.session.add(score)
             db.session.commit()
             return True
@@ -263,7 +168,8 @@ def insert_into_scores(player_id, score, date, difficulty_id):
     else:
         raise excp.BadRequest(
             "Name has to be string, score can be int or "
-            "float, difficulty_id has to be an integer 1-4 and date has to be datetime.date.")
+            "float and date has to be datetime.date."
+        )
 
 
 def get_iteration_name():
@@ -427,7 +333,7 @@ def delete_old_games():
         raise Exception("Couldn't clean up old game records: " + str(e))
 
 
-def get_daily_high_score(difficulty_id):
+def get_daily_high_score():
     """
         Function for reading all daily scores.
 
@@ -437,14 +343,14 @@ def get_daily_high_score(difficulty_id):
         today = datetime.date.today()
         # filter by today and sort by score
         top_n_list = (
-            Scores.query.filter_by(date=today, difficulty_id=difficulty_id)
+            Scores.query.filter_by(date=today)
             .order_by(Scores.score.desc())
             .all()
         )
         # structure data
         new = [
-            {"id": score.score_id, "score": score.score}
-            for score in top_n_list
+            {"name": player.name, "score": player.score}
+            for player in top_n_list
         ]
         return new
 
@@ -454,7 +360,7 @@ def get_daily_high_score(difficulty_id):
         )
 
 
-def get_top_n_high_score_list(top_n, difficulty_id):
+def get_top_n_high_score_list(top_n):
     """
         Funtion for reading total top n list from database.
 
@@ -465,13 +371,12 @@ def get_top_n_high_score_list(top_n, difficulty_id):
     try:
         # read top n high scores
         top_n_list = (
-            Scores.query.filter_by(difficulty_id=difficulty_id).order_by(
-                Scores.score.desc()).limit(top_n).all()
+            Scores.query.order_by(Scores.score.desc()).limit(top_n).all()
         )
         # strucutre data
         new = [
-            {"id": score.score_id, "score": score.score}
-            for score in top_n_list
+            {"name": player.name, "score": player.score}
+            for player in top_n_list
         ]
         return new
 
@@ -510,7 +415,7 @@ def seed_labels(app, filepath):
                     for row in readCSV:
                         # Insert label into Labels table if not present
                         if Labels.query.get(row[0]) is None:
-                            insert_into_labels(row[0], row[1], row[2])
+                            insert_into_labels(row[0], row[1])
                 except AttributeError as e:
                     raise AttributeError(
                         "Could not insert into Labels table: " + str(e)
@@ -519,16 +424,13 @@ def seed_labels(app, filepath):
             raise AttributeError("File path not found")
 
 
-def insert_into_labels(english, norwegian, difficulty_id):
+def insert_into_labels(english, norwegian):
     """
         Insert values into Scores table.
     """
     if isinstance(english, str) and isinstance(norwegian, str):
         try:
-            label_row = Labels(
-                english=english,
-                norwegian=norwegian,
-                difficulty_id=difficulty_id)
+            label_row = Labels(english=english, norwegian=norwegian)
             db.session.add(label_row)
             db.session.commit()
             return True
@@ -538,34 +440,15 @@ def insert_into_labels(english, norwegian, difficulty_id):
         raise excp.BadRequest("English and norwegian must be strings")
 
 
-def get_n_labels(n, difficulty_id):
+def get_n_labels(n):
     """
         Reads all rows from database and chooses n random labels in a list.
     """
     try:
-
-        # get labels from three most recent games
-        games = Games.query.filter(
-            Games.difficulty_id <= difficulty_id,
-            difficulty_id
-            - Games.difficulty_id < 2).order_by(
-            Games.date.desc()).limit(3).all()
-        labels_to_filter = [
-            label for game in games for label in json.loads(game.labels)]
-
         # read all english labels in database
-        labels = Labels.query.filter(
-            Labels.difficulty_id <= difficulty_id).all()
+        labels = Labels.query.all()
         english_labels = [str(label.english) for label in labels]
-
-        minimum_labels = 6
-        for label in labels_to_filter:
-            if label in english_labels and len(
-                    english_labels) > minimum_labels:
-                english_labels.remove(label)
-
         random_list = random.sample(english_labels, n)
-
         return random_list
 
     except Exception as e:
@@ -579,19 +462,6 @@ def get_all_labels():
     try:
         # read all english labels in database
         labels = Labels.query.all()
-        return [str(label.english) for label in labels]
-
-    except Exception as e:
-        raise Exception("Could not read Labels table: " + str(e))
-
-
-def get_labels_with_difficulty(difficulty):
-    """
-        Reads all labels from database with the given difficulty.
-    """
-    try:
-        # read all english labels in database
-        labels = Labels.query.filter_by(difficulty_id=difficulty).all()
         return [str(label.english) for label in labels]
 
     except Exception as e:
@@ -613,89 +483,12 @@ def to_norwegian(english_label):
         )
 
 
-def to_english(norwegian_label):
-    """
-        Reads the labels table and return the english translation of the norwegian label
-    """
-    try:
-        query = Labels.query.filter(Labels.norwegian == norwegian_label)[0]
-        return str(query.english)
-
-    except AttributeError as e:
-        raise AttributeError(
-            "Could not find translation in Labels table: " + str(e)
-        )
-
-
 def get_translation_dict():
     """
         Reads all labels from database and create dictionary.
     """
     try:
         labels = Labels.query.all()
-        return dict([(str(label.english), str(label.norwegian))
-                    for label in labels])
+        return dict([(str(label.english), str(label.norwegian)) for label in labels])
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
-
-
-def delete_all_tables(app):
-    """
-        Function for deleting all tables in the database.
-        Can use if you need to reset the database after adding new columns
-    """
-    with app.app_context():
-        db.drop_all()
-    return True
-
-
-def insert_into_example_images(images, label):
-    """
-        Insert values into ExampleImages table.
-    """
-    if isinstance(images, list) and isinstance(label, str):
-        try:
-            for image in images:
-                example_image = ExampleImages(image=image, label=label)
-                db.session.add(example_image)
-            db.session.commit()
-        except Exception as e:
-            raise Exception(
-                "Could not insert into ExampleImages table: " + str(e))
-    else:
-        raise excp.BadRequest("Invalid type of parameters.")
-
-
-def get_n_random_example_images(label, number_of_images):
-    """
-        Returns n random example images for the given label.
-    """
-    try:
-        example_images = ExampleImages.query.filter_by(label=label).all()
-        selected_images = random.sample(
-            example_images, min(
-                number_of_images, len(example_images)))
-        images = [image.image for image in selected_images]
-        return images
-    except Exception as e:
-        raise Exception("Could not read ExampleImages table: " + str(e)
-                        )
-
-
-def populate_example_images(app):
-    """
-        Function for populating example images table with exported csv data. Used so you dont need to
-        run the prediction job twice
-    """
-    with app.app_context():
-        try:
-            # read all rows from safe_images.csv
-            with open("safe_images.csv") as csvfile:
-                readCSV = csv.reader(csvfile, delimiter=",")
-                for row in readCSV:
-                    example_image = ExampleImages(image=row[0], label=row[1])
-                    db.session.add(example_image)
-                db.session.commit()
-        except Exception as e:
-            raise Exception(
-                "Could not insert into ExampleImages table: " + str(e))
