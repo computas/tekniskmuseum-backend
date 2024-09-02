@@ -690,7 +690,9 @@ def populate_example_images(app):
     with app.app_context():
         try:
             # read all rows from safe_images.csv
-            with open("safe_images.csv") as csvfile:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            csv_file_path = os.path.join(base_dir, "..", "example_images.csv")
+            with open(csv_file_path) as csvfile:
                 readCSV = csv.reader(csvfile, delimiter=",")
                 for row in readCSV:
                     example_image = ExampleImages(image=row[0], label=row[1])
