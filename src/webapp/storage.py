@@ -12,6 +12,8 @@ from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
 from utilities.keys import Keys
 from utilities import setup
+import base64
+import random
 
 
 def save_image(image, label, certainty):
@@ -37,9 +39,13 @@ def save_image(image, label, certainty):
         blob.upload_blob(image)
         container_client = blob_connection()
         # update metadata in blob
-        image_count = int(
-            container_client.get_container_properties().metadata["image_count"]
-        )
+        try:
+            image_count = int(
+                container_client.get_container_properties(
+                ).metadata["image_count"]
+            )
+        except KeyError:
+            image_count = 0
         metadata = {"image_count": str(image_count + 1)}
         container_client.set_container_metadata(metadata=metadata)
     except Exception as e:
@@ -96,11 +102,11 @@ def image_count():
     return container_client.get_container_properties().metadata["image_count"]
 
 
-def blob_connection():
+def blob_connection(container_name=setup.CONTAINER_NAME_NEW):
     """
         Helper method for connection to blob service.
     """
-    container_name = setup.CONTAINER_NAME_NEW
+
     connect_str = Keys.get("BLOB_CONNECTION_STRING")
     try:
         # Instantiate a BlobServiceClient using a connection string
@@ -115,3 +121,58 @@ def blob_connection():
         raise Exception("Could not connect to blob client: " + str(e))
 
     return container_client
+
+
+def get_n_random_images_from_label(n, label):
+    """
+        Returns n random images from the blob storage container with the given label.
+    """
+    container_client = blob_connection(setup.CONTAINER_NAME_ORIGINAL)
+    blob_prefix = f"{label}/"
+    blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
+    selected_blobs = random.sample(blobs, min(n, len(blobs)))
+    images = []
+    for blob in selected_blobs:
+        blob_client = container_client.get_blob_client(blob)
+        image_data = blob_client.download_blob().readall()
+        decoded_image = image_to_data_url(
+            image_data, blob.content_settings.content_type)
+        images.append(decoded_image)
+    return images
+
+
+def image_to_data_url(image_data, content_type):
+    """
+        Converts image data to a data URL.
+    """
+    base64_image = base64.b64encode(image_data).decode('utf-8')
+    return f"data:{content_type};base64,{base64_image}"
+
+
+def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
+    """
+        Method for removing all images from a container.
+    """
+    container_client = blob_connection(container_name)
+    blobs = container_client.list_blobs()
+    for blob in blobs:
+        container_client.delete_blob(blob)
+    metadata = {"image_count": "0"}
+    container_client.set_container_metadata(metadata=metadata)
+    return True
+
+
+def get_images_from_relative_url(image_urls):
+    """
+        Returns a list of images from a list of relative URLs.
+    """
+    container_client = blob_connection(setup.CONTAINER_NAME_ORIGINAL)
+    images = []
+    for image in image_urls:
+        blob_client = container_client.get_blob_client(image)
+
+        image_data = blob_client.download_blob().readall()
+        decoded_image = image_to_data_url(
+            image_data, "application/octet-stream")
+        images.append(decoded_image)
+    return images

@@ -1,6 +1,6 @@
 {
     "CV_ENDPOINT": "https://example.cognitiveservices.azure.com/",
-    "CV_PREDICTION_ENDPOINT": "https://example-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/94ca4f89-f477-4649-a15b-e56715d950e1/classify/iterations/5b2486b9-c817-4075-b427-292076b7452d/image",
+    "CV_PREDICTION_ENDPOINT": "https://example-prediction.cognitiveservices.azure.com/",
     "CV_PROJECT_ID": "exampleid",
     "CV_TRAINING_KEY": "examplekey",
     "CV_PREDICTION_KEY": "examplekey",

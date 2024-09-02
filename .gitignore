@@ -1,8 +1,14 @@
 src/preprocessing/data/*
 src/preprocessing/images/*
-.vscode
+.idea
 *__pycache__*
 config.json
 *.pytest_cache*
 *.pyc
 *.swp
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+.venv
+venv
+src/record.log

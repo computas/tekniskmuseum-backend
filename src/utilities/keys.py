@@ -3,12 +3,13 @@
 """
 import os
 import json
+import sys
 
 ENVIRON = os.environ
-if "IS_PRODUCTION" in ENVIRON:
+if "IS_PRODUCTION" in ENVIRON or "TESTING" in ENVIRON:
     keys = ENVIRON
-elif os.path.isfile("./config.json"):
-    with open("./config.json") as configFile:
+elif os.path.isfile("config.json"):
+    with open("config.json") as configFile:
         keys = json.load(configFile)
     keys["IS_PRODUCTION"] = "false"
 else:
@@ -24,6 +25,7 @@ class Keys:
             return True
         else:
             return False
+
     def get(keyName):
         """
             Returns secret matching the key. Returns appropriate error message if key

@@ -14,11 +14,17 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 
 ### **Development**
 * Clone repository.
-* Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15).
+* Install the database [driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15). Download version 17.
+* Create virtual enviroment: `python3 -m venv venv`
+* Activate virtual enviroment: `source venv/bin/activate`
 * Install python requirements with pip: `pip install -r requirements.txt`.
 * Save the secret keys as a json object in: `src/config.json`.
-* Run script: `bash startapp.sh -d`to run the app locally.
-* Use `bash startapp.sh` in production.
+1. Head to portal.azure.com
+2. Enter *KunstigeJens-Dev*
+3. Under resources, go to *tekniskmuseumbackendsingleplayer-dev*
+4. On the left column under settings, click *Environment variables*
+5. Copy all the variables to the config file.
+* Run script: `bash startapp.sh`to run the app (For windows users: Run this in a WSL shell).
 
 ### **Tests**
 #### Run the tests with the following command:
@@ -28,6 +34,61 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 
 All python requirements should be included in `requirements.txt`, and can be installed by running
 * `pip install -r requirements.txt`
+
+## Debugging
+
+There is a launch configuration in .vscode/launch.json that launches the app backend with debugpy. This is super helpful with debugging as you can set breakpoints and inspect variables etc. during runtime. 
+
+**What you probably need to change is the "program" field to the path of your own gunicorn bin file.**
+
+## Format & lint
+Also in .vscode there is a tasks.json file that includes a task for formatting & linting which you should regularly do. The task uses autopep8 and flake8 using the .flake8 configuration files in the repo.
+
+## **Migration of Images and Training the Model**
+
+The backend is setup with scripts to use the image data from the QuickDraw dataset and process this. This includes transforming the image format from ndjson to png, uploading them to azure blob storage, and after that uploading it to Azure CustomVision for training.
+
+This also assumes that both Azure Blob Storage and Azure CustomVision is already setup and running.
+
+### **Downloading the dataset from Quickdraw and uploading it to blob storage**
+
+1. Downloading the dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. 
+
+Note that the entire dataset is around ~22GB. More info on the dataset can be found on the [Github page](https://github.com/googlecreativelab/quickdraw-dataset#get-the-data).
+
+Migrating the data to the Blob Storage is done in `src/preprocessing/data_migration.py`. This script uses the library *cairocffi* to transform the image vectors into pngs. This also requires to have *Cairo* Downloaded on the machine running the script. It is recommended to install this on either macOS or WSL.
+
+
+2. Instructions for WSL/Ubuntu and macOS. 
+    - On Ubuntu, run `sudo apt install libcairo2-dev pkg-config python3-dev`
+    - On macOS/Homebrew, run `brew install cairo pkg-config`
+
+While it is not the same python library, the documentation for [pycairo](https://pycairo.readthedocs.io/en/latest/getting_started.html) has some notes on installing Cairo.
+
+3. Install the *cairocffi* package with `pip install cairocffi`
+
+4. Open `transfer.sh` from in the src folder, and type in the words you want to migrate to the blob storage
+
+5. Run `bash transfer.sh` from the src folder once the script is read
+
+Assuming everything runs without errors, the images should now be in the blob storage
+
+### **Uploading the data to Azure CustomVision and training an iteration of the classification model**
+
+There is not a specific script to do this step, but both functions are ready for use in `src/customvision/classifier.py`. The classifier class is also initizalied in `src/webapp/api.py`, meaning the data can be uploaded and trained on there.
+
+1. Add the lines for uploading images to api.py, so it looks something like the code below. "labels" is the list of labels to be trained on, e.g. ["airplane", "apple", "ant"]
+
+        # Initialize CV classifier
+        classifier = Classifier()
+        classifier.upload_images(labels, "oldimgcontainer")
+
+2. Run `startapp.sh` once, assuming the images gets uploaded without error, the upload_images line should be removed before running `startapp.sh` again later.
+
+3. Go to [customvision.ai](customvision.ai), and click on the `Train` button in the top right after entering the correct project. For most use cases, `Quick Training` can be chosen here.
+
+
+
 
 ## **Conventions and Rules**
 
