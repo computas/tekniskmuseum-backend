@@ -550,8 +550,11 @@ def get_n_labels(n, difficulty_id):
             difficulty_id
             - Games.difficulty_id < 2).order_by(
             Games.date.desc()).limit(3).all()
-        labels_to_filter = [
-            label for game in games for label in json.loads(game.labels)]
+
+        if not games:
+            labels_to_filter = []
+        else:
+            labels_to_filter = [label for game in games for label in json.loads(game.labels)]
 
         # read all english labels in database
         labels = Labels.query.filter(
