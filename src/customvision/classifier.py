@@ -24,7 +24,6 @@ from azure.cognitiveservices.vision.customvision.training import (
 from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateEntry,
     CustomVisionErrorException,
-    ImageUrlCreateBatch
 )
 
 from utilities.keys import Keys
@@ -51,7 +50,6 @@ class Classifier:
             None
         """
         self.ENDPOINT = Keys.get("CV_ENDPOINT")
-        self.PREDICTION_ENDPOINT = Keys.get("CV_PREDICTION_ENDPOINT")
         self.project_id = Keys.get("CV_PROJECT_ID")
         self.prediction_key = Keys.get("CV_PREDICTION_KEY")
         self.training_key = Keys.get("CV_TRAINING_KEY")
@@ -62,7 +60,7 @@ class Classifier:
             in_headers={"Prediction-key": self.prediction_key}
         )
         self.predictor = CustomVisionPredictionClient(
-            self.PREDICTION_ENDPOINT, self.prediction_credentials
+            self.ENDPOINT, self.prediction_credentials
         )
         self.training_credentials = ApiKeyCredentials(
             in_headers={"Training-key": self.training_key}
@@ -81,7 +79,7 @@ class Classifier:
             puplished_iterations = [
                 iteration
                 for iteration in iterations
-                if iteration.publish_name is not None
+                if iteration.publish_name != None
             ]
             # get the latest published iteration
             puplished_iterations.sort(key=lambda i: i.created)
@@ -92,6 +90,7 @@ class Classifier:
         except Exception as e:
             logging.info(e)
             self.iteration_name = "iteration1"
+
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -107,11 +106,8 @@ class Classifier:
         with api.app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
-            project_id=self.project_id,
-            published_name=self.iteration_name,
-            url=img_url,
-            custom_headers={
-                "Prediction-Key": self.prediction_key})
+            self.project_id, self.iteration_name, img_url
+        )
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
 
@@ -137,8 +133,7 @@ class Classifier:
         res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
-        # reset the file head such that it does not affect the state of the
-        # file handle
+        # reset the file head such that it does not affect the state of the file handle
         img.seek(0)
         pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
         best_guess = max(pred_kv, key=pred_kv.get)
@@ -160,18 +155,10 @@ class Classifier:
             best_guess: (str): name of the label with highest probability)
         """
 
-        headers = {'content-type': 'application/octet-stream',
-                   "prediction-key": self.prediction_key}
-        res = self.predictor.classify_image(
-            self.project_id,
-            self.iteration_name,
-            img.read(),
-            custom_headers=headers)
-        # res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
-
+        headers = {'content-type': 'application/octet-stream', "prediction-key": self.prediction_key}
+        res = requests.post(Keys.get("CV_PREDICTION_ENDPOINT"), img.read(), headers=headers).json()
         img.seek(0)
-        # pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
-        pred_kv = dict([(i.tag_name, i.probability) for i in res.predictions])
+        pred_kv = dict([(i["tagName"], i["probability"]) for i in res["predictions"]])
         best_guess = max(pred_kv, key=pred_kv.get)
         return pred_kv, best_guess
 
@@ -180,7 +167,7 @@ class Classifier:
             Helper method used by upload_images() to upload URL chunks of 64, which is maximum chunk size in Azure Custom Vision.
         """
         for i in range(0, len(lst), n):
-            yield lst[i: i + n]
+            yield lst[i : i + n]
 
     def upload_images(self, labels: List, container_name) -> None:
         """
@@ -248,7 +235,7 @@ class Classifier:
         error_messages = set()
         for url_chunk in chunks:
             upload_result = self.trainer.create_images_from_urls(
-                self.project_id, batch=ImageUrlCreateBatch(images=url_chunk)
+                self.project_id, images=url_chunk
             )
             if not upload_result.is_batch_successful:
                 for image in upload_result.images:
@@ -359,17 +346,6 @@ class Classifier:
         except Exception as e:
             raise Exception("Could not delete all images: " + str(e))
 
-    def delete_all_tags(self) -> None:
-        """
-            Function for deleting all tags in Custom Vision.
-        """
-        try:
-            tags = self.trainer.get_tags(self.project_id)
-            for tag in tags:
-                self.trainer.delete_tag(self.project_id, tag.id)
-        except Exception as e:
-            raise Exception("Could not delete all tags" + str(e))
-
     def retrain(self):
         """
             Train model on all labels and update iteration.
@@ -405,34 +381,6 @@ class Classifier:
             print(e, "exiting...")
             raise excp.BadRequest(msg)
 
-    def classify_images_by_label(self, label, number_of_examples):
-        """
-            Classifies images by label and returns a list of correctly classified images.
-        """
-        # Load the blob service client
-        container_client = self.blob_service_client.get_container_client(
-            setup.CONTAINER_NAME_ORIGINAL)
-
-        blob_prefix = f"{label}/"
-
-        # List all blobs in the container
-        blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
-
-        # List to store correctly classified images
-        images = []
-        for blob in blobs:
-            blob_client = container_client.get_blob_client(blob)
-            image_url = blob_client.url
-
-            pred_kv, best_guess = self.predict_image_url(image_url)
-
-            if pred_kv[best_guess] > 0.7:
-                images.append(blob["name"])
-            # Check if the image is classified correctly
-            if len(images) >= number_of_examples:
-                return images
-        return images
-
 
 def main():
     """
@@ -441,29 +389,24 @@ def main():
         -no more than two projects created in Azure Custom Vision
         -no more than 10 iterations done in one projectS
     """
-    test_url = "https://i.imgur.com/PamZxsc.png"
+    test_url = "https://newdataset.blob.core.windows.net/oldimgcontainer/old/airplane/4554736336371712.png"
 
     classifier = Classifier()
-
-    # classifier.upload_images(["belt", "apple", "airplane"], "oldimgcontainer")
-
-    # classifier.train(["belt", "apple", "airplane"])
 
     # classify image with URL reference
     result, best_guess = classifier.predict_image_url(test_url)
     print(f"url result:\n{best_guess} url result {result}")
 
     # classify image
-    with open("./preprocessing/images/airplane/4554736336371712.png", "rb") as f:
-        # result, best_guess = classifier.predict_image(f)
-        result = classifier.predict_image_by_post(f)
+    with open("../data/cv_testfile.png", "rb") as f:
+        result, best_guess = classifier.predict_image(f)
         print(f"png result:\n{result}")
 
-    # with api.app.app_context():
-    #    labels = models.get_all_labels()
+    with api.app.app_context():
+        labels = models.get_all_labels()
 
-    # classifier.upload_images(labels, "old")
-    # classifier.train(labels)
+    classifier.upload_images(labels, "old")
+    classifier.train(labels)
 
 
 if __name__ == "__main__":

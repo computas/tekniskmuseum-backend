@@ -1,15 +1,29 @@
 import os
 import io
+import sys
+import pytest
 import werkzeug
 import tempfile
+import datetime
 from flask import json
 from pytest import raises
 from webapp import api
 from webapp import models
+from test import test_db
+from test import config as cfg
 from utilities import setup
 from werkzeug import exceptions as excp
 from PIL import Image
-from test.conftest import TestValues, get_data_folder_path
+
+
+@pytest.fixture
+def client():
+    """
+        Pytest fixture which configures application for testing.
+    """
+    api.app.config["TESTING"] = True
+    with api.app.test_client() as client:
+        yield client
 
 
 def test_root_example(client):
@@ -27,16 +41,16 @@ def test_start_game_wrong_request(client):
     """
     # send request to test client with empty dictionary
     res = client.post("/startGame", data=dict())
-    assert (b"405 Method Not Allowed" in res.data)
+    assert(b"405 Method Not Allowed" in res.data)
 
 
 def test_start_game_correct(client):
     """
         Ensure that the API doesn't return error when sumitting a GET request.
     """
-    res = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res = client.get("/startGame", data=dict())
     # Ensure that the returned dictionary contains a player_id
-    assert (b"player_id" in res.data)
+    assert(b"player_id" in res.data)
 
 
 def test_classify_wrong_request(client):
@@ -47,7 +61,7 @@ def test_classify_wrong_request(client):
     # Submit GET request
     res = client.get("/classify")
     # Should give error since POST is required
-    assert (b"405 Method Not Allowed" in res.data)
+    assert(b"405 Method Not Allowed" in res.data)
 
 
 def test_classify_no_image(client):
@@ -74,7 +88,7 @@ def test_classify_wrong_image(client):
     player_id, user = "", ""
     # Submit answer with the given parameters and get results
     res = classify_helper(
-        client, TestValues.API_IMAGE1, time, player_id, user
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE1, time, player_id, user
     )
     assert b"415 Unsupported Media Type" in res.data
 
@@ -87,20 +101,20 @@ def test_classify_white_image_data(client):
     time = 0
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res1 = client.get("/startGame")
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_IMAGE5, time, token, user
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
-    assert (res.status == "200 OK")
+    assert(res.status == "200 OK")
     data = json.loads(res.data.decode("utf-8"))
-    assert ("certainty" in data)
-    assert ("guess" in data)
-    assert ("correctLabel" in data)
-    assert ("hasWon" in data)
-    assert ("gameState" in data)
+    assert("certainty" in data)
+    assert("guess" in data)
+    assert("correctLabel" in data)
+    assert("hasWon" in data)
+    assert("gameState" in data)
 
 
 def test_classify_white_image_done(client):
@@ -111,15 +125,15 @@ def test_classify_white_image_done(client):
     time = 0
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res1 = client.get("/startGame")
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_IMAGE5, time, token, user
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
-    assert (data["gameState"] == "Done")
+    assert(data["gameState"] == "Done")
 
 
 def test_classify_white_image_not_done(client):
@@ -130,15 +144,15 @@ def test_classify_white_image_not_done(client):
     time = 1
     user = ""
     # Need to start a new game to get a token we can submit
-    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res1 = client.get("/startGame")
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     token = response["player_id"]
     res = classify_helper(
-        client, TestValues.API_IMAGE5, time, token, user
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE5, time, token, user
     )
     data = json.loads(res.data.decode("utf-8"))
-    assert (data["gameState"] == "Playing")
+    assert(data["gameState"] == "Playing")
 
 
 def test_classify_correct(client):
@@ -150,22 +164,22 @@ def test_classify_correct(client):
     name = "testing_api"
     time = 0
     # Need to start a new game to get a player_id we can submit
-    res1 = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res1 = client.get("/startGame")
     res1 = res1.data.decode("utf-8")
     response = json.loads(res1)
     player_id = response["player_id"]
     # submit answer with parameters and retrieve results
     res = classify_helper(
-        client, TestValues.API_IMAGE4, time, player_id, name
+        client, cfg.API_PATH_DATA, cfg.API_IMAGE4, time, player_id, name
     )
     # Check if the correct response data is returned
     data = json.loads(res.data.decode("utf-8"))
-    assert (isinstance(data, dict))
+    assert(isinstance(data, dict))
     # Check if the correct keys are included
-    assert ("certainty" in data)
-    assert ("hasWon" in data)
+    assert("certainty" in data)
+    assert("hasWon" in data)
     # Check if 200 is returned
-    assert (res.status_code == 200)
+    assert(res.status_code == 200)
 
 
 def test_allowedFile_small_resolution():
@@ -176,7 +190,7 @@ def test_allowedFile_small_resolution():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(TestValues.API_IMAGE1, False, "image/png")
+        allowed_file_helper(cfg.API_IMAGE1, False, "image/png")
 
 
 def test_allowedFile_too_large_file():
@@ -187,7 +201,7 @@ def test_allowedFile_too_large_file():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(TestValues.API_IMAGE2, False, "image/png")
+        allowed_file_helper(cfg.API_IMAGE2, False, "image/png")
 
 
 def test_allowedFile_wrong_format():
@@ -198,7 +212,7 @@ def test_allowedFile_wrong_format():
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'false'.
     with raises(excp.UnsupportedMediaType):
-        allowed_file_helper(TestValues.API_IMAGE3, False, "image/jpeg")
+        allowed_file_helper(cfg.API_IMAGE3, False, "image/jpeg")
 
 
 def test_allowedFile_correct():
@@ -208,15 +222,17 @@ def test_allowedFile_correct():
     """
     # Test the allowedFile function with the given filename.
     # The allowedFile function should return 'true'.
-    allowed_file_helper(TestValues.API_IMAGE4, True, "image/png")
+    allowed_file_helper(cfg.API_IMAGE4, True, "image/png")
 
 
 def allowed_file_helper(filename, expected_result, content_type):
     """
         Helper function for the allowedFile function tests.
     """
+    # Construct path to the directory with the images
+    dir_path = construct_path(cfg.API_PATH_DATA)
     # The path is only valid if the program runs from the src directory
-    path = os.path.join(get_data_folder_path(), filename)
+    path = os.path.join(dir_path, filename)
     with open(path, "rb") as f:
         data_stream = f.read()
         # Create temporary file and reset seek to avoid EOF errors
@@ -230,7 +246,7 @@ def allowed_file_helper(filename, expected_result, content_type):
         return api.allowed_file(image)
 
 
-def classify_helper(client, image, time, player_id, user):
+def classify_helper(client, data_path, image, time, player_id, user):
     """
         Helper function which sends post request to client on /classify.
         The function returns the response given from the client
@@ -243,13 +259,13 @@ def classify_helper(client, image, time, player_id, user):
         user: username of the player
     """
     # Construct path to the directory storing the test data
-    path = os.path.join(get_data_folder_path(), image)
+    dir_path = construct_path(data_path)
+    path = os.path.join(dir_path, image)
     # Open image and retrieve bytes stream
     with open(path, "rb") as f:
         img_string = io.BytesIO(f.read())
 
     answer = {
-        "lang": "NO",
         "image": (img_string, image),
         "player_id": player_id,
         "time": time
@@ -281,15 +297,15 @@ def test_view_highscore(client):
         "total":[{"name":"ole","score":105},{"name":"mari","score":83}]}
     """
     # get response
-    res = client.get("/viewHighScore", query_string=dict(difficulty_id=1))
+    res = client.get("/viewHighScore")
     response = json.loads(res.data)
-    # check that data structure is correct
+    #check that data structure is correct
     if response["total"]:
-        assert (isinstance(response, dict))
-        assert (isinstance(response["daily"], list))
-        assert (isinstance(response["total"], list))
-        assert (isinstance(response["daily"][0], dict))
-        assert (isinstance(response["total"][0], dict))
+        assert(isinstance(response, dict))
+        assert(isinstance(response["daily"], list))
+        assert(isinstance(response["total"], list))
+        assert(isinstance(response["daily"][0], dict))
+        assert(isinstance(response["total"][0], dict))
 
 
 def test_white_image_true():
@@ -297,10 +313,11 @@ def test_white_image_true():
         Test if the white_image function returns True if the image is
         completely white.
     """
-    path = os.path.join(get_data_folder_path(), TestValues.API_IMAGE5)
+    dir_path = construct_path(cfg.API_PATH_DATA)
+    path = os.path.join(dir_path, cfg.API_IMAGE5)
     img = Image.open(path)
     white = api.white_image(img)
-    assert (white is True)
+    assert(white is True)
 
 
 def test_white_image_false():
@@ -308,10 +325,11 @@ def test_white_image_false():
         Test if the white_image function returns False if the image isn't
         compeltely white.
     """
-    path = os.path.join(get_data_folder_path(), TestValues.API_IMAGE6)
+    dir_path = construct_path(cfg.API_PATH_DATA)
+    path = os.path.join(dir_path, cfg.API_IMAGE1)
     img = Image.open(path)
     white = api.white_image(img)
-    assert (white is False)
+    assert(white is False)
 
 
 def test_white_image_data_keys():
@@ -321,12 +339,12 @@ def test_white_image_data_keys():
     """
     data, code = api.white_image_data("", 1, "game_id", "player_id")
     json_data = json.loads(data)
-    assert ("certainty" in json_data)
-    assert ("guess" in json_data)
-    assert ("correctLabel" in json_data)
-    assert ("hasWon" in json_data)
-    assert ("gameState" in json_data)
-    assert (code == 200)
+    assert("certainty" in json_data)
+    assert("guess" in json_data)
+    assert("correctLabel" in json_data)
+    assert("hasWon" in json_data)
+    assert("gameState" in json_data)
+    assert(code == 200)
 
 
 def test_white_image_data_playing():
@@ -337,11 +355,11 @@ def test_white_image_data_playing():
     label = ""
     data, code = api.white_image_data(label, 1, "game_id", "player_id")
     json_data = json.loads(data)
-    assert (json_data["gameState"] == "Playing")
-    assert (json_data["correctLabel"] == label)
-    assert (json_data["hasWon"] is False)
-    assert (json_data["certainty"] == 1.0)
-    assert (json_data["guess"] == setup.WHITE_IMAGE_GUESS)
+    assert(json_data["gameState"] == "Playing")
+    assert(json_data["correctLabel"] == label)
+    assert(json_data["hasWon"] is False)
+    assert(json_data["certainty"] == 1.0)
+    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
 
 
 def test_white_image_data_done(client):
@@ -349,14 +367,14 @@ def test_white_image_data_done(client):
         Test if the white_image_data function returns the correct data and
         that state is "done" when time_left parameter is zero.
     """
-    res = client.get("/startGame", query_string=dict(difficulty_id=1))
+    res = client.get("/startGame")
     player_id = json.loads(res.data)["player_id"]
     game_id = models.get_player(player_id).game_id
     label = ""
     data, code = api.white_image_data(label, 0, game_id, player_id)
     json_data = json.loads(data)
-    assert (json_data["gameState"] == "Done")
-    assert (json_data["correctLabel"] == label)
-    assert (json_data["hasWon"] is False)
-    assert (json_data["certainty"] == 1.0)
-    assert (json_data["guess"] == setup.WHITE_IMAGE_GUESS)
+    assert(json_data["gameState"] == "Done")
+    assert(json_data["correctLabel"] == label)
+    assert(json_data["hasWon"] is False)
+    assert(json_data["certainty"] == 1.0)
+    assert(json_data["guess"] == setup.WHITE_IMAGE_GUESS)
