@@ -69,6 +69,13 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_53391EB7A9264C4ABD8BB27CEEA88D5E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_56D14C87D80442F0A11F978597BDB729 }}
 
+      - name: Set up Azure DB credentials
+        run: echo "AZURE_DATABASE_URI=${{ secrets.AZURE_DATABASE_URI}}" >> $GITHUB_ENV
+
+      - name: Update and migrate newest database model if necessary
+        run: |
+              echo "HEllo"
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
