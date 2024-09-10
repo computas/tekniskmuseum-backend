@@ -32,6 +32,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
 from utilities.keys import Keys
+from flask_migrate import Migrate
 
 # Initialization app
 app = Flask(__name__)
@@ -71,6 +72,8 @@ try:
 except Exception:
     #error is raised by handle_exception()
     print("Error when contacting DB in Azure")
+
+migrate = Migrate(app, models.db)
     
 
 # Initialize CV classifier
