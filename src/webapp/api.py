@@ -23,7 +23,7 @@ from webapp import storage
 from webapp import models
 from utilities import setup
 from customvision.classifier import Classifier
-from flask import Flask
+from flask import Flask, current_app
 from flask import request
 from flask import session
 from flask_sqlalchemy import SQLAlchemy
@@ -32,66 +32,24 @@ from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
 from utilities.keys import Keys
-from flask_migrate import Migrate
+from flask import Blueprint
 
-# Initialization app
-app = Flask(__name__)
-if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app,
-                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
-                                   "supports_credentials": True}})
-else:
-    cors = CORS(app, resources={
-                r"/*": {"origins": "*", "supports_credentials": True}})
-app.config.from_object("utilities.setup.Flask_config")
 
-#Config logging
-logging.basicConfig(filename='record.log', level=logging.INFO, filemode="w", format="%(asctime)s %(levelname)s %(message)s")
-log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
-
-#max file size 4 MB
-handler = RotatingFileHandler(
-    filename='record.log',
-    maxBytes=4 * 1024 * 1024,
-    backupCount=5
-)
-
-app.logger.addHandler(handler)
-
-try:
-    # Set up DB and models
-    models.db.init_app(app)
-    models.create_tables(app)
-    models.populate_difficulty(app)
-    # Point to correct CSV file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_file_path = os.path.join(base_dir, "..", "dict_eng_to_nor_difficulties_v2.csv")
-    models.seed_labels(app, csv_file_path)
-    app.logger.info("Backend was able to communicate with DB. ")
-
-except Exception:
-    #error is raised by handle_exception()
-    print("Error when contacting DB in Azure")
-
-migrate = Migrate(app, models.db)
-    
+singleplayer = Blueprint('singleplayer', __name__)
 
 # Initialize CV classifier
 classifier = Classifier()
 
-if __name__ != "__main__":
-    gunicorn_logger = logging.getLogger("gunicorn.error")
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
 
 
-@app.route("/")
+@singleplayer.route("/")
 def hello():
-    app.logger.info("We're up!")
+    current_app.logger.info("We're up!")
     return "Yes, we're up", 200
 
 
-@app.route("/startGame")
+@singleplayer.route("/startGame")
 def start_game():
     """
         Starts a new game by providing the client with a unique game id and player id.
@@ -113,7 +71,7 @@ def start_game():
     return json.dumps(data), 200
 
 
-@app.route("/getLabel", methods=["POST"])
+@singleplayer.route("/getLabel", methods=["POST"])
 def get_label():
     """
         Provides the client with a new word.
@@ -138,7 +96,7 @@ def get_label():
         return json.dumps(data), 200
 
 
-@app.route("/classify", methods=["POST"])
+@singleplayer.route("/classify", methods=["POST"])
 def classify():
     """
         Classify endpoint for continuous guesses.
@@ -158,7 +116,6 @@ def classify():
     time_left = float(request.values["time"])
     # Get label for game session
     player = models.get_player(player_id)
-
     clientRound = request.values.get("client_round_num", None)
     game = models.get_game(player.game_id)
     server_round = game.session_num
@@ -167,7 +124,6 @@ def classify():
             "Server-round number larger than request/client. Probably a request processed out of order")
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     certainty, best_guess = classifier.predict_image_by_post(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -213,11 +169,10 @@ def classify():
             "gameState": game_state,
             "serverRound": server_round,
         }
-
     return json.dumps(data), 200
 
 
-@app.route("/postScore", methods=["POST"])
+@singleplayer.route("/postScore", methods=["POST"])
 def post_score():
     """
         Endpoint for ending game consisting of NUM_GAMES sessions.
@@ -243,7 +198,7 @@ def post_score():
     return json.dumps({"success": "OK"}), 200
 
 
-@app.route("/viewHighScore")
+@singleplayer.route("/viewHighScore")
 def view_high_score():
     """
         Read highscore from database. Return top n of all time and daily high
@@ -263,7 +218,7 @@ def view_high_score():
     return json.dumps(data), 200
 
 
-@app.route("/getExampleDrawings", methods=["POST"])
+@singleplayer.route("/getExampleDrawings", methods=["POST"])
 def get_n_drawings_by_label():
     """
         Returns n images from the blob storage container with the given label.
@@ -280,7 +235,7 @@ def get_n_drawings_by_label():
     return json.dumps(images), 200
 
 
-@app.route("/auth", methods=["POST"])
+@singleplayer.route("/auth", methods=["POST"])
 def authenticate():
     """
         Endpoint for admin authentication. Returns encrypted cookie with login
@@ -299,7 +254,8 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
-@app.route("/admin/<action>", methods=["POST"])
+
+@singleplayer.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
     """
         Endpoint for admin actions. Requires authentication from /auth within
@@ -345,27 +301,28 @@ def admin_page(action):
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
-@app.route("/admin/logging")
+
+@singleplayer.route("/admin/logging")
 def get_error_logs():
     try:
         #is_authenticated()
-        path = base_dir.replace("webapp", "")
-        log_name = path + "record.log"
-
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        src_directory = os.path.dirname(current_directory)
+        log_file = os.path.join(src_directory, "record.log")
         data = []
-
-        for line in readlines_reverse(log_name):
+        for line in readlines_reverse(log_file):
             match = re.match(log_pattern, line)
             if match:
                 log_dict = match.groupdict()
                 data.append(log_dict)
-    
+
         return json.dumps(data), 200
     except Exception as e:
-        app.logger.error(f"Failed to read log file: {e}")
+        current_app.logger.error(f"Failed to read log file: {e}")
         return "Failed to read log file", 500
 
-@app.errorhandler(Exception)
+
+@singleplayer.errorhandler(Exception)
 def handle_exception(error):
     """
        Captures all exceptions raised. If the Exception is a HTTPException the
@@ -377,7 +334,7 @@ def handle_exception(error):
         if error.code >= 400 and error.code < 500:
             return error
     else:
-        app.logger.error(error)
+        current_app.logger.error(error)
         return json.dumps({"error": "Internal server error"}), 500
 
 

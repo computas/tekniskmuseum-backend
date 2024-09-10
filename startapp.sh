@@ -96,7 +96,7 @@ Number processing units: $ncores
 Number of workers: $nworkers"
 
 # Default settings and entry point to flask
-default_settings="--timeout=600 -w=$nworkers --chdir src/ webapp.api:app"
+default_settings="--timeout=600 -w=$nworkers --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
 
 if [[ $debug = true ]]; then

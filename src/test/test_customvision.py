@@ -2,6 +2,7 @@ import pytest
 import os
 from customvision.classifier import Classifier
 from test.conftest import TestValues, get_data_folder_path
+from flask import current_app as app
 
 
 @pytest.fixture
