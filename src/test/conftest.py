@@ -1,9 +1,11 @@
 import pytest
-from webapp.api import app, models
+from webapp.api import models
 import uuid
 import datetime
 from src.utilities.difficulties import DifficultyId
 import os
+from flask import current_app as app
+from main import create_app
 
 
 class TestValues:
@@ -34,11 +36,12 @@ class TestValues:
 
 @pytest.fixture(scope="session")
 def client():
+    app = create_app()
     app.config['TESTING'] = True
-    with app.test_client() as client:
-        with app.app_context():
-            pass
-        yield client
+
+    with app.app_context():
+        with app.test_client() as client:
+            yield client
 
 
 @pytest.fixture(scope="session")

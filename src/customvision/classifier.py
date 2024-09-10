@@ -10,7 +10,7 @@ import os
 from typing import Dict
 from typing import List
 from webapp import models
-from webapp import api
+from flask import current_app as app
 import requests
 from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
@@ -87,11 +87,11 @@ class Classifier:
             puplished_iterations.sort(key=lambda i: i.created)
             self.iteration_name = puplished_iterations[-1].publish_name
 
-            with api.app.app_context():
+            with app.app_context():
                 models.update_iteration_name(self.iteration_name)
         except Exception as e:
             logging.info(e)
-            self.iteration_name = "iteration1"
+            self.iteration_name = "Iteration5"
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -104,7 +104,7 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
-        with api.app.app_context():
+        with app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
             project_id=self.project_id,
@@ -132,7 +132,7 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
-        with api.app.app_context():
+        with app.app_context():
             self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
@@ -159,7 +159,7 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
-
+ 
         headers = {'content-type': 'application/octet-stream',
                    "prediction-key": self.prediction_key}
         res = self.predictor.classify_image(
@@ -345,7 +345,7 @@ class Classifier:
             iteration_name,
             self.prediction_resource_id,
         )
-        with api.app.app_context():
+        with app.app_context():
             self.iteration_name = models.update_iteration_name(iteration_name)
 
     def delete_all_images(self) -> None:
@@ -374,7 +374,7 @@ class Classifier:
         """
             Train model on all labels and update iteration.
         """
-        with api.app.app_context():
+        with app.app_context():
             labels = models.get_all_labels()
 
         self.upload_images(labels, setup.CONTAINER_NAME_NEW)
@@ -392,7 +392,7 @@ class Classifier:
             old images are deleted from custom vision before
             uploading original dataset.
         """
-        with api.app.app_context():
+        with app.app_context():
             labels = models.get_all_labels()
 
         # Wait 60 seconds to make sure all images are deleted in custom vision
