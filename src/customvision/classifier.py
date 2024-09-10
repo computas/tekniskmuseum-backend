@@ -159,7 +159,7 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
- 
+
         headers = {'content-type': 'application/octet-stream',
                    "prediction-key": self.prediction_key}
         res = self.predictor.classify_image(

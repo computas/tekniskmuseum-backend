@@ -688,16 +688,18 @@ def populate_example_images(app):
         run the prediction job twice
     """
     with app.app_context():
-        try:
-            # read all rows from safe_images.csv
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            csv_file_path = os.path.join(base_dir, "..", "example_images.csv")
-            with open(csv_file_path) as csvfile:
-                readCSV = csv.reader(csvfile, delimiter=",")
-                for row in readCSV:
-                    example_image = ExampleImages(image=row[0], label=row[1])
-                    db.session.add(example_image)
-                db.session.commit()
-        except Exception as e:
-            raise Exception(
-                "Could not insert into ExampleImages table: " + str(e))
+        if ExampleImages.query.count() == 0:
+            try:
+                # read all rows from safe_images.csv
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                csv_file_path = os.path.join(base_dir, "..", "example_images.csv")
+                with open(csv_file_path) as csvfile:
+                    readCSV = csv.reader(csvfile, delimiter=",")
+                    for row in readCSV:
+                        example_image = ExampleImages(image=row[0], label=row[1])
+                        db.session.add(example_image)
+                    db.session.commit()
+                    app.logger.info("Example_Images table was populated. ")
+            except Exception as e:
+                raise Exception(
+                    "Could not insert into ExampleImages table: " + str(e))

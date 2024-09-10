@@ -61,12 +61,11 @@ def create_app():
         models.create_tables(app)
         models.populate_difficulty(app)
         # Point to correct CSV file
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_file_path = os.path.join(base_dir, "..", "dict_eng_to_nor_difficulties_v2.csv")
+        webapp_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_file_path = os.path.join(webapp_dir, "dict_eng_to_nor_difficulties_v2.csv")
         models.seed_labels(app, csv_file_path)
         app.logger.info("Backend was able to communicate with DB. ")
         models.populate_example_images(app)
-        app.logger.info("Example_Images table was populated. ")
     except Exception:
         #error is raised by handle_exception()
         print("Error when contacting DB in Azure")
