@@ -24,6 +24,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
 from flask import Blueprint
+from flask_migrate import Migrate
 
 
 def create_app():
@@ -69,5 +70,7 @@ def create_app():
     except Exception:
         #error is raised by handle_exception()
         print("Error when contacting DB in Azure")
+    
+    migrate = Migrate(app, models.db)
 
     return app

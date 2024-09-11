@@ -51,7 +51,7 @@ class Scores(db.Model):
     """
 
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    player_id = db.Column(db.NVARCHAR(32), db.ForeignKey("players.player_id"))
+    player_id = db.Column(db.NVARCHAR(32), nullable=True)
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
     difficulty_id = db.Column(
@@ -108,7 +108,6 @@ class User(db.Model):
     """
     username = db.Column(db.String(64), primary_key=True)
     password = db.Column(db.String(256))
-
 
 class Difficulty(db.Model):
     id = db.Column(db.Integer, primary_key=True)
