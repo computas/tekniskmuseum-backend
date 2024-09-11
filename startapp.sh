@@ -69,6 +69,14 @@ runTests() {
     fi
 }
 
+migrate() {
+    printHeadline 'Migrating database if necessary'
+    export FLASK_APP=main
+    
+    flask db init
+    flask db migrate
+}
+
 # Parse flags
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -98,6 +106,8 @@ Number of workers: $nworkers"
 # Default settings and entry point to flask
 default_settings="--timeout=600 -w=$nworkers --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
+
+
 
 if [[ $debug = true ]]; then
     printHeadline red 'Debug mode'
