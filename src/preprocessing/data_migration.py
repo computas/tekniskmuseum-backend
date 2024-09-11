@@ -111,7 +111,7 @@ def get_images_from_class(className, N=100):
     """
         Retrieve images from the class provided.
     """
-    path = f"./preprocessing/data/{className}.ndjson"
+    path = f"./preprocessing/images/{className}.ndjson"
     lines = []
     with open(path) as f:
         while len(lines) < N:
@@ -129,7 +129,7 @@ def get_classnames():
         Retrieve class names.
     """
     classname = []
-    for file in os.listdir("./preprocessing/data"):
+    for file in os.listdir("./preprocessing/images"):
         if file.endswith(".ndjson"):
             classname.append(str(file)[:-7])
 
