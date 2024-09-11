@@ -69,13 +69,18 @@ runTests() {
     fi
 }
 
-migrate() {
-    printHeadline 'Migrating database if necessary'
-    export FLASK_APP=main
-    
+
+export FLASK_APP=main.py  # Replace with the entry point of your Flask app
+
+if [ ! -d "migrations" ]; then
+    echo "Initializing migrations directory..."
     flask db init
-    flask db migrate
-}
+fi
+
+flask db migrate -m "migration"
+flask db upgrade
+
+echo "Migration complete."
 
 # Parse flags
 while [[ "$#" -gt 0 ]]; do
