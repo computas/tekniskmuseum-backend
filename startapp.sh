@@ -78,7 +78,7 @@ if [ ! -d "migrations" ]; then
 fi
 
 flask db migrate -m "migration"
-flask db upgrade
+#flask db upgrade
 
 echo "Migration complete."
 
