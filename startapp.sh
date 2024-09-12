@@ -69,19 +69,6 @@ runTests() {
     fi
 }
 
-
-export FLASK_APP=main.py  # Replace with the entry point of your Flask app
-
-if [ ! -d "migrations" ]; then
-    echo "Initializing migrations directory..."
-    flask db init
-fi
-
-flask db migrate -m "migration"
-#flask db upgrade
-
-echo "Migration complete."
-
 # Parse flags
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -108,10 +95,22 @@ $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
 
+if [ ! -d "migrations" ]; then
+    echo "Initializing migrations directory..."
+    printHeadline 'Migrations'
+    flask db init
+fi
+
+flask db migrate -m "migration"
+#flask db upgrade
+
+echo "Migration complete."
+
 # Default settings and entry point to flask
 default_settings="--timeout=600 -w=$nworkers --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
 
+export FLASK_APP=main.py  # Replace with the entry point of your Flask app
 
 
 if [[ $debug = true ]]; then
