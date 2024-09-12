@@ -95,22 +95,32 @@ $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
 
-if [ ! -d "migrations" ]; then
-    echo "Initializing migrations directory..."
-    printHeadline 'Migrations'
+
+
+# Default settings and entry point to flask
+default_settings="--timeout=600 -w=1 --chdir src/ main:app"
+logfile='/home/LogFiles/flaskapp.log'
+
+# Database migration
+printHeadline 'Database Migration'
+export FLASK_APP=main.py  # Replace with the entry point of your Flask app
+
+# Initialize migrations folder if not initialized
+if [[ ! -d "migrations" ]]; then
+    echo "Initializing migration directory..."
     flask db init
 fi
 
-flask db migrate -m "migration"
-#flask db upgrade
+current_version=$(flask db current)  # Get the current migration version of the database
+latest_version=$(flask db heads)     # Get the latest migration version available
 
-echo "Migration complete."
-
-# Default settings and entry point to flask
-default_settings="--timeout=600 -w=$nworkers --chdir src/ main:app"
-logfile='/home/LogFiles/flaskapp.log'
-
-export FLASK_APP=main.py  # Replace with the entry point of your Flask app
+if [[ "$current_version" != "$latest_version" ]]; then
+    echo "New migration available. Running migration..."
+    flask db migrate -m "Auto migration via script"
+    #flask db upgrade
+else
+    echo "Database is up to date. No migration needed."
+fi
 
 
 if [[ $debug = true ]]; then
