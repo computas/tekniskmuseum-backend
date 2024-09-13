@@ -4,28 +4,26 @@
 """
 import datetime
 from src.utilities.difficulties import DifficultyId
-from webapp import api
-from webapp import models
+from src import models
 from pytest import raises
 from werkzeug import exceptions as excp
 import json
 from test.conftest import TestValues
-from flask import current_app as app
 
 
-def test_create_tables():
+def test_create_tables(app_instance):
     """
         Check that the tables exists.
     """
-    result = models.create_tables(app)
+    result = models.create_tables(app_instance)
     assert result
 
 
-def test_insert_into_games():
+def test_insert_into_games(app_instance):
     """
         Check that records exists in Games table after inserting.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.insert_into_games(
             str(TestValues.GAME_ID), json.dumps(TestValues.LABELS), TestValues.TODAY, TestValues.DIFFICULTY_ID
         )
@@ -33,11 +31,11 @@ def test_insert_into_games():
     assert result
 
 
-def test_insert_into_players():
+def test_insert_into_players(app_instance):
     """
         Check that record exists in PlayerInGame table after inserting.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.insert_into_players(
             TestValues.PLAYER_ID, TestValues.GAME_ID, TestValues.STATE
         )
@@ -45,11 +43,11 @@ def test_insert_into_players():
     assert result
 
 
-def test_insert_into_scores():
+def test_insert_into_scores(app_instance):
     """
         Check that records exists in Scores table after inserting.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.insert_into_scores(
             TestValues.PLAYER_ID, 500, TestValues.TODAY, TestValues.DIFFICULTY_ID)
 
@@ -95,33 +93,33 @@ def test_illegal_parameter_players():
         models.insert_into_players(100, 200, 11)
 
 
-def test_query_equals_insert_games():
+def test_query_equals_insert_games(app_instance):
     """
         Check that inserted record is the same as record catched by query.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_game(TestValues.GAME_ID)
 
     assert result.labels == json.dumps(TestValues.LABELS)    # Datetime assertion can't be done due to millisec differents
 
 
-def test_query_equals_insert_players():
+def test_query_equals_insert_players(app_instance):
     """
         Check that inserted record is the same as record catched by query.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_player(TestValues.PLAYER_ID)
 
     assert result.game_id == TestValues.GAME_ID
     assert result.state == TestValues.STATE
 
 
-def test_get_daily_high_score_sorted():
+def test_get_daily_high_score_sorted(app_instance):
     """
         Check that daily high score list is sorted.
     """
     # insert random data into db
-    with app.app_context():
+    with app_instance.app_context():
         for i in range(5):
             result = models.insert_into_scores(
                 TestValues.PLAYER_ID,
@@ -131,16 +129,16 @@ def test_get_daily_high_score_sorted():
             )
             assert result
 
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_daily_high_score(TestValues.DIFFICULTY_ID)
     sorting_check_helper(result)
 
 
-def test_get_top_n_high_score_list_sorted():
+def test_get_top_n_high_score_list_sorted(app_instance):
     """
         Check that total high score list is sorted.
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_top_n_high_score_list(10, TestValues.DIFFICULTY_ID)
 
     sorting_check_helper(result)
@@ -156,11 +154,11 @@ def sorting_check_helper(high_score_list):
         prev_score = player["score"]
 
 
-def test_get_daily_high_score_structure():
+def test_get_daily_high_score_structure(app_instance):
     """
         Check that highscore data has correct attributes: score and name
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_daily_high_score(TestValues.DIFFICULTY_ID)
 
     for player in result:
@@ -168,11 +166,11 @@ def test_get_daily_high_score_structure():
         assert "id" in player
 
 
-def test_get_top_n_high_score_list_structure():
+def test_get_top_n_high_score_list_structure(app_instance):
     """
         Check that highscore data has correct attributes: score and name
     """
-    with app.app_context():
+    with app_instance.app_context():
         result = models.get_top_n_high_score_list(10, TestValues.DIFFICULTY_ID)
 
     for player in result:
@@ -180,21 +178,21 @@ def test_get_top_n_high_score_list_structure():
         assert "id" in player
 
 
-def test_get_iteration_name_is_string():
+def test_get_iteration_name_is_string(app_instance):
     """
         Tests if it's possible to get an iteration name from the database and the type is str
     """
-    with app.app_context():
+    with app_instance.app_context():
         iteration_name = models.get_iteration_name()
 
     assert isinstance(iteration_name, str)
 
 
-def test_get_n_labels_correct_size():
+def test_get_n_labels_correct_size(app_instance):
     """
         Test that get_n_labels return lists of correct sizes
     """
-    with app.app_context():
+    with app_instance.app_context():
         for i in range(1, 5):
             result = models.get_n_labels(i, TestValues.DIFFICULTY_ID)
             assert len(result) == i
@@ -208,14 +206,14 @@ def test_get_n_labels_bad_request():
         models.get_n_labels(10000)
 
 
-def test_to_norwegian_correct_translation():
+def test_to_norwegian_correct_translation(app_instance):
     """
         Test that to_norwegian translates words correctly
     """
     english_words = ["mermaid", "axe", "airplane"]
     norwgian_words = ["havfrue", "øks", "fly"]
 
-    with app.app_context():
+    with app_instance.app_context():
         for i in range(0, len(english_words)):
             translation = models.to_norwegian(english_words[i])
             assert translation == norwgian_words[i]
@@ -229,20 +227,20 @@ def test_to_norwegian_illegal_parameter():
         models.to_norwegian("this word is not in the database")
 
 
-def test_get_iteration_name_length():
+def test_get_iteration_name_length(app_instance):
     """
         Test if the result returned has specified length
     """
-    with app.app_context():
+    with app_instance.app_context():
         iteration_name = models.get_iteration_name()
     assert iteration_name == TestValues.CV_ITERATION_NAME
 
 
-def test_high_score_cleared():
+def test_high_score_cleared(app_instance):
     """
         Check if high score table empty.
     """
-    with app.app_context():
+    with app_instance.app_context():
         models.clear_highscores()
         num_records = models.Scores.query.count()
 

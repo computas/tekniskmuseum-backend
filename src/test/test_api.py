@@ -6,6 +6,7 @@ from flask import json
 from pytest import raises
 from webapp import api
 from webapp import models
+import src.models as shared_models
 from utilities import setup
 from werkzeug import exceptions as excp
 from PIL import Image
@@ -351,7 +352,7 @@ def test_white_image_data_done(client):
     """
     res = client.get("/startGame", query_string=dict(difficulty_id=1))
     player_id = json.loads(res.data)["player_id"]
-    game_id = models.get_player(player_id).game_id
+    game_id = shared_models.get_player(player_id).game_id
     label = ""
     data, code = api.white_image_data(label, 0, game_id, player_id)
     json_data = json.loads(data)

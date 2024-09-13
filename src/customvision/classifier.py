@@ -9,7 +9,7 @@ import sys
 import os
 from typing import Dict
 from typing import List
-from webapp import models
+from src import models
 from flask import current_app as app
 import requests
 from werkzeug import exceptions as excp

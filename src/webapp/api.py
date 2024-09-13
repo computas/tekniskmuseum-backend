@@ -10,28 +10,24 @@
 """
 import uuid
 import os
-import logging
 import re
-from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime, timezone, timedelta
 from PIL import Image
 from PIL import ImageChops
 from threading import Thread
 from io import BytesIO
-from webapp import storage
-from webapp import models
+from src import storage
+from . import models
+import src.models as shared_models
 from utilities import setup
 from customvision.classifier import Classifier
-from flask import Flask, current_app
+from flask import current_app
 from flask import request
 from flask import session
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
-from utilities.keys import Keys
 from flask import Blueprint
 
 
@@ -60,10 +56,10 @@ def start_game():
         return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
-    labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
+    labels = shared_models.get_n_labels(setup.NUM_GAMES, difficulty_id)
     today = datetime.today()
-    models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
-    models.insert_into_players(player_id, game_id, "Playing")
+    shared_models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
+    shared_models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
         "player_id": player_id,
@@ -78,8 +74,8 @@ def get_label():
     """
     player_id = request.values["player_id"]
     lang = request.values["lang"]
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+    player = shared_models.get_player(player_id)
+    game = shared_models.get_game(player.game_id)
 
     # Check if game complete
     if game.session_num > setup.NUM_GAMES:
@@ -88,7 +84,7 @@ def get_label():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     if lang == "NO":
-        norwegian_label = models.to_norwegian(label)
+        norwegian_label = shared_models.to_norwegian(label)
         data = {"label": norwegian_label}
         return json.dumps(data), 200
     else:
@@ -115,9 +111,9 @@ def classify():
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player = models.get_player(player_id)
+    player = shared_models.get_player(player_id)
     clientRound = request.values.get("client_round_num", None)
-    game = models.get_game(player.game_id)
+    game = shared_models.get_game(player.game_id)
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
         raise excp.BadRequest(
@@ -135,7 +131,7 @@ def classify():
     # End game if player win or loose
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
-        models.update_game_for_player(player.game_id, player_id, 1, "Done")
+        shared_models.update_game_for_player(player.game_id, player_id, 1, "Done")
         # save image
         storage.save_image(image, label, best_certainty)
         # Update game state to be done
@@ -145,7 +141,7 @@ def classify():
             label=label, is_success=has_won, date=datetime.now())
     # translate labels into norwegian
     if lang == "NO":
-        translation = models.get_translation_dict()
+        translation = shared_models.get_translation_dict()
         certainty_translated = dict(
             [
                 (translation[label], probability)
@@ -182,14 +178,14 @@ def post_score():
     score = float(data.get("score"))
     difficulty_id = int(data.get("difficulty_id"))
 
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+    player = shared_models.get_player(player_id)
+    game = shared_models.get_game(player.game_id)
 
     if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")
 
     today = datetime.today()
-    models.insert_into_scores(player_id, score, today, difficulty_id)
+    shared_models.insert_into_scores(player_id, score, today, difficulty_id)
 
     # ! Need to decide if this is needed
     # Clean database for unnecessary data
@@ -206,10 +202,10 @@ def view_high_score():
     """
     difficulty_id = request.values["difficulty_id"]
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(
+    top_n_high_scores = shared_models.get_top_n_high_score_list(
         setup.TOP_N, difficulty_id=difficulty_id)
     # read daily high score
-    daily_high_scores = models.get_daily_high_score(
+    daily_high_scores = shared_models.get_daily_high_score(
         difficulty_id=difficulty_id)
     data = {
         "daily": daily_high_scores,
@@ -228,9 +224,9 @@ def get_n_drawings_by_label():
     label = data["label"]
     lang = data["lang"]
     if lang == "NO":
-        label = models.to_english(label)
+        label = shared_models.to_english(label)
 
-    image_urls = models.get_n_random_example_images(label, number_of_images)
+    image_urls = shared_models.get_n_random_example_images(label, number_of_images)
     images = storage.get_images_from_relative_url(image_urls)
     return json.dumps(images), 200
 
@@ -244,7 +240,7 @@ def authenticate():
     username = request.values["username"]
     password = request.values["password"]
 
-    user = models.get_user(username)
+    user = shared_models.get_user(username)
 
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
@@ -265,7 +261,7 @@ def admin_page(action):
     is_authenticated()
 
     if action == "clearHighScore":
-        models.clear_highscores()
+        shared_models.clear_highscores()
         return json.dumps({"success": "High scores cleared"}), 200
 
     elif action == "trainML":
@@ -368,7 +364,7 @@ def add_user():
     hashed_psw = generate_password_hash(
         password, method="pbkdf2:sha256:200000", salt_length=128
     )
-    models.insert_into_user(username, hashed_psw)
+    shared_models.insert_into_user(username, hashed_psw)
     response = {"response": "user added"}
     return json.dumps(response), 200
 
@@ -412,7 +408,7 @@ def white_image_data(label, time_left, game_id, player_id):
     if time_left > 0:
         game_state = "Playing"
     else:
-        models.update_game_for_player(game_id, player_id, 1, "Done")
+        shared_models.update_game_for_player(game_id, player_id, 1, "Done")
         game_state = "Done"
 
     data = {
