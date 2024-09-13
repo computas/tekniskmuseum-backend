@@ -6,7 +6,7 @@ import uuid
 import sys
 import time
 import logging
-from webapp import api
+from singleplayer import api
 from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient

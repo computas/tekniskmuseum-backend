@@ -1,6 +1,6 @@
 from flask import Flask
 from src.multiplayer import multiplayer
-from src.webapp import singleplayer
+from src.singleplayer import singleplayer
 from flask_cors import CORS
 from utilities.keys import Keys
 import logging
@@ -29,7 +29,7 @@ def create_app():
 
     #max file size 1 MB
     handler = RotatingFileHandler(
-        filename='src/record.log',
+        filename='record.log',
         maxBytes=1024 * 1024,
         backupCount=5
     )
@@ -47,8 +47,8 @@ def create_app():
         models.create_tables(app)
         models.populate_difficulty(app)
         # Point to correct CSV file
-        webapp_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_file_path = os.path.join(webapp_dir, "dict_eng_to_nor_difficulties_v2.csv")
+        src_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_file_path = os.path.join(src_dir, "dict_eng_to_nor_difficulties_v2.csv")
         models.seed_labels(app, csv_file_path)
         app.logger.info("Backend was able to communicate with DB. ")
         models.populate_example_images(app)

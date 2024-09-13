@@ -4,8 +4,8 @@ import werkzeug
 import tempfile
 from flask import json
 from pytest import raises
-from webapp import api
-from webapp import models
+from singleplayer import api
+from singleplayer import models
 import src.models as shared_models
 from utilities import setup
 from werkzeug import exceptions as excp
