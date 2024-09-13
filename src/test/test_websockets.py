@@ -4,79 +4,29 @@
     YOUR IP SHOULD BE WHITELISTED DB_SERVER ON THE AZURE PROJECT
 
 """
-
 from unittest.mock import patch, MagicMock
-from webbrowser import get
-import pytest
 import json
 import tempfile
 import werkzeug
-from webapp.api import app, socketio
 import os
 
-current_path = os.getcwd()
-parent_path = os.path.dirname(current_path)
-HARAMBE_PATH = os.path.join(parent_path, 'data/harambe.png')
+current_directory = os.path.dirname(os.path.abspath(__file__))
+src_directory = os.path.dirname(current_directory)
+root_directory = os.path.dirname(src_directory)
+HARAMBE_PATH = os.path.join(root_directory, 'data/harambe.png')
 
 mock_classifier = MagicMock()
 mock_classifier.predict_image_by_post = MagicMock(
     return_value=({"angel": 1}, "angel"))
 
 
-@pytest.fixture
-def test_clients():
-    app.config["TESTING"] = True
-    with app.test_client() as flask_client:
-        test_client1 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-        test_client2 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-        """ response = flask_client.get("/")
-        assert response.status_code == 200 """
-        yield flask_client, test_client1, test_client2
-
-        test_client1.disconnect()
-        test_client2.disconnect()
-
-
-@pytest.fixture
-def four_test_clients():
-    app.config["TESTING"] = True
-    with app.test_client() as flask_client:
-        test_client1 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-        test_client2 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-        test_client3 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-        test_client4 = socketio.test_client(
-            app, flask_test_client=flask_client
-        )
-
-        yield flask_client, test_client1, test_client2, test_client3, test_client4
-
-        test_client1.disconnect()
-        test_client2.disconnect()
-        test_client3.disconnect()
-        test_client4.disconnect()
-
-
-@pytest.mark.parametrize('data', [
-    (''),
-    ('{"pair_id": "same_pair_id"}')])
-def test_join_game_same_pair_id(test_clients, data, ):
+def test_join_game_same_pair_id(test_clients):
     """
         tests whether a player is able to join game
     """
     _, ws_client1, ws_client2 = test_clients
 
-    data = '{"difficulty_id": 1}'
-    ws_client1.emit("joinGame", data)
+    ws_client1.emit("joinGame", '{"pair_id": "classify","difficulty_id": 1}')
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "joinGame"
@@ -85,7 +35,7 @@ def test_join_game_same_pair_id(test_clients, data, ):
     r2 = ws_client2.get_received()
     assert r2 == []
 
-    ws_client2.emit("joinGame", data)
+    ws_client2.emit("joinGame", '{"pair_id": "classify","difficulty_id": 1}')
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "joinGame"
@@ -147,15 +97,11 @@ def test_join_game_diff_pair_id(four_test_clients):
 
 
 def test_join_game_different_difficulty(test_clients):
-    """ 
+    """
     tests whether a player with a different difficulty is able to join game
     """
     _, ws_client1, ws_client2 = test_clients
-
-    data_1 = '{"pair_id": "pair_id_1A","difficulty_id": 1}'
-    data_2 = '{"pair_id": "pair_id_2B","difficulty_id": 3}'
-
-    ws_client1.emit("joinGame", data_1)
+    ws_client1.emit("joinGame", '{"pair_id": "pair_id_1A","difficulty_id": 1}')
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "joinGame"
@@ -164,13 +110,13 @@ def test_join_game_different_difficulty(test_clients):
     r2 = ws_client2.get_received()
     assert r2 == []
 
-    ws_client2.emit("joinGame", data_2)
+    ws_client2.emit("joinGame", '{"pair_id": "pair_id_2A","difficulty_id": 2}')
 
     assert r1[0]["name"] == "joinGame"
     r2 = ws_client2.get_received()
     assert r2[0]["name"] == "joinGame"
     assert r2[0]["args"][0]["game_id"] != r1[0]["args"][0]["game_id"]
-    assert r2[1]["args"][0]['ready'] == False
+    assert not r2[1]["args"][0]['ready']
 
 
 @patch('webapp.api.classifier', mock_classifier)
@@ -241,7 +187,6 @@ def test_game_in_different_languages(test_clients):
         wrong_label)
 
     r1 = ws_client1.get_received()
-    print(r1)
     assert r1[0]["name"] == "prediction"
     assert type(r1[0]["args"][0]["certainty"]) is dict
     assert r1[0]["args"][0]["correctLabel"] == "engel"
