@@ -13,8 +13,7 @@ import os
 import re
 import json
 from datetime import datetime, timezone, timedelta
-from PIL import Image
-from PIL import ImageChops
+from PIL import Image, ImageChops
 from threading import Thread
 from io import BytesIO
 from src import storage
@@ -22,16 +21,12 @@ from . import models
 import src.models as shared_models
 from utilities import setup
 from customvision.classifier import Classifier
-from flask import current_app
-from flask import request
-from flask import session
-from werkzeug.security import generate_password_hash
-from werkzeug.security import check_password_hash
+from flask import Blueprint, current_app, request, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
-from flask import Blueprint
 
 
-singleplayer = Blueprint('singleplayer', __name__)
+singleplayer = Blueprint("singleplayer", __name__)
 
 # Initialize CV classifier
 classifier = Classifier()
@@ -48,7 +43,7 @@ def hello():
 @singleplayer.route("/startGame")
 def start_game():
     """
-        Starts a new game by providing the client with a unique game id and player id.
+    Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
     difficulty_id = request.args.get("difficulty_id", default=None, type=int)
@@ -58,7 +53,9 @@ def start_game():
     player_id = uuid.uuid4().hex
     labels = shared_models.get_n_labels(setup.NUM_GAMES, difficulty_id)
     today = datetime.today()
-    shared_models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
+    shared_models.insert_into_games(
+        game_id, json.dumps(labels), today, difficulty_id
+    )
     shared_models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
@@ -70,7 +67,7 @@ def start_game():
 @singleplayer.route("/getLabel", methods=["POST"])
 def get_label():
     """
-        Provides the client with a new word.
+    Provides the client with a new word.
     """
     player_id = request.values["player_id"]
     lang = request.values["lang"]
@@ -95,7 +92,7 @@ def get_label():
 @singleplayer.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continuous guesses.
+    Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -117,7 +114,8 @@ def classify():
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
         raise excp.BadRequest(
-            "Server-round number larger than request/client. Probably a request processed out of order")
+            "Server-round number larger than request/client. Probably a request processed out of order"
+        )
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     certainty, best_guess = classifier.predict_image_by_post(image)
@@ -131,14 +129,17 @@ def classify():
     # End game if player win or loose
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
-        shared_models.update_game_for_player(player.game_id, player_id, 1, "Done")
+        shared_models.update_game_for_player(
+            player.game_id, player_id, 1, "Done"
+        )
         # save image
         storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
         # Insert statistic for label
         models.insert_into_label_success(
-            label=label, is_success=has_won, date=datetime.now())
+            label=label, is_success=has_won, date=datetime.now()
+        )
     # translate labels into norwegian
     if lang == "NO":
         translation = shared_models.get_translation_dict()
@@ -171,7 +172,7 @@ def classify():
 @singleplayer.route("/postScore", methods=["POST"])
 def post_score():
     """
-        Endpoint for ending game consisting of NUM_GAMES sessions.
+    Endpoint for ending game consisting of NUM_GAMES sessions.
     """
     data = request.get_json()
     player_id = data.get("player_id")
@@ -197,16 +198,18 @@ def post_score():
 @singleplayer.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and daily high
-        scores.
+    Read highscore from database. Return top n of all time and daily high
+    scores.
     """
     difficulty_id = request.values["difficulty_id"]
     # read top n overall high score
     top_n_high_scores = shared_models.get_top_n_high_score_list(
-        setup.TOP_N, difficulty_id=difficulty_id)
+        setup.TOP_N, difficulty_id=difficulty_id
+    )
     # read daily high score
     daily_high_scores = shared_models.get_daily_high_score(
-        difficulty_id=difficulty_id)
+        difficulty_id=difficulty_id
+    )
     data = {
         "daily": daily_high_scores,
         "total": top_n_high_scores,
@@ -217,7 +220,7 @@ def view_high_score():
 @singleplayer.route("/getExampleDrawings", methods=["POST"])
 def get_n_drawings_by_label():
     """
-        Returns n images from the blob storage container with the given label.
+    Returns n images from the blob storage container with the given label.
     """
     data = request.get_json()
     number_of_images = data["number_of_images"]
@@ -226,7 +229,9 @@ def get_n_drawings_by_label():
     if lang == "NO":
         label = shared_models.to_english(label)
 
-    image_urls = shared_models.get_n_random_example_images(label, number_of_images)
+    image_urls = shared_models.get_n_random_example_images(
+        label, number_of_images
+    )
     images = storage.get_images_from_relative_url(image_urls)
     return json.dumps(images), 200
 
@@ -234,8 +239,8 @@ def get_n_drawings_by_label():
 @singleplayer.route("/auth", methods=["POST"])
 def authenticate():
     """
-        Endpoint for admin authentication. Returns encrypted cookie with login
-        time and username.
+    Endpoint for admin authentication. Returns encrypted cookie with login
+    time and username.
     """
     username = request.values["username"]
     password = request.values["password"]
@@ -254,8 +259,8 @@ def authenticate():
 @singleplayer.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
     """
-        Endpoint for admin actions. Requires authentication from /auth within
-        SESSION_EXPIRATION_TIME
+    Endpoint for admin actions. Requires authentication from /auth within
+    SESSION_EXPIRATION_TIME
     """
     # Check if user has valid cookie
     is_authenticated()
@@ -301,7 +306,7 @@ def admin_page(action):
 @singleplayer.route("/admin/logging")
 def get_error_logs():
     try:
-        #is_authenticated()
+        # is_authenticated()
         current_directory = os.path.dirname(os.path.abspath(__file__))
         src_directory = os.path.dirname(current_directory)
         log_file = os.path.join(src_directory, "record.log")
@@ -321,9 +326,9 @@ def get_error_logs():
 @singleplayer.errorhandler(Exception)
 def handle_exception(error):
     """
-       Captures all exceptions raised. If the Exception is a HTTPException the
-       error message and code is returned to the client. Else the error is
-       logged.
+    Captures all exceptions raised. If the Exception is a HTTPException the
+    error message and code is returned to the client. Else the error is
+    logged.
     """
     if isinstance(error, excp.HTTPException):
         # check if 4xx error. This should be returned to user.
@@ -336,7 +341,7 @@ def handle_exception(error):
 
 def allowed_file(image):
     """
-        Check if image satisfies the constraints of Custom Vision.
+    Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
         raise excp.BadRequest("No image submitted")
@@ -356,7 +361,7 @@ def allowed_file(image):
 
 def add_user():
     """
-        Add user to user table in db.
+    Add user to user table in db.
     """
     username = request.values["username"]
     password = request.values["password"]
@@ -371,16 +376,14 @@ def add_user():
 
 def is_authenticated():
     """
-        Check if user has an unexpired cookie. Renew time if not expired.
-        Raises exception if cookie is invalid.
+    Check if user has an unexpired cookie. Renew time if not expired.
+    Raises exception if cookie is invalid.
     """
     if "last_login" not in session:
         raise excp.Unauthorized()
 
     session_length = datetime.now(timezone.utc) - session["last_login"]
-    is_auth = session_length < timedelta(
-        minutes=setup.SESSION_EXPIRATION_TIME
-    )
+    is_auth = session_length < timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
@@ -392,7 +395,7 @@ def is_authenticated():
 
 def white_image(image):
     """
-        Check if the image provided is completely white.
+    Check if the image provided is completely white.
     """
     if not ImageChops.invert(image).getbbox():
         return True
@@ -402,8 +405,8 @@ def white_image(image):
 
 def white_image_data(label, time_left, game_id, player_id):
     """
-        Generate the json data to be returned to the client when a completely
-        white image has been submitted for classification.
+    Generate the json data to be returned to the client when a completely
+    white image has been submitted for classification.
     """
     if time_left > 0:
         game_state = "Playing"
@@ -423,7 +426,7 @@ def white_image_data(label, time_left, game_id, player_id):
 
 def get_image_resolution(image):
     """
-        Retrieve the resolution of the image provided.
+    Retrieve the resolution of the image provided.
     """
     image.seek(0)
     height, width = Image.open(BytesIO(image.stream.read())).size
@@ -435,13 +438,13 @@ def readlines_reverse(filename):
     with open(filename) as qfile:
         qfile.seek(0, os.SEEK_END)
         position = qfile.tell()
-        line = ''
+        line = ""
         while position >= 0:
             qfile.seek(position)
             next_char = qfile.read(1)
             if next_char == "\n":
                 yield line[::-1]
-                line = ''
+                line = ""
             else:
                 line += next_char
             position -= 1

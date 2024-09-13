@@ -4,6 +4,7 @@
     YOUR IP SHOULD BE WHITELISTED DB_SERVER ON THE AZURE PROJECT
 
 """
+
 from unittest.mock import patch, MagicMock
 import json
 import tempfile
@@ -13,16 +14,17 @@ import os
 current_directory = os.path.dirname(os.path.abspath(__file__))
 src_directory = os.path.dirname(current_directory)
 root_directory = os.path.dirname(src_directory)
-HARAMBE_PATH = os.path.join(root_directory, 'data/harambe.png')
+HARAMBE_PATH = os.path.join(root_directory, "data/harambe.png")
 
 mock_classifier = MagicMock()
 mock_classifier.predict_image_by_post = MagicMock(
-    return_value=({"angel": 1}, "angel"))
+    return_value=({"angel": 1}, "angel")
+)
 
 
 def test_join_game_same_pair_id(test_clients):
     """
-        tests whether a player is able to join game
+    tests whether a player is able to join game
     """
     _, ws_client1, ws_client2 = test_clients
 
@@ -30,8 +32,8 @@ def test_join_game_same_pair_id(test_clients):
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "joinGame"
-    assert r1[0]["args"][0]['player_nr'] == 'player_1'
-    assert not r1[1]["args"][0]['ready']
+    assert r1[0]["args"][0]["player_nr"] == "player_1"
+    assert not r1[1]["args"][0]["ready"]
     r2 = ws_client2.get_received()
     assert r2 == []
 
@@ -41,15 +43,17 @@ def test_join_game_same_pair_id(test_clients):
     assert r1[0]["name"] == "joinGame"
     r2 = ws_client2.get_received()
     assert r2[0]["name"] == "joinGame"
-    assert r2[0]["args"][0]['player_nr'] == 'player_2'
-    assert r2[1]["args"][0]['ready']
+    assert r2[0]["args"][0]["player_nr"] == "player_2"
+    assert r2[1]["args"][0]["ready"]
 
 
 def test_join_game_diff_pair_id(four_test_clients):
     """
-        tests wether a player is able to join game
+    tests wether a player is able to join game
     """
-    _, ws_client1_1, ws_client1_2, ws_client2_1, ws_client2_2 = four_test_clients
+    _, ws_client1_1, ws_client1_2, ws_client2_1, ws_client2_2 = (
+        four_test_clients
+    )
     data_1 = '{"pair_id": "pair_id_1","difficulty_id": 1}'
     data_2 = '{"pair_id": "pair_id_2","difficulty_id": 1}'
 
@@ -58,8 +62,8 @@ def test_join_game_diff_pair_id(four_test_clients):
 
     r11 = ws_client1_1.get_received()
     assert r11[0]["name"] == "joinGame"
-    assert r11[0]["args"][0]['player_nr'] == 'player_1'
-    assert not r11[1]["args"][0]['ready']
+    assert r11[0]["args"][0]["player_nr"] == "player_1"
+    assert not r11[1]["args"][0]["ready"]
     r21 = ws_client2_1.get_received()
     assert r21 == []
 
@@ -67,8 +71,8 @@ def test_join_game_diff_pair_id(four_test_clients):
 
     r21 = ws_client2_1.get_received()
     assert r21[0]["name"] == "joinGame"
-    assert r21[0]["args"][0]['player_nr'] == 'player_1'
-    assert not r21[1]["args"][0]['ready']
+    assert r21[0]["args"][0]["player_nr"] == "player_1"
+    assert not r21[1]["args"][0]["ready"]
     r11 = ws_client1_1.get_received()
     assert r11 == []
 
@@ -77,8 +81,8 @@ def test_join_game_diff_pair_id(four_test_clients):
 
     r12 = ws_client1_2.get_received()
     assert r12[0]["name"] == "joinGame"
-    assert r12[0]["args"][0]['player_nr'] == 'player_2'
-    assert r12[1]["args"][0]['ready']
+    assert r12[0]["args"][0]["player_nr"] == "player_2"
+    assert r12[1]["args"][0]["ready"]
     r11 = ws_client1_1.get_received()
     assert r11[0]["name"] == "joinGame"
     r21 = ws_client2_1.get_received()
@@ -88,8 +92,8 @@ def test_join_game_diff_pair_id(four_test_clients):
 
     r2 = ws_client2_2.get_received()
     assert r2[0]["name"] == "joinGame"
-    assert r2[0]["args"][0]['player_nr'] == 'player_2'
-    assert r2[1]["args"][0]['ready']
+    assert r2[0]["args"][0]["player_nr"] == "player_2"
+    assert r2[1]["args"][0]["ready"]
     r11 = ws_client1_1.get_received()
     assert r11 == []
     r21 = ws_client2_1.get_received()
@@ -105,8 +109,8 @@ def test_join_game_different_difficulty(test_clients):
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "joinGame"
-    assert r1[0]["args"][0]['player_nr'] == 'player_1'
-    assert not r1[1]["args"][0]['ready']
+    assert r1[0]["args"][0]["player_nr"] == "player_1"
+    assert not r1[1]["args"][0]["ready"]
     r2 = ws_client2.get_received()
     assert r2 == []
 
@@ -116,10 +120,10 @@ def test_join_game_different_difficulty(test_clients):
     r2 = ws_client2.get_received()
     assert r2[0]["name"] == "joinGame"
     assert r2[0]["args"][0]["game_id"] != r1[0]["args"][0]["game_id"]
-    assert not r2[1]["args"][0]['ready']
+    assert not r2[1]["args"][0]["ready"]
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_classification_only_client1_correct(test_clients):
     time_left = 1
     correct_label = "angel"
@@ -133,15 +137,11 @@ def test_classification_only_client1_correct(test_clients):
     game_id = args["game_id"]
     data = {"game_id": game_id, "time_left": time_left, "lang": "NO"}
     ws_client1.emit(
-        "classify",
-        data,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
     ws_client2.emit(
-        "classify",
-        data,
-        _get_image_as_stream(HARAMBE_PATH),
-        wrong_label)
+        "classify", data, _get_image_as_stream(HARAMBE_PATH), wrong_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "prediction"
@@ -160,7 +160,7 @@ def test_classification_only_client1_correct(test_clients):
     assert len(r2) == 1
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_game_in_different_languages(test_clients):
     correct_label = "angel"
     wrong_label = "bicycle"
@@ -176,15 +176,11 @@ def test_game_in_different_languages(test_clients):
     data_2 = {"game_id": game_id, "time_left": 1, "lang": "ENG"}
 
     ws_client1.emit(
-        "classify",
-        data_1,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data_1, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
     ws_client2.emit(
-        "classify",
-        data_2,
-        _get_image_as_stream(HARAMBE_PATH),
-        wrong_label)
+        "classify", data_2, _get_image_as_stream(HARAMBE_PATH), wrong_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "prediction"
@@ -203,7 +199,7 @@ def test_game_in_different_languages(test_clients):
     assert len(r2) == 1
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_classification_both_correct(test_clients):
     time_left = 1
     correct_label = "angel"
@@ -217,10 +213,8 @@ def test_classification_both_correct(test_clients):
     data = {"game_id": game_id, "time_left": time_left, "lang": "NO"}
 
     ws_client1.emit(
-        "classify",
-        data,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "prediction"
@@ -232,10 +226,8 @@ def test_classification_both_correct(test_clients):
     ws_client2.get_received() == []
 
     ws_client2.emit(
-        "classify",
-        data,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "roundOver"
@@ -252,7 +244,7 @@ def test_classification_both_correct(test_clients):
     assert len(r2) == 2
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_classification_client1_timeout_and_client2_correct(test_clients):
     time_out = 0
     time_left = 1
@@ -267,20 +259,16 @@ def test_classification_client1_timeout_and_client2_correct(test_clients):
 
     data1 = {"game_id": game_id, "time_left": time_out, "lang": "NO"}
     ws_client1.emit(
-        "classify",
-        data1,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data1, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     assert ws_client1.get_received() == []
     assert ws_client2.get_received() == []
 
     data2 = {"game_id": game_id, "time_left": time_left, "lang": "NO"}
     ws_client2.emit(
-        "classify",
-        data2,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data2, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "roundOver"
@@ -297,7 +285,7 @@ def test_classification_client1_timeout_and_client2_correct(test_clients):
     assert len(r2) == 2
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_classification_client1_correct_and_client2_timeout(test_clients):
     time_out = 0
     time_left = 1
@@ -312,10 +300,8 @@ def test_classification_client1_correct_and_client2_timeout(test_clients):
 
     data1 = {"game_id": game_id, "time_left": time_left, "lang": "NO"}
     ws_client1.emit(
-        "classify",
-        data1,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data1, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "prediction"
@@ -328,10 +314,8 @@ def test_classification_client1_correct_and_client2_timeout(test_clients):
 
     data2 = {"game_id": game_id, "time_left": time_out, "lang": "NO"}
     ws_client2.emit(
-        "classify",
-        data2,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data2, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "roundOver"
@@ -343,7 +327,7 @@ def test_classification_client1_correct_and_client2_timeout(test_clients):
     assert len(r2) == 1
 
 
-@patch('singleplayer.api.classifier', mock_classifier)
+@patch("singleplayer.api.classifier", mock_classifier)
 def test_classification_both_timeout(test_clients):
     time_out = 0
     correct_label = "angel"
@@ -357,20 +341,16 @@ def test_classification_both_timeout(test_clients):
 
     data1 = {"game_id": game_id, "time_left": time_out, "lang": "NO"}
     ws_client1.emit(
-        "classify",
-        data1,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data1, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     assert ws_client1.get_received() == []
     assert ws_client2.get_received() == []
 
     data2 = {"game_id": game_id, "time_left": time_out, "lang": "NO"}
     ws_client2.emit(
-        "classify",
-        data2,
-        _get_image_as_stream(HARAMBE_PATH),
-        correct_label)
+        "classify", data2, _get_image_as_stream(HARAMBE_PATH), correct_label
+    )
 
     r1 = ws_client1.get_received()
     assert r1[0]["name"] == "roundOver"
@@ -424,15 +404,16 @@ def test_end_game(test_clients):
     player_1_id = r1[0]["args"][0]["player_id"]
     game_id = r1[0]["args"][0]["game_id"]
     data = json.dumps(
-        {"game_id": game_id, "player_id": player_1_id, "score": 100})
+        {"game_id": game_id, "player_id": player_1_id, "score": 100}
+    )
 
-    ws_client1.emit('endGame', data)
+    ws_client1.emit("endGame", data)
 
     assert ws_client1.get_received() == []
     r2 = ws_client2.get_received()
     r2_json = json.loads(r2[0]["args"][0])
-    assert r2_json['score'] == 100
-    assert r2_json['playerId'] == player_1_id
+    assert r2_json["score"] == 100
+    assert r2_json["playerId"] == player_1_id
 
 
 def _get_image_as_stream(file_path):

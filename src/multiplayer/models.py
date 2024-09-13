@@ -4,23 +4,15 @@
 """
 
 import datetime
-import csv
-import os
 import random
-from utilities.difficulties import DifficultyId
 from src.extensions import db
 from src.models import (
     MulitPlayer,
     Games,
     Players,
-    Iteration,
     Scores,
     Labels,
-    ExampleImages
 )
-import src.models as shared_models
-from werkzeug import exceptions as excp
-import json
 from utilities.exceptions import UserError
 
 """

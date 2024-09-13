@@ -4,24 +4,23 @@
 """
 
 import datetime
-import csv
-import os
-import random
 from werkzeug import exceptions as excp
-import json
 from src.extensions import db
-from src.models import MulitPlayer, Games, Players, Iteration, Scores, Labels, ExampleImages, LabelSuccess, User
+from src.models import LabelSuccess
 
 
 def insert_into_label_success(
-        label: str,
-        is_success: bool,
-        date: datetime.datetime):
-    if (isinstance(label, str) and isinstance(is_success, bool)
-            and isinstance(date, datetime.datetime)):
+    label: str, is_success: bool, date: datetime.datetime
+):
+    if (
+        isinstance(label, str)
+        and isinstance(is_success, bool)
+        and isinstance(date, datetime.datetime)
+    ):
         try:
             label_success = LabelSuccess(
-                label=label, is_success=is_success, attempt_time=date)
+                label=label, is_success=is_success, attempt_time=date
+            )
             db.session.add(label_success)
             db.session.commit()
             return True

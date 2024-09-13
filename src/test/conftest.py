@@ -37,7 +37,7 @@ class TestValues:
 @pytest.fixture(scope="session")
 def app():
     app, socketio = create_app()
-    app.config['TESTING'] = True
+    app.config["TESTING"] = True
 
     with app.app_context():
         yield app, socketio
@@ -63,13 +63,17 @@ def db(app):
     app, _ = app
     with app.app_context():
         models.insert_into_games(
-            TestValues.GAME_ID, TestValues.LABELS, TestValues.TODAY, DifficultyId.Easy
+            TestValues.GAME_ID,
+            TestValues.LABELS,
+            TestValues.TODAY,
+            DifficultyId.Easy,
         )
         models.insert_into_players(
             TestValues.PLAYER_ID, TestValues.GAME_ID, TestValues.STATE
         )
         models.insert_into_scores(
-            TestValues.PLAYER_ID, 599, TestValues.TODAY, DifficultyId.Easy)
+            TestValues.PLAYER_ID, 599, TestValues.TODAY, DifficultyId.Easy
+        )
         yield _db
 
     with app.app_context():
@@ -121,7 +125,7 @@ def four_test_clients(app):
             test_client4.disconnect()
 
 
-#Return path to data folder where images for testing are saved
+# Return path to data folder where images for testing are saved
 def get_data_folder_path():
     current_directory = os.path.dirname(os.path.abspath(__file__))
     src_directory = os.path.dirname(current_directory)

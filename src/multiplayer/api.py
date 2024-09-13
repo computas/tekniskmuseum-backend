@@ -6,10 +6,9 @@
     application is live.
 """
 from flask_socketio import emit, send, join_room
-from flask import request
-from flask import Blueprint
-from PIL import Image
-from PIL import ImageChops
+from flask import Blueprint, request
+from flask import current_app as app
+from PIL import Image, ImageChops
 from io import BytesIO
 from datetime import datetime
 import json
@@ -24,11 +23,10 @@ from src import storage
 from utilities.exceptions import UserError
 from utilities import setup
 from customvision.classifier import Classifier
-from flask import current_app as app
 from src.extensions import socketio
 
 
-multiplayer = Blueprint('multiplayer', __name__)
+multiplayer = Blueprint("multiplayer", __name__)
 classifier = Classifier()
 
 
@@ -40,9 +38,9 @@ def connect():
 @socketio.on("disconnect")
 def disconnect():
     """
-        When a player disconnects from a session this function tells the
-        other player in the room that someone left and deletes all records in the
-        database connected to the session.
+    When a player disconnects from a session this function tells the
+    other player in the room that someone left and deletes all records in the
+    database connected to the session.
     """
     player_id = request.sid
     player = shared_models.get_player(player_id)
@@ -73,17 +71,17 @@ def handle_filetest(json_data, image):
 @socketio.on("joinGame")
 def handle_joinGame(json_data):
     """
-        Check if mulitplayer table exists for the optional pair_id.
-        * If check is false create new mulitplayer game.
-        * If check is true insert player where player2 is none and start
-          the game.
+    Check if mulitplayer table exists for the optional pair_id.
+    * If check is false create new mulitplayer game.
+    * If check is true insert player where player2 is none and start
+      the game.
     """
-    data = json.loads(json_data or 'null')
+    data = json.loads(json_data or "null")
     try:
         difficulty_id = data["difficulty_id"]
         pair_id = data["pair_id"]
     except (KeyError, TypeError):
-        pair_id = ''
+        pair_id = ""
         app.logger.error("No pair id for " + request.sid)
     app.logger.info("pair id: " + pair_id + " player id: " + request.sid)
     player_id = request.sid
@@ -104,7 +102,8 @@ def handle_joinGame(json_data):
         labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
         today = datetime.today()
         shared_models.insert_into_games(
-            game_id, json.dumps(labels), today, difficulty_id)
+            game_id, json.dumps(labels), today, difficulty_id
+        )
 
         shared_models.insert_into_players(player_id, game_id, "Waiting")
         models.insert_into_mulitplayer(game_id, player_id, pair_id)
@@ -124,7 +123,7 @@ def handle_joinGame(json_data):
 @socketio.on("getLabel")
 def handle_getLabel(json_data):
     """
-        Event for providing both players with a new label.
+    Event for providing both players with a new label.
     """
     player_id = request.sid
     data = json.loads(json_data)
@@ -155,18 +154,20 @@ def handle_postScore(json_data):
 @socketio.on("viewHighScore")
 def view_high_score(json_data):
     """
-        Read highscore from database. Return top n of all time and daily high
-        scores.
+    Read highscore from database. Return top n of all time and daily high
+    scores.
     """
     difficulty_id = DifficultyId.Multiplayer
     data = json.loads(json_data)
     game_id = data["game_id"]
     # read top n overall high score
     top_n_high_scores = models.get_top_n_high_score_list(
-        setup.TOP_N, difficulty_id=difficulty_id)
+        setup.TOP_N, difficulty_id=difficulty_id
+    )
     # read daily high score
     daily_high_scores = models.get_daily_high_score(
-        difficulty_id=difficulty_id)
+        difficulty_id=difficulty_id
+    )
     data = {
         "daily": daily_high_scores,
         "total": top_n_high_scores,
@@ -178,7 +179,7 @@ def view_high_score(json_data):
 @socketio.on("getExampleDrawings")
 def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
     """
-        Get example drawings from the database
+    Get example drawings from the database
     """
     data = json.loads(json_data)
     game_id = data["game_id"]
@@ -186,13 +187,15 @@ def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
 
     label = data["label"]
     lang = data["lang"]
-    if (lang == "NO"):
+    if lang == "NO":
         label = shared_models.to_english(label)
 
     example_drawing_urls = shared_models.get_n_random_example_images(
-        label, number_of_images)
+        label, number_of_images
+    )
     example_drawings = storage.get_images_from_relative_url(
-        example_drawing_urls)
+        example_drawing_urls
+    )
     emit(emitEndpoint, json.dumps(example_drawings), room=game_id)
 
 
@@ -209,10 +212,10 @@ def get_example_drawings_player_2(json_data):
 @socketio.on("classify")
 def handle_classify(data, image, correct_label=None):
     """
-        WS event for accepting images for classification
-        params: data: {"game_id": str: the game_id you get from joinGame,
-                       "time_left": float: the time left until the game is over}
-               image: binary string with the image data
+    WS event for accepting images for classification
+    params: data: {"game_id": str: the game_id you get from joinGame,
+                   "time_left": float: the time left until the game is over}
+           image: binary string with the image data
     """
     image_stream = BytesIO(image)
 
@@ -229,7 +232,7 @@ def handle_classify(data, image, correct_label=None):
         correct_label = labels[game.session_num - 1]
 
     # Check if the image hasn't been drawn on
-    bytes_img = Image.open(image_stream).convert('RGB')
+    bytes_img = Image.open(image_stream).convert("RGB")
     if white_image(bytes_img):
         response = white_image_data(
             correct_label, time_left, game_id, player_id
@@ -242,7 +245,7 @@ def handle_classify(data, image, correct_label=None):
     certainty, best_guess = classifier.predict_image_by_post(image_stream)
     best_certainty = certainty[best_guess]
 
-    time_out = (time_left <= 0)
+    time_out = time_left <= 0
 
     if time_out:
         # to break race condition if both players timeout
@@ -298,9 +301,9 @@ def handle_classify(data, image, correct_label=None):
 @socketio.on("endGame")
 def handle_endGame(json_data):
     """
-        Event which ends the final game of the two players. The players provide
-        their scores and the player with the highest score is deemed the winner.
-        The two scores are finally stored in the database.
+    Event which ends the final game of the two players. The players provide
+    their scores and the player with the highest score is deemed the winner.
+    The two scores are finally stored in the database.
     """
     data = json.loads(json_data)
     # Get data from given player
@@ -322,9 +325,9 @@ def handle_endGame(json_data):
 @socketio.on_error()
 def error_handler(error):
     """
-        Captures all Exceptions raised. If error is an Exception, the
-        error message is returned to the client. Else the error is
-        logged.
+    Captures all Exceptions raised. If error is an Exception, the
+    error message is returned to the client. Else the error is
+    logged.
     """
     app.logger.error(error)
 
@@ -334,7 +337,7 @@ def error_handler(error):
 
 def get_label(game_id) -> dict[str, str]:
     """
-        Provides the client with a new word in both languages.
+    Provides the client with a new word in both languages.
     """
     game = shared_models.get_game(game_id)
 
@@ -351,7 +354,7 @@ def get_label(game_id) -> dict[str, str]:
 
 def translate_probabilities(labels):
     """
-        translate the labels in a probability dictionary to norwegian
+    translate the labels in a probability dictionary to norwegian
     """
     translation_dict = shared_models.get_translation_dict()
     return dict(
@@ -361,7 +364,7 @@ def translate_probabilities(labels):
 
 def allowed_file(image):
     """
-        Check if image satisfies the constraints of Custom Vision.
+    Check if image satisfies the constraints of Custom Vision.
     """
     # Ensure the file isn't too large
     too_large = len(image.read()) > setup.MAX_IMAGE_SIZE
@@ -386,7 +389,7 @@ def allowed_file(image):
 
 def white_image(image):
     """
-        Check if the image provided is completely white.
+    Check if the image provided is completely white.
     """
     if ImageChops.invert(image).getbbox() is None:
         return True
@@ -396,8 +399,8 @@ def white_image(image):
 
 def white_image_data(label, time_left, game_id, player_id):
     """
-        Generate the json data to be returned to the client when a completely
-        white image has been submitted for classification.
+    Generate the json data to be returned to the client when a completely
+    white image has been submitted for classification.
     """
     if time_left > 0:
         game_state = "Playing"
