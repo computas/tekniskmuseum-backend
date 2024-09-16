@@ -2,11 +2,27 @@
 categories=""
 input="dict_eng_to_nor_difficulties_v2.csv"
 pattern=" |'"
+num_img=50
 
-if [ $# -gt 0 ]
-  then
-    input=$1
-fi
+# Process the arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --categories) 
+            input="$2"
+            shift # shift past the argument's value
+            ;;
+        --num_images)
+            num_img="$2"
+            shift # shift past the argument's value
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+    shift # shift past the option
+done
+
 
 while IFS=',' read -a line
 do
@@ -18,4 +34,6 @@ do
     fi
   done < "$input"
 
-python3 preprocessing/data_migration.py $categories
+echo $num_img
+
+python3 preprocessing/data_migration.py $categories -n $num_img

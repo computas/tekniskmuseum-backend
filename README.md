@@ -52,7 +52,7 @@ This also assumes that both Azure Blob Storage and Azure CustomVision is already
 
 ### **Downloading the dataset from Quickdraw and uploading it to blob storage**
 
-1. Downloading the dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. 
+1. Downloading the entire dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. The `*` can be replaced by the name of a category if you want to download just one specific category. If you want to only download the categories that are currently used in the game, you can run `bash download_quick_draw.sh` from the folder src/preprocessing. A csv-file with category names can also be provided as a command line argument to this script.
 
 Note that the entire dataset is around ~22GB. More info on the dataset can be found on the [Github page](https://github.com/googlecreativelab/quickdraw-dataset#get-the-data).
 
@@ -67,9 +67,10 @@ While it is not the same python library, the documentation for [pycairo](https:/
 
 3. Install the *cairocffi* package with `pip install cairocffi`
 
-4. Open `transfer.sh` from in the src folder, and type in the words you want to migrate to the blob storage
-
-5. Run `bash transfer.sh` from the src folder once the script is read
+4. Run `bash upload_to_blob.sh`. This uploads images from the categories used in the current version of the game. You can also provide your own csv-file with
+category names as a command line argument. Available options are 
+  - `--categories`: should be a csv-file containing the categories you wish to upload.
+  - `--num_images`: the number of images you want to upload from each category. The default is 50.
 
 Assuming everything runs without errors, the images should now be in the blob storage
 
