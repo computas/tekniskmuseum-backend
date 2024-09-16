@@ -10,7 +10,6 @@ fi
 
 while IFS=',' read -a line
 do
-    echo "${line[0]}"
     if [[ ${line[0]} =~ $pattern ]]
     then
       categories="${categories} \"${line[0]}\""
