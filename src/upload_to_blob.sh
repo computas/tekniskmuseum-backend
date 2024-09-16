@@ -34,6 +34,4 @@ do
     fi
   done < "$input"
 
-echo $num_img
-
 python3 preprocessing/data_migration.py $categories -n $num_img
