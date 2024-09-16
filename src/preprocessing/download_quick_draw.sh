@@ -1,6 +1,6 @@
 #!/bin/bash
 categories=""
-input="dict_eng_to_nor_difficulties_v2.csv"
+input="../dict_eng_to_nor_difficulties_v2.csv"
 pattern=" |'"
 
 # if there is a command line argument, use this as the csv-file to 

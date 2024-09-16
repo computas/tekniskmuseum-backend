@@ -1,5 +1,4 @@
 #!/bin/bash
-categories=""
 input="dict_eng_to_nor_difficulties_v2.csv"
 pattern=" |'"
 
@@ -10,16 +9,12 @@ if [ $# -gt 0 ]
     input=$1
 fi
 
+categories_arr=()
+
 while IFS=',' read -a line
 do
-    if [[ ${line[0]} =~ $pattern ]]
-    then
-      categories="${categories} \"${line[0]}\""
-    else 
-      categories="${categories} ${line[0]}"
-    fi
+    categories_arr+=( "${line[0]}" )
   done < "$input"
 
 
-
-python3 customvision/upload.py $categories
+python3 customvision/upload.py "${categories_arr[@]}"

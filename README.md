@@ -52,7 +52,7 @@ This also assumes that both Azure Blob Storage and Azure CustomVision is already
 
 ### **Downloading the dataset from Quickdraw and uploading it to blob storage**
 
-1. Downloading the entire dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. The `*` can be replaced by the name of a category if you want to download just one specific category. If you want to only download the categories that are currently used in the game, you can run `bash download_quick_draw.sh` from the folder src/preprocessing. A csv-file with category names can also be provided as a command line argument to this script.
+1. Downloading the entire dataset can be done by cding into preprocessing, and running `gsutil -m cp gs://quickdraw_dataset/full/simplified/*.ndjson ./data`. The `*` can be replaced by the name of a category if you want to download just one specific category. If you want to only download the categories that are currently used in the game, you can run `bash download_quick_draw.sh` from the folder `src/preprocessing`. A csv-file with category names can also be provided as a command line argument to this script.
 
 Note that the entire dataset is around ~22GB. More info on the dataset can be found on the [Github page](https://github.com/googlecreativelab/quickdraw-dataset#get-the-data).
 
@@ -67,26 +67,19 @@ While it is not the same python library, the documentation for [pycairo](https:/
 
 3. Install the *cairocffi* package with `pip install cairocffi`
 
-4. Run `bash upload_to_blob.sh`. This uploads images from the categories used in the current version of the game. You can also provide your own csv-file with
+4. Run `bash upload_to_blob.sh` from the src folder. This uploads images from the categories used in the current version of the game. You can also provide your own csv-file with
 category names as a command line argument. Available options are 
-  - `--categories`: should be a csv-file containing the categories you wish to upload.
-  - `--num_images`: the number of images you want to upload from each category. The default is 50.
+    - `--categories`: should be a csv-file containing the categories you wish to upload.
+    - `--num_images`: the number of images you want to upload from each category. The default is 50.
 
 Assuming everything runs without errors, the images should now be in the blob storage
 
 ### **Uploading the data to Azure CustomVision and training an iteration of the classification model**
 
-There is not a specific script to do this step, but both functions are ready for use in `src/customvision/classifier.py`. The classifier class is also initizalied in `src/webapp/api.py`, meaning the data can be uploaded and trained on there.
+1. Run `bash upload_to_CV.sh` from the `src/customvision` folder. This will upload all photos from Blob storage from the categories in the current version of the Custom Vision model.
+Optionally, you can provide a csv-file containing the categories you want to upload as a command line argument to this script.
 
-1. Add the lines for uploading images to api.py, so it looks something like the code below. "labels" is the list of labels to be trained on, e.g. ["airplane", "apple", "ant"]
-
-        # Initialize CV classifier
-        classifier = Classifier()
-        classifier.upload_images(labels, "oldimgcontainer")
-
-2. Run `startapp.sh` once, assuming the images gets uploaded without error, the upload_images line should be removed before running `startapp.sh` again later.
-
-3. Go to [customvision.ai](customvision.ai), and click on the `Train` button in the top right after entering the correct project. For most use cases, `Quick Training` can be chosen here.
+2. Go to [customvision.ai](customvision.ai), and click on the `Train` button in the top right after entering the correct project. For most use cases, `Quick Training` can be chosen here.
 
 
 
