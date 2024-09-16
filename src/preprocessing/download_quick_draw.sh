@@ -10,8 +10,7 @@ if [ $# -gt 0 ]
     input=$1
 fi
 
-while IFS=',' read -ra
- line
+while IFS=',' read -a line
 do
   gsutil -m cp gs://quickdraw_dataset/full/simplified/"${line[0]}".ndjson ./images/"${line[0]}".ndjson
 done < "$input"
