@@ -231,8 +231,14 @@ class Classifier:
                 raise AttributeError("no images for this label")
 
             # build correct URLs and append to URL list
+
+            #if base url ends on /, remove it.
+            base_img_url = self.base_img_url
+            if base_img_url[-1] == "/":
+                base_img_url = base_img_url[:-1]
+
             for blob in blob_list:
-                blob_url = f"{self.base_img_url}/{container_name}/{blob.name}"
+                blob_url = f"{base_img_url}/{container_name}/{blob.name}"
                 url_list.append(
                     ImageUrlCreateEntry(url=blob_url, tag_ids=[tag.id])
                 )
