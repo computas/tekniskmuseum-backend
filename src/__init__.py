@@ -28,7 +28,7 @@ def create_app():
         socketio.init_app(
             app,
             cors_allowed_origins=Keys.get("CORS_ALLOWED_ORIGIN"),
-            logger=True,
+            logger=False,
         )
     else:
         socketio.init_app(app, cors_allowed_origins="*", logger=True)
@@ -42,7 +42,7 @@ def create_app():
     # Config logging
     logging.basicConfig(
         filename="src/record.log",
-        level=logging.INFO,
+        level=logging.WARN,
         filemode="w",
         format="%(asctime)s %(levelname)s %(message)s",
     )
@@ -57,7 +57,7 @@ def create_app():
     if __name__ != "__main__":
         gunicorn_logger = logging.getLogger("gunicorn.error")
         app.logger.handlers = gunicorn_logger.handlers
-        app.logger.setLevel(gunicorn_logger.level)
+        app.logger.setLevel(logging.WARN)
 
     try:
         # Set up DB and models

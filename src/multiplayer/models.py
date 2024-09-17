@@ -117,7 +117,6 @@ def update_mulitplayer(player_2_id, game_id):
     try:
         mp = MulitPlayer.query.get(game_id)
         player_1 = Players.query.get(mp.player_1)
-        print(player_1)
         player_1.state = "Ready"
         mp.player_2 = player_2_id
         db.session.commit()
