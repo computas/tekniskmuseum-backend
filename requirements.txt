@@ -14,3 +14,5 @@ Pillow==10.3.0
 flask-cors==4.0.1
 requests==2.32.3
 eventlet==0.36.1
+azure-monitor-opentelemetry==1.6.1 
+azure-monitor-opentelemetry-exporter==1.0.0b28
