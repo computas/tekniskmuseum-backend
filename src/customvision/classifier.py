@@ -5,13 +5,10 @@
 import logging
 import uuid
 import time
-import sys
-import os
 from typing import Dict
 from typing import List
 from src import models
 from flask import current_app as app
-import requests
 from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
@@ -27,8 +24,8 @@ from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateBatch
 )
 
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 
 
 class Classifier:

@@ -19,8 +19,8 @@ from io import BytesIO
 from src import storage
 from . import models
 import src.models as shared_models
-from utilities import setup
-from customvision.classifier import Classifier
+from src.utilities import setup
+from src.customvision.classifier import Classifier
 from flask import Blueprint, current_app, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp

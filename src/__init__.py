@@ -2,7 +2,7 @@ from flask import Flask
 from src.multiplayer import multiplayer
 from src.singleplayer import singleplayer
 from flask_cors import CORS
-from utilities.keys import Keys
+from src.utilities.keys import Keys
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -37,7 +37,7 @@ def create_app():
             resources={r"/*": {"origins": "*", "supports_credentials": True}},
         )
 
-    app.config.from_object("utilities.setup.Flask_config")
+    app.config.from_object("src.utilities.setup.Flask_config")
 
     # Config logging
     logging.basicConfig(

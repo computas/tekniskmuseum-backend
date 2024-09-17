@@ -15,14 +15,14 @@ import json
 import uuid
 import time
 import random
-from utilities.difficulties import DifficultyId
-from utilities.languages import Language
+from src.utilities.difficulties import DifficultyId
+from src.utilities.languages import Language
 from . import models
 import src.models as shared_models
 from src import storage
-from utilities.exceptions import UserError
-from utilities import setup
-from customvision.classifier import Classifier
+from src.utilities.exceptions import UserError
+from src.utilities import setup
+from src.customvision.classifier import Classifier
 from src.extensions import socketio
 
 
@@ -347,7 +347,7 @@ def get_label(game_id) -> dict[str, str]:
 
     labels = json.loads(game.labels)
     label: str = labels[game.session_num - 1]
-    norwegian_label = models.to_norwegian(label)
+    norwegian_label = shared_models.to_norwegian(label)
     data = {"label": label, "norwegian_label": norwegian_label}
     return data
 

@@ -13,7 +13,7 @@ from src.models import (
     Scores,
     Labels,
 )
-from utilities.exceptions import UserError
+from src.utilities.exceptions import UserError
 
 """
     Classes for describing tables in the database and additional functions for

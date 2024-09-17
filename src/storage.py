@@ -2,17 +2,15 @@
     Tools for interacting with Azure blob storage.
 """
 
-import os
 import uuid
-import sys
 import time
 import logging
-from singleplayer import api
+from src.singleplayer import api
 from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 import base64
 import random
 
