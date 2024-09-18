@@ -1,16 +1,6 @@
 #!/bin/bash
 # This script serves as the main interface to the app
 
-# Compute number of gunicorn workers
-ncores=$(nproc)
-nworkers=$(((2*$ncores)+1))
-if [[ $nworkers -gt 12 ]]; then
-    nworkers=12
-fi
-
-# Get console width
-cols=$(tput cols)
-
 # Help string
 usage='Script to start webapp with gunicorn.
 Options:
@@ -95,9 +85,33 @@ $(which python)
 Number processing units: $ncores
 Number of workers: $nworkers"
 
+
+
 # Default settings and entry point to flask
 default_settings="-k eventlet --timeout=600 -w=1 --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
+
+# Database migration
+printHeadline 'Database Migration'
+export FLASK_APP=main.py  # Replace with the entry point of your Flask app
+
+# Initialize migrations folder if not initialized
+if [[ ! -d "migrations" ]]; then
+    echo "Initializing migration directory..."
+    flask db init
+fi
+
+current_version=$(flask db current)  # Get the current migration version of the database
+latest_version=$(flask db heads)     # Get the latest migration version available
+
+if [[ "$current_version" != "$latest_version" ]]; then
+    echo "New migration available. Running migration..."
+    flask db migrate -m "Auto migration via script"
+    flask db upgrade
+else
+    echo "Database is up to date. No migration needed."
+fi
+
 
 if [[ $debug = true ]]; then
     printHeadline red 'Debug mode'

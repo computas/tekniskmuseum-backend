@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 import os
 from . import models
 from src.extensions import db, socketio
+from flask_migrate import Migrate
 
 
 def create_app():
@@ -72,8 +73,15 @@ def create_app():
         models.seed_labels(app, csv_file_path)
         app.logger.info("Backend was able to communicate with DB. ")
         models.populate_example_images(app)
-    except Exception:
+    except Exception as e:
+        print(e)
         # error is raised by handle_exception()
         app.logger.error("Error when contacting DB in Azure")
+
+    try:
+        Migrate(app, models.db)
+    except Exception as e:
+        print(e)
+        app.logger.error("Error when migrating DB")
 
     return app, socketio
