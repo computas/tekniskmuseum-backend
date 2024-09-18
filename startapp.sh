@@ -117,7 +117,7 @@ latest_version=$(flask db heads)     # Get the latest migration version availabl
 if [[ "$current_version" != "$latest_version" ]]; then
     echo "New migration available. Running migration..."
     flask db migrate -m "Auto migration via script"
-    #flask db upgrade
+    flask db upgrade
 else
     echo "Database is up to date. No migration needed."
 fi
