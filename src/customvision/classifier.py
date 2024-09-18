@@ -9,7 +9,7 @@ import sys
 import os
 from typing import Dict
 from typing import List
-from webapp import models
+from src.webapp import models
 from flask import current_app as app
 import requests
 from werkzeug import exceptions as excp
@@ -27,8 +27,8 @@ from azure.cognitiveservices.vision.customvision.training.models import (
     ImageUrlCreateBatch
 )
 
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 
 
 class Classifier:

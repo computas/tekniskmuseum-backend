@@ -1,6 +1,6 @@
 import sys
 import os
-from utilities.keys import Keys
+from src.utilities.keys import Keys
 
 # number of players in overall high score top list
 TOP_N = 10

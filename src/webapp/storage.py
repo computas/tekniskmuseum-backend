@@ -6,12 +6,12 @@ import uuid
 import sys
 import time
 import logging
-from webapp import api
+from src.webapp import api
 from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 import base64
 import random
 

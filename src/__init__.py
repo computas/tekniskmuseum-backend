@@ -4,7 +4,7 @@ from src.webapp import singleplayer
 from src.utilities import setup
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from utilities.keys import Keys
+from src.utilities.keys import Keys
 import logging
 from logging.handlers import RotatingFileHandler
 import uuid
@@ -16,8 +16,8 @@ from PIL import Image
 from PIL import ImageChops
 from threading import Thread
 from io import BytesIO
-from webapp import storage
-from webapp import models
+from src.webapp import storage
+from src.webapp import models
 from flask import request
 from flask import session
 from werkzeug.security import generate_password_hash
@@ -37,7 +37,7 @@ def create_app():
     else:
         CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 
-    app.config.from_object("utilities.setup.Flask_config")
+    app.config.from_object("src.utilities.setup.Flask_config")
 
     #Config logging
     logging.basicConfig(filename='record.log', level=logging.INFO, filemode="w", format="%(asctime)s %(levelname)s %(message)s")

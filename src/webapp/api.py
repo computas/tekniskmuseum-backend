@@ -19,10 +19,10 @@ from PIL import Image
 from PIL import ImageChops
 from threading import Thread
 from io import BytesIO
-from webapp import storage
-from webapp import models
-from utilities import setup
-from customvision.classifier import Classifier
+from src.webapp import storage
+from src.webapp import models
+from src.utilities import setup
+from src.customvision.classifier import Classifier
 from flask import Flask, current_app
 from flask import request
 from flask import session
@@ -31,7 +31,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
-from utilities.keys import Keys
+from src.utilities.keys import Keys
 from flask import Blueprint
 
 
