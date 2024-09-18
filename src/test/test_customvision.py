@@ -2,20 +2,19 @@ import pytest
 import os
 from customvision.classifier import Classifier
 from test.conftest import TestValues, get_data_folder_path
-from flask import current_app as app
 
 
 @pytest.fixture
 def classifier():
     """
-        initialize custom vision classifer object.
+    initialize custom vision classifer object.
     """
     yield Classifier()
 
 
 def test_prediction_image_does_not_crash(classifier):
     """
-        assert classifier is able to get a predicition without crashing.
+    assert classifier is able to get a predicition without crashing.
     """
     path = os.path.join(get_data_folder_path(), TestValues.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
@@ -28,7 +27,7 @@ def test_prediction_image_does_not_crash(classifier):
 
 def test_best_guess_is_string(classifier):
     """
-        Test that the best guess from the classifier is a string.
+    Test that the best guess from the classifier is a string.
     """
     path = os.path.join(get_data_folder_path(), TestValues.CV_TEST_IMAGE)
     with open(path, "rb") as fh:
@@ -38,7 +37,7 @@ def test_best_guess_is_string(classifier):
 
 def test_probabilities_format(classifier):
     """
-        Test that the probability items are of the correct type.
+    Test that the probability items are of the correct type.
     """
     path = os.path.join(get_data_folder_path(), TestValues.CV_TEST_IMAGE)
     with open(path, "rb") as fh:

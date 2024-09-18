@@ -5,13 +5,10 @@
 import logging
 import uuid
 import time
-import sys
-import os
 from typing import Dict
 from typing import List
-from src.webapp import models
+from src import models
 from flask import current_app as app
-import requests
 from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient

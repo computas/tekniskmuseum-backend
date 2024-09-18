@@ -1,11 +1,11 @@
 import pytest
-from webapp.api import models
+from src import models
 import uuid
 import datetime
 from src.utilities.difficulties import DifficultyId
 import os
-from flask import current_app as app
 from main import create_app
+from src.extensions import db as _db
 
 
 class TestValues:
@@ -35,33 +35,97 @@ class TestValues:
 
 
 @pytest.fixture(scope="session")
-def client():
-    app = create_app()
-    app.config['TESTING'] = True
+def app():
+    app, socketio = create_app()
+    app.config["TESTING"] = True
 
     with app.app_context():
-        with app.test_client() as client:
-            yield client
+        yield app, socketio
 
 
 @pytest.fixture(scope="session")
-def db():
+def app_instance(app):
+    app, _ = app
+
+    with app.app_context():
+        yield app
+
+
+@pytest.fixture(scope="session")
+def client(app):
+    app, _ = app
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture(scope="session")
+def db(app):
+    app, _ = app
     with app.app_context():
         models.insert_into_games(
-            TestValues.GAME_ID, TestValues.LABELS, TestValues.TODAY, DifficultyId.Easy
+            TestValues.GAME_ID,
+            TestValues.LABELS,
+            TestValues.TODAY,
+            DifficultyId.Easy,
         )
         models.insert_into_players(
             TestValues.PLAYER_ID, TestValues.GAME_ID, TestValues.STATE
         )
         models.insert_into_scores(
-            TestValues.PLAYER_ID, 599, TestValues.TODAY, DifficultyId.Easy)
+            TestValues.PLAYER_ID, 599, TestValues.TODAY, DifficultyId.Easy
+        )
+        yield _db
 
-    yield
+    with app.app_context():
+        models.delete_all_tables()
 
-    models.delete_all_tables()
+
+@pytest.fixture
+def test_clients(app):
+    app, socketio = app
+    with app.app_context():
+        with app.test_client() as flask_client:
+            test_client1 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+            test_client2 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+            """ response = flask_client.get("/")
+            assert response.status_code == 200 """
+            yield flask_client, test_client1, test_client2
+
+            test_client1.disconnect()
+            test_client2.disconnect()
 
 
-#Return path to data folder where images for testing are saved
+@pytest.fixture
+def four_test_clients(app):
+    app, socketio = app
+    with app.app_context():
+        with app.test_client() as flask_client:
+            test_client1 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+            test_client2 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+            test_client3 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+            test_client4 = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
+
+            yield flask_client, test_client1, test_client2, test_client3, test_client4
+
+            test_client1.disconnect()
+            test_client2.disconnect()
+            test_client3.disconnect()
+            test_client4.disconnect()
+
+
+# Return path to data folder where images for testing are saved
 def get_data_folder_path():
     current_directory = os.path.dirname(os.path.abspath(__file__))
     src_directory = os.path.dirname(current_directory)

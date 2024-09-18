@@ -88,7 +88,7 @@ Number of workers: $nworkers"
 
 
 # Default settings and entry point to flask
-default_settings="--timeout=600 -w=1 --chdir src/ main:app"
+default_settings="-k eventlet --timeout=600 -w=1 --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
 
 # Database migration
