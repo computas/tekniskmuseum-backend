@@ -1,7 +1,7 @@
 
 # Classifier complaining about circular imports when not importing storage here
-from webapp import storage
-from webapp import models
+from src import storage
+from src import models
 from customvision.classifier import Classifier
 from flask import Flask
 from utilities.keys import Keys

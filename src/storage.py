@@ -1,26 +1,25 @@
 """
     Tools for interacting with Azure blob storage.
 """
-import os
+
 import uuid
-import sys
 import time
 import logging
-from webapp import api
+from src.singleplayer import api
 from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 import base64
 import random
 
 
 def save_image(image, label, certainty):
     """
-        Upload image to blob storage container named "newimgcontainer" with same name as image label.
-        Image is renamed to assure unique name. Uploads only if certainty is larger than threshold
-        Returns public URL to access image, or non if certainty too low.
+    Upload image to blob storage container named "newimgcontainer" with same name as image label.
+    Image is renamed to assure unique name. Uploads only if certainty is larger than threshold
+    Returns public URL to access image, or non if certainty too low.
     """
     # save image in blob storage if certainty above threshold
     if certainty < setup.SAVE_CERTAINTY:
@@ -41,8 +40,9 @@ def save_image(image, label, certainty):
         # update metadata in blob
         try:
             image_count = int(
-                container_client.get_container_properties(
-                ).metadata["image_count"]
+                container_client.get_container_properties().metadata[
+                    "image_count"
+                ]
             )
         except KeyError:
             image_count = 0
@@ -57,10 +57,10 @@ def save_image(image, label, certainty):
 
 def clear_dataset():
     """
-        Method for resetting dataset back to original dataset
-        from Google Quickdraw. It deletes the 'New Images Container'.
-        NOTE: container is deleted by garbage collection, which does not
-        happen instantly. A new blob cannot be initalized before old is collected.
+    Method for resetting dataset back to original dataset
+    from Google Quickdraw. It deletes the 'New Images Container'.
+    NOTE: container is deleted by garbage collection, which does not
+    happen instantly. A new blob cannot be initalized before old is collected.
     """
     container_client = blob_connection()
     try:
@@ -72,8 +72,8 @@ def clear_dataset():
 
 def create_container():
     """
-        Method for creating a new container. Tries to create a new container
-        n times, to make sure Azure garbage collection is finished.
+    Method for creating a new container. Tries to create a new container
+    n times, to make sure Azure garbage collection is finished.
     """
     tries = setup.CREATE_CONTAINER_TRIES
     waiting_time = setup.CREATE_CONTAINER_WAITER
@@ -96,7 +96,7 @@ def create_container():
 
 def image_count():
     """
-        Returns number of images in 'newimgcontainer'.
+    Returns number of images in 'newimgcontainer'.
     """
     container_client = blob_connection()
     return container_client.get_container_properties().metadata["image_count"]
@@ -104,7 +104,7 @@ def image_count():
 
 def blob_connection(container_name=setup.CONTAINER_NAME_NEW):
     """
-        Helper method for connection to blob service.
+    Helper method for connection to blob service.
     """
 
     connect_str = Keys.get("BLOB_CONNECTION_STRING")
@@ -125,7 +125,7 @@ def blob_connection(container_name=setup.CONTAINER_NAME_NEW):
 
 def get_n_random_images_from_label(n, label):
     """
-        Returns n random images from the blob storage container with the given label.
+    Returns n random images from the blob storage container with the given label.
     """
     container_client = blob_connection(setup.CONTAINER_NAME_ORIGINAL)
     blob_prefix = f"{label}/"
@@ -136,22 +136,23 @@ def get_n_random_images_from_label(n, label):
         blob_client = container_client.get_blob_client(blob)
         image_data = blob_client.download_blob().readall()
         decoded_image = image_to_data_url(
-            image_data, blob.content_settings.content_type)
+            image_data, blob.content_settings.content_type
+        )
         images.append(decoded_image)
     return images
 
 
 def image_to_data_url(image_data, content_type):
     """
-        Converts image data to a data URL.
+    Converts image data to a data URL.
     """
-    base64_image = base64.b64encode(image_data).decode('utf-8')
+    base64_image = base64.b64encode(image_data).decode("utf-8")
     return f"data:{content_type};base64,{base64_image}"
 
 
 def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
     """
-        Method for removing all images from a container.
+    Method for removing all images from a container.
     """
     container_client = blob_connection(container_name)
     blobs = container_client.list_blobs()
@@ -164,7 +165,7 @@ def clear_container(container_name=setup.CONTAINER_NAME_ORIGINAL):
 
 def get_images_from_relative_url(image_urls):
     """
-        Returns a list of images from a list of relative URLs.
+    Returns a list of images from a list of relative URLs.
     """
     container_client = blob_connection(setup.CONTAINER_NAME_ORIGINAL)
     images = []
@@ -173,6 +174,7 @@ def get_images_from_relative_url(image_urls):
 
         image_data = blob_client.download_blob().readall()
         decoded_image = image_to_data_url(
-            image_data, "application/octet-stream")
+            image_data, "application/octet-stream"
+        )
         images.append(decoded_image)
     return images

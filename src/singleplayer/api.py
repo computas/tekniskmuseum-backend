@@ -10,88 +10,40 @@
 """
 import uuid
 import os
-import logging
 import re
-from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime, timezone, timedelta
-from PIL import Image
-from PIL import ImageChops
+from PIL import Image, ImageChops
 from threading import Thread
 from io import BytesIO
-from webapp import storage
-from webapp import models
-from utilities import setup
-from customvision.classifier import Classifier
-from flask import Flask
-from flask import request
-from flask import session
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from werkzeug.security import generate_password_hash
-from werkzeug.security import check_password_hash
+from src import storage
+from . import models
+import src.models as shared_models
+from src.utilities import setup
+from src.customvision.classifier import Classifier
+from flask import Blueprint, current_app, request, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
-from utilities.keys import Keys
 
-# Initialization app
-app = Flask(__name__)
-if Keys.exists("CORS_ALLOWED_ORIGIN"):
-    cors = CORS(app,
-                resources={r"/*": {"origins": Keys.get("CORS_ALLOWED_ORIGIN"),
-                                   "supports_credentials": True}})
-else:
-    cors = CORS(app, resources={
-                r"/*": {"origins": "*", "supports_credentials": True}})
-app.config.from_object("utilities.setup.Flask_config")
 
-#Config logging
-logging.basicConfig(filename='record.log', level=logging.INFO, filemode="w", format="%(asctime)s %(levelname)s %(message)s")
-log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
-
-#max file size 4 MB
-handler = RotatingFileHandler(
-    filename='record.log',
-    maxBytes=4 * 1024 * 1024,
-    backupCount=5
-)
-
-app.logger.addHandler(handler)
-
-try:
-    # Set up DB and models
-    models.db.init_app(app)
-    models.create_tables(app)
-    models.populate_difficulty(app)
-    # Point to correct CSV file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_file_path = os.path.join(base_dir, "..", "dict_eng_to_nor_difficulties_v2.csv")
-    models.seed_labels(app, csv_file_path)
-    app.logger.info("Backend was able to communicate with DB. ")
-
-except Exception:
-    #error is raised by handle_exception()
-    print("Error when contacting DB in Azure")
-    
+singleplayer = Blueprint("singleplayer", __name__)
 
 # Initialize CV classifier
 classifier = Classifier()
 
-if __name__ != "__main__":
-    gunicorn_logger = logging.getLogger("gunicorn.error")
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
 
 
-@app.route("/")
+@singleplayer.route("/")
 def hello():
-    app.logger.info("We're up!")
+    current_app.logger.info("We're up!")
     return "Yes, we're up", 200
 
 
-@app.route("/startGame")
+@singleplayer.route("/startGame")
 def start_game():
     """
-        Starts a new game by providing the client with a unique game id and player id.
+    Starts a new game by providing the client with a unique game id and player id.
     """
     # start a game and insert it into the games table
     difficulty_id = request.args.get("difficulty_id", default=None, type=int)
@@ -99,10 +51,12 @@ def start_game():
         return json.dumps({"error": "No difficulty_id provided"}), 400
     game_id = uuid.uuid4().hex
     player_id = uuid.uuid4().hex
-    labels = models.get_n_labels(setup.NUM_GAMES, difficulty_id)
+    labels = shared_models.get_n_labels(setup.NUM_GAMES, difficulty_id)
     today = datetime.today()
-    models.insert_into_games(game_id, json.dumps(labels), today, difficulty_id)
-    models.insert_into_players(player_id, game_id, "Playing")
+    shared_models.insert_into_games(
+        game_id, json.dumps(labels), today, difficulty_id
+    )
+    shared_models.insert_into_players(player_id, game_id, "Playing")
     # return game data as json object
     data = {
         "player_id": player_id,
@@ -110,15 +64,15 @@ def start_game():
     return json.dumps(data), 200
 
 
-@app.route("/getLabel", methods=["POST"])
+@singleplayer.route("/getLabel", methods=["POST"])
 def get_label():
     """
-        Provides the client with a new word.
+    Provides the client with a new word.
     """
     player_id = request.values["player_id"]
     lang = request.values["lang"]
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+    player = shared_models.get_player(player_id)
+    game = shared_models.get_game(player.game_id)
 
     # Check if game complete
     if game.session_num > setup.NUM_GAMES:
@@ -127,7 +81,7 @@ def get_label():
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
     if lang == "NO":
-        norwegian_label = models.to_norwegian(label)
+        norwegian_label = shared_models.to_norwegian(label)
         data = {"label": norwegian_label}
         return json.dumps(data), 200
     else:
@@ -135,10 +89,10 @@ def get_label():
         return json.dumps(data), 200
 
 
-@app.route("/classify", methods=["POST"])
+@singleplayer.route("/classify", methods=["POST"])
 def classify():
     """
-        Classify endpoint for continuous guesses.
+    Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
     # Check if image submitted correctly
@@ -154,17 +108,16 @@ def classify():
     # Get time from POST request
     time_left = float(request.values["time"])
     # Get label for game session
-    player = models.get_player(player_id)
-
+    player = shared_models.get_player(player_id)
     clientRound = request.values.get("client_round_num", None)
-    game = models.get_game(player.game_id)
+    game = shared_models.get_game(player.game_id)
     server_round = game.session_num
     if clientRound is not None and int(clientRound) < game.session_num:
         raise excp.BadRequest(
-            "Server-round number larger than request/client. Probably a request processed out of order")
+            "Server-round number larger than request/client. Probably a request processed out of order"
+        )
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
-
     certainty, best_guess = classifier.predict_image_by_post(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit
@@ -176,17 +129,20 @@ def classify():
     # End game if player win or loose
     if has_won or time_left <= 0:
         # Update session_num in game and state for player
-        models.update_game_for_player(player.game_id, player_id, 1, "Done")
+        shared_models.update_game_for_player(
+            player.game_id, player_id, 1, "Done"
+        )
         # save image
         storage.save_image(image, label, best_certainty)
         # Update game state to be done
         game_state = "Done"
         # Insert statistic for label
         models.insert_into_label_success(
-            label=label, is_success=has_won, date=datetime.now())
+            label=label, is_success=has_won, date=datetime.now()
+        )
     # translate labels into norwegian
     if lang == "NO":
-        translation = models.get_translation_dict()
+        translation = shared_models.get_translation_dict()
         certainty_translated = dict(
             [
                 (translation[label], probability)
@@ -210,28 +166,27 @@ def classify():
             "gameState": game_state,
             "serverRound": server_round,
         }
-
     return json.dumps(data), 200
 
 
-@app.route("/postScore", methods=["POST"])
+@singleplayer.route("/postScore", methods=["POST"])
 def post_score():
     """
-        Endpoint for ending game consisting of NUM_GAMES sessions.
+    Endpoint for ending game consisting of NUM_GAMES sessions.
     """
     data = request.get_json()
     player_id = data.get("player_id")
     score = float(data.get("score"))
     difficulty_id = int(data.get("difficulty_id"))
 
-    player = models.get_player(player_id)
-    game = models.get_game(player.game_id)
+    player = shared_models.get_player(player_id)
+    game = shared_models.get_game(player.game_id)
 
     if game.session_num != setup.NUM_GAMES + 1:
         raise excp.BadRequest("Game not finished")
 
     today = datetime.today()
-    models.insert_into_scores(player_id, score, today, difficulty_id)
+    shared_models.insert_into_scores(player_id, score, today, difficulty_id)
 
     # ! Need to decide if this is needed
     # Clean database for unnecessary data
@@ -240,19 +195,21 @@ def post_score():
     return json.dumps({"success": "OK"}), 200
 
 
-@app.route("/viewHighScore")
+@singleplayer.route("/viewHighScore")
 def view_high_score():
     """
-        Read highscore from database. Return top n of all time and daily high
-        scores.
+    Read highscore from database. Return top n of all time and daily high
+    scores.
     """
     difficulty_id = request.values["difficulty_id"]
     # read top n overall high score
-    top_n_high_scores = models.get_top_n_high_score_list(
-        setup.TOP_N, difficulty_id=difficulty_id)
+    top_n_high_scores = shared_models.get_top_n_high_score_list(
+        setup.TOP_N, difficulty_id=difficulty_id
+    )
     # read daily high score
-    daily_high_scores = models.get_daily_high_score(
-        difficulty_id=difficulty_id)
+    daily_high_scores = shared_models.get_daily_high_score(
+        difficulty_id=difficulty_id
+    )
     data = {
         "daily": daily_high_scores,
         "total": top_n_high_scores,
@@ -260,33 +217,35 @@ def view_high_score():
     return json.dumps(data), 200
 
 
-@app.route("/getExampleDrawings", methods=["POST"])
+@singleplayer.route("/getExampleDrawings", methods=["POST"])
 def get_n_drawings_by_label():
     """
-        Returns n images from the blob storage container with the given label.
+    Returns n images from the blob storage container with the given label.
     """
     data = request.get_json()
     number_of_images = data["number_of_images"]
     label = data["label"]
     lang = data["lang"]
     if lang == "NO":
-        label = models.to_english(label)
+        label = shared_models.to_english(label)
 
-    image_urls = models.get_n_random_example_images(label, number_of_images)
+    image_urls = shared_models.get_n_random_example_images(
+        label, number_of_images
+    )
     images = storage.get_images_from_relative_url(image_urls)
     return json.dumps(images), 200
 
 
-@app.route("/auth", methods=["POST"])
+@singleplayer.route("/auth", methods=["POST"])
 def authenticate():
     """
-        Endpoint for admin authentication. Returns encrypted cookie with login
-        time and username.
+    Endpoint for admin authentication. Returns encrypted cookie with login
+    time and username.
     """
     username = request.values["username"]
     password = request.values["password"]
 
-    user = models.get_user(username)
+    user = shared_models.get_user(username)
 
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
@@ -296,17 +255,18 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
-@app.route("/admin/<action>", methods=["POST"])
+
+@singleplayer.route("/admin/<action>", methods=["POST"])
 def admin_page(action):
     """
-        Endpoint for admin actions. Requires authentication from /auth within
-        SESSION_EXPIRATION_TIME
+    Endpoint for admin actions. Requires authentication from /auth within
+    SESSION_EXPIRATION_TIME
     """
     # Check if user has valid cookie
     is_authenticated()
 
     if action == "clearHighScore":
-        models.clear_highscores()
+        shared_models.clear_highscores()
         return json.dumps({"success": "High scores cleared"}), 200
 
     elif action == "trainML":
@@ -342,45 +302,46 @@ def admin_page(action):
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
 
-@app.route("/admin/logging")
+
+@singleplayer.route("/admin/logging")
 def get_error_logs():
     try:
-        #is_authenticated()
-        path = base_dir.replace("webapp", "")
-        log_name = path + "record.log"
-
+        # is_authenticated()
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        src_directory = os.path.dirname(current_directory)
+        log_file = os.path.join(src_directory, "record.log")
         data = []
-
-        for line in readlines_reverse(log_name):
+        for line in readlines_reverse(log_file):
             match = re.match(log_pattern, line)
             if match:
                 log_dict = match.groupdict()
                 data.append(log_dict)
-    
+
         return json.dumps(data), 200
     except Exception as e:
-        app.logger.error(f"Failed to read log file: {e}")
+        current_app.logger.error(f"Failed to read log file: {e}")
         return "Failed to read log file", 500
 
-@app.errorhandler(Exception)
+
+@singleplayer.errorhandler(Exception)
 def handle_exception(error):
     """
-       Captures all exceptions raised. If the Exception is a HTTPException the
-       error message and code is returned to the client. Else the error is
-       logged.
+    Captures all exceptions raised. If the Exception is a HTTPException the
+    error message and code is returned to the client. Else the error is
+    logged.
     """
     if isinstance(error, excp.HTTPException):
         # check if 4xx error. This should be returned to user.
         if error.code >= 400 and error.code < 500:
             return error
     else:
-        app.logger.error(error)
+        current_app.logger.error(error)
         return json.dumps({"error": "Internal server error"}), 500
 
 
 def allowed_file(image):
     """
-        Check if image satisfies the constraints of Custom Vision.
+    Check if image satisfies the constraints of Custom Vision.
     """
     if image.filename == "":
         raise excp.BadRequest("No image submitted")
@@ -400,7 +361,7 @@ def allowed_file(image):
 
 def add_user():
     """
-        Add user to user table in db.
+    Add user to user table in db.
     """
     username = request.values["username"]
     password = request.values["password"]
@@ -408,23 +369,21 @@ def add_user():
     hashed_psw = generate_password_hash(
         password, method="pbkdf2:sha256:200000", salt_length=128
     )
-    models.insert_into_user(username, hashed_psw)
+    shared_models.insert_into_user(username, hashed_psw)
     response = {"response": "user added"}
     return json.dumps(response), 200
 
 
 def is_authenticated():
     """
-        Check if user has an unexpired cookie. Renew time if not expired.
-        Raises exception if cookie is invalid.
+    Check if user has an unexpired cookie. Renew time if not expired.
+    Raises exception if cookie is invalid.
     """
     if "last_login" not in session:
         raise excp.Unauthorized()
 
     session_length = datetime.now(timezone.utc) - session["last_login"]
-    is_auth = session_length < timedelta(
-        minutes=setup.SESSION_EXPIRATION_TIME
-    )
+    is_auth = session_length < timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
 
     if not is_auth:
         raise excp.Unauthorized("Session expired")
@@ -436,7 +395,7 @@ def is_authenticated():
 
 def white_image(image):
     """
-        Check if the image provided is completely white.
+    Check if the image provided is completely white.
     """
     if not ImageChops.invert(image).getbbox():
         return True
@@ -446,13 +405,13 @@ def white_image(image):
 
 def white_image_data(label, time_left, game_id, player_id):
     """
-        Generate the json data to be returned to the client when a completely
-        white image has been submitted for classification.
+    Generate the json data to be returned to the client when a completely
+    white image has been submitted for classification.
     """
     if time_left > 0:
         game_state = "Playing"
     else:
-        models.update_game_for_player(game_id, player_id, 1, "Done")
+        shared_models.update_game_for_player(game_id, player_id, 1, "Done")
         game_state = "Done"
 
     data = {
@@ -467,7 +426,7 @@ def white_image_data(label, time_left, game_id, player_id):
 
 def get_image_resolution(image):
     """
-        Retrieve the resolution of the image provided.
+    Retrieve the resolution of the image provided.
     """
     image.seek(0)
     height, width = Image.open(BytesIO(image.stream.read())).size
@@ -479,13 +438,13 @@ def readlines_reverse(filename):
     with open(filename) as qfile:
         qfile.seek(0, os.SEEK_END)
         position = qfile.tell()
-        line = ''
+        line = ""
         while position >= 0:
             qfile.seek(position)
             next_char = qfile.read(1)
             if next_char == "\n":
                 yield line[::-1]
-                line = ''
+                line = ""
             else:
                 line += next_char
             position -= 1

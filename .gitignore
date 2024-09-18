@@ -12,3 +12,4 @@ config.json
 .venv
 venv
 src/record.log
+record.log
