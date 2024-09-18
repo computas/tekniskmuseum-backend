@@ -29,10 +29,11 @@ def create_app():
         socketio.init_app(
             app,
             cors_allowed_origins=Keys.get("CORS_ALLOWED_ORIGIN"),
-            logger=False,
+            logger=True,
+            engineio_logger=False,
         )
     else:
-        socketio.init_app(app, cors_allowed_origins="*", logger=True)
+        socketio.init_app(app, cors_allowed_origins="*", engineio_logger=False)
         CORS(
             app,
             resources={r"/*": {"origins": "*", "supports_credentials": True}},
