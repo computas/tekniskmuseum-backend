@@ -72,15 +72,6 @@ jobs:
       - name: Set up Azure DB credentials
         run: echo "AZURE_DATABASE_URI=${{ secrets.AZURE_DATABASE_URI}}" >> $GITHUB_ENV
 
-      # - name: Check for pending migrations
-      #   run: |
-      #       export FLASK_APP=main && flask db init
-      #       flask db migrate 
-      
-      # - name: Apply migrations
-      #   run: |
-      #       flask db upgrade
-
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp

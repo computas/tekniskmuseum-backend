@@ -1,16 +1,6 @@
 #!/bin/bash
 # This script serves as the main interface to the app
 
-# Compute number of gunicorn workers
-ncores=$(nproc)
-nworkers=$(((2*$ncores)+1))
-if [[ $nworkers -gt 12 ]]; then
-    nworkers=12
-fi
-
-# Get console width
-cols=$(tput cols)
-
 # Help string
 usage='Script to start webapp with gunicorn.
 Options:
