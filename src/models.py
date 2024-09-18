@@ -108,6 +108,7 @@ class User(db.Model):
     username = db.Column(db.String(64), primary_key=True)
     password = db.Column(db.String(256))
 
+
 class Difficulty(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     difficulty = db.Column(db.String(32), nullable=False)

@@ -14,4 +14,5 @@ Pillow==10.3.0
 flask-cors==4.0.1
 requests==2.32.3
 Flask-Migrate==4.0.7
-eventlet==0.36.1
+gevent==24.2.1
+gevent-websocket==0.10.1
