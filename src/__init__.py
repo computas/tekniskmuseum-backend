@@ -33,7 +33,9 @@ def create_app():
             engineio_logger=False,
         )
     else:
-        socketio.init_app(app, cors_allowed_origins="*", engineio_logger=False)
+        socketio.init_app(
+            app, cors_allowed_origins="*", logger=True, engineio_logger=False
+        )
         CORS(
             app,
             resources={r"/*": {"origins": "*", "supports_credentials": True}},
@@ -43,23 +45,23 @@ def create_app():
 
     # Config logging
     logging.basicConfig(
-        filename="src/record.log",
-        level=logging.WARN,
+        filename="record.log",
+        level=logging.INFO,
         filemode="w",
         format="%(asctime)s %(levelname)s %(message)s",
     )
+
+    if __name__ != "__main__":
+        gunicorn_logger = logging.getLogger("gunicorn.error")
+        app.logger.handlers = gunicorn_logger.handlers
+        app.logger.setLevel(logging.INFO)
 
     # max file size 1 MB
     handler = RotatingFileHandler(
         filename="record.log", maxBytes=1024 * 1024, backupCount=5
     )
-
     app.logger.addHandler(handler)
-
-    if __name__ != "__main__":
-        gunicorn_logger = logging.getLogger("gunicorn.error")
-        app.logger.handlers = gunicorn_logger.handlers
-        app.logger.setLevel(logging.WARN)
+    app.logger.addHandler(logging.StreamHandler())
 
     try:
         # Set up DB and models
@@ -80,7 +82,7 @@ def create_app():
         app.logger.error("Error when contacting DB in Azure")
 
     try:
-        Migrate(app, models.db)
+        Migrate(app, db)
     except Exception as e:
         print(e)
         app.logger.error("Error when migrating DB")
