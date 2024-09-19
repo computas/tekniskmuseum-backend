@@ -77,7 +77,8 @@ Assuming everything runs without errors, the images should now be in the blob st
 
 ### **Uploading the data to Azure CustomVision and training an iteration of the classification model**
 
-1. Run `bash custom_vision/upload_to_CV.sh` from the `src` folder. This will upload all photos from Blob storage from the categories in the current version of the Custom Vision model.
+1. Run `bash custom_vision/upload_to_CV.sh` from the `src` folder. Same as above, the root folder might need to be added to the PYTHONPATH environment variable.
+This will upload all photos from Blob storage from the categories in the current version of the Custom Vision model.
 Optionally, you can provide a csv-file containing the categories you want to upload as a command line argument to this script.
 
 2. Go to [customvision.ai](customvision.ai), and click on the `Train` button in the top right after entering the correct project. For most use cases, `Quick Training` can be chosen here.
