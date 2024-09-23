@@ -47,7 +47,7 @@ class Scores(db.Model):
     """
 
     score_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    player_id = db.Column(db.NVARCHAR(32), db.ForeignKey("players.player_id"))
+    player_id = db.Column(db.NVARCHAR(32), nullable=True)
     score = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date)
     difficulty_id = db.Column(
@@ -62,13 +62,11 @@ class Players(db.Model):
     """
 
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(
-        db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False
-    )
+    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey(
+        "games.game_id"), nullable=False)
     state = db.Column(db.String(32), nullable=False)
 
     game = db.relationship("Games", back_populates="players")
-    scores = db.relationship("Scores", backref="Players", passive_deletes=True)
 
 
 class MulitPlayer(db.Model):
