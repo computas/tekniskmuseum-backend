@@ -10,8 +10,8 @@ import json
 import os
 import argparse
 from azure.storage.blob import BlobServiceClient
-from utilities.keys import Keys
-from utilities import setup
+from src.utilities.keys import Keys
+from src.utilities import setup
 
 CONNECT_STR = Keys.get("BLOB_CONNECTION_STRING")
 parser = argparse.ArgumentParser(

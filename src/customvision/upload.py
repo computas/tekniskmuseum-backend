@@ -1,6 +1,5 @@
 from classifier import Classifier
-import argparse
-from utilities.keys import Keys
+from src.utilities.keys import Keys
 import sys
 
 classifier = Classifier()
