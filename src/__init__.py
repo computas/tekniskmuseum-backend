@@ -1,4 +1,4 @@
-from flask import Flask
+
 from src.multiplayer import multiplayer
 from src.singleplayer import singleplayer
 from flask_cors import CORS
@@ -8,10 +8,14 @@ from logging.handlers import RotatingFileHandler
 import os
 from . import models
 from src.extensions import db, socketio
+from azure.monitor.opentelemetry import configure_azure_monitor
+from flask import Flask
 from flask_migrate import Migrate
 
 
 def create_app():
+    configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
+
     app = Flask(__name__)
     app.register_blueprint(multiplayer, url_prefix="/")
     app.register_blueprint(singleplayer, url_prefix="/")

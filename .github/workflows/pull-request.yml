@@ -45,5 +45,5 @@ jobs:
 
     - name: Run tests
       shell: bash
-      run: python3 src/runTests.py --keys='${{ secrets.TEST_SETTINGS2 }}'
+      run: python3 src/runTests.py --keys='${{ secrets.NEW_TEST_SETTINGS }}'
       
