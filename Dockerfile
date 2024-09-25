@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 # Set the working directory in the container
 
 RUN apt-get update && apt-get install -y \
-    python3 \
+    python3.11 \
     python3-pip
 
 
@@ -34,21 +34,13 @@ RUN rm -rf /var/lib/apt/lists/*
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt 
 
-
-
-#COPY install-mysql-driver.sh .
-#RUN chmod +x install-mysql-driver.sh
-#RUN bash ./install-mysql-driver.sh
-
 # Copy the rest of the application code to the container
 COPY . /app
 WORKDIR /app
-
 
 # Expose the port that your app runs on
 EXPOSE 8000
 
 # Command to run Gunicorn with Gevent worker class for async handling
-#CMD ["python3", "main.py"]
 CMD ["gunicorn", "--bind=0.0.0.0", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w=1", "--chdir", "src/", "main:app"]
 

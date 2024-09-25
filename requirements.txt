@@ -16,4 +16,3 @@ requests==2.32.3
 Flask-Migrate==4.0.7
 gevent==24.2.1
 gevent-websocket==0.10.1
-numpy==2.1.1
