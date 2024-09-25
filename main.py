@@ -1,3 +1,5 @@
+from gevent import monkey
+monkey.patch_all()
 from src import create_app
 
 app, socketio = create_app()
