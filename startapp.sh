@@ -80,51 +80,56 @@ done
 
 # Print some info
 printHeadline 'Teknisk Museum backend'
-echo "$(python --version)
-$(which python)
-Number processing units: $ncores
-Number of workers: $nworkers"
+echo "$(python --version)"
+echo "$(which python)"
 
-
-
-# Default settings and entry point to flask
-default_settings="-k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w=1 --chdir src/ main:app"
 logfile='/home/LogFiles/flaskapp.log'
 
 # Database migration
 printHeadline 'Database Migration'
-export FLASK_APP=main.py  # Replace with the entry point of your Flask app
+
+export FLASK_APP="main:app" 
 
 # Initialize migrations folder if not initialized
 if [[ ! -d "migrations" ]]; then
     echo "Initializing migration directory..."
     flask db init
+else
+    echo "Migration directory already exists"
+    printline
 fi
 
 current_version=$(flask db current)  # Get the current migration version of the database
 latest_version=$(flask db heads)     # Get the latest migration version available
 
 if [[ "$current_version" != "$latest_version" ]]; then
+    printline
     echo "New migration available. Running migration..."
+    printline
     flask db migrate -m "Auto migration via script"
     flask db upgrade
 else
+    printline
     echo "Database is up to date. No migration needed."
+    printline
 fi
 
-
 if [[ $debug = true ]]; then
+    printline
     printHeadline red 'Debug mode'
     echo 'Debug mode activated. Gunicorn is reloaded on code changes.'
     export DEBUG=true
+    export FLASK_DEBUG=1
     printline
-    gunicorn --reload $default_settings
+    
 elif [[ $IS_PRODUCTION = true ]]; then
-    gunicorn --bind=0.0.0.0 --log-file=$logfile $default_settings
     echo "Logs written to: $logfile"
-else
     printline
-    gunicorn --bind=0.0.0.0 $default_settings
+
+else
+    echo "Running locally"
+    printline
 fi
 
-printline
+printHeadline 'Run backend'
+python3 main.py
