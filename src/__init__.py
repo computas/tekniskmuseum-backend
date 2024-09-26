@@ -1,24 +1,22 @@
+import os
+from src.utilities.keys import Keys
+from azure.monitor.opentelemetry import configure_azure_monitor
+# Only configure Azure Monitor when not running FLASK migrations
+if not os.getenv("FLASK_RUN_FROM_CLI"):
+    configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
 from datetime import timedelta
 from src.multiplayer import multiplayer
 from src.singleplayer import singleplayer
 from flask_cors import CORS
-from src.utilities.keys import Keys
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 from . import models
 from src.extensions import db, socketio
-from azure.monitor.opentelemetry import configure_azure_monitor
 from flask import Flask
 from flask_migrate import Migrate
 
 
 def create_app():
-
-    # Only configure Azure Monitor when not running FLASK migrations
-    if not os.getenv("FLASK_RUN_FROM_CLI"):  
-        configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
-
     app = Flask(__name__)
     app.register_blueprint(multiplayer, url_prefix="/")
     app.register_blueprint(singleplayer, url_prefix="/")
