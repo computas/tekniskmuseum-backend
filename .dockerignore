@@ -2,8 +2,8 @@
 src/preprocessing/data/*
 src/preprocessing/images/*
 .idea
-**/__pycache__*
-**/.pytest_cache*
+**/__pycache__/
+**/.pytest_cache/
 *.pyc
 *.swp
 .vscode/*
