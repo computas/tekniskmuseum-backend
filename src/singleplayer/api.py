@@ -13,6 +13,7 @@ import os
 import re
 import json
 from datetime import datetime, timezone, timedelta
+import pytz
 from PIL import Image, ImageChops
 from threading import Thread
 from io import BytesIO
@@ -20,10 +21,12 @@ from src import storage
 from . import models
 import src.models as shared_models
 from src.utilities import setup
+from src.utilities.keys import Keys
 from src.customvision.classifier import Classifier
 from flask import Blueprint, current_app, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
+import requests
 
 
 singleplayer = Blueprint("singleplayer", __name__)
@@ -32,6 +35,8 @@ singleplayer = Blueprint("singleplayer", __name__)
 classifier = Classifier()
 
 log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
+
+norwegian_tz = pytz.timezone('Europe/Oslo')
 
 
 @singleplayer.route("/")
@@ -242,6 +247,7 @@ def authenticate():
     Endpoint for admin authentication. Returns encrypted cookie with login
     time and username.
     """
+    set_config()
     username = request.values["username"]
     password = request.values["password"]
 
@@ -249,14 +255,14 @@ def authenticate():
 
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
-
-    session["last_login"] = datetime.now(timezone.utc)
+    
+    session["last_login"] = datetime.now(norwegian_tz)
     session["username"] = username
 
     return json.dumps({"success": "OK"}), 200
 
 
-@singleplayer.route("/admin/<action>", methods=["POST"])
+@singleplayer.route("/admin/<action>", methods=["GET", "POST"])
 def admin_page(action):
     """
     Endpoint for admin actions. Requires authentication from /auth within
@@ -279,7 +285,7 @@ def admin_page(action):
         classifier.delete_all_images()
         storage.clear_dataset()
         Thread(target=classifier.hard_reset_retrain).start()
-        response = {"success": "All images deleted, nodel now training"}
+        response = {"success": "All images deleted, model now training"}
         return json.dumps(response), 200
 
     elif action == "status":
@@ -291,6 +297,25 @@ def admin_page(action):
             "BLOB_image_count": new_blob_image_count,
         }
         return json.dumps(data), 200
+    
+    elif action == "logging":
+        url = "https://api.applicationinsights.io/v1/apps/06576007-5f29-4426-b5bb-eccd87fd9804/query?query=traces%20%7C%20where%20severityLevel%20%3E%202%0A%7C%20project%20timestamp%2C%20message%2C%20severityLevel%0A%7C%20order%20by%20timestamp%20desc%0A%7C%20take%2020"
+
+        headers = {
+            "x-api-key": Keys.get("API_KEY"),  
+            "Content-Type": "application/json"
+        }
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            formatted_output = format_logs(data)
+            return json.dumps(formatted_output), 200
+            
+        else:
+            current_app.logger.error(f"Failed to get log from Azure: {response.text}")
+            return "Failed to fetch log from Azure", 500
 
     elif action == "logout":
         session.clear()
@@ -301,26 +326,6 @@ def admin_page(action):
 
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
-
-
-@singleplayer.route("/admin/logging")
-def get_error_logs():
-    try:
-        # is_authenticated()
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        src_directory = os.path.dirname(current_directory)
-        log_file = os.path.join(src_directory, "record.log")
-        data = []
-        for line in readlines_reverse(log_file):
-            match = re.match(log_pattern, line)
-            if match:
-                log_dict = match.groupdict()
-                data.append(log_dict)
-
-        return json.dumps(data), 200
-    except Exception as e:
-        current_app.logger.error(f"Failed to read log file: {e}")
-        return "Failed to read log file", 500
 
 
 @singleplayer.errorhandler(Exception)
@@ -380,9 +385,10 @@ def is_authenticated():
     Raises exception if cookie is invalid.
     """
     if "last_login" not in session:
+        print("Login could not be found")
         raise excp.Unauthorized()
 
-    session_length = datetime.now(timezone.utc) - session["last_login"]
+    session_length = datetime.now(norwegian_tz) - session["last_login"]
     is_auth = session_length < timedelta(minutes=setup.SESSION_EXPIRATION_TIME)
 
     if not is_auth:
@@ -449,3 +455,36 @@ def readlines_reverse(filename):
                 line += next_char
             position -= 1
         yield line[::-1]
+
+def set_config():
+    session.clear()
+    current_app.config.update(
+    SECRET_KEY = os.urandom(24),
+    SESSION_COOKIE_SECURE=True)
+
+
+ # Function to format the data
+def format_logs(data):
+    severity_mapping = {
+        1: 'INFO',
+        2: 'WARNING',
+        3: 'ERROR',
+    }
+    
+    formatted_logs = []
+    for row in data['tables'][0]['rows']:
+        timestamp, message, severity_level = row
+
+        dt = datetime.strptime(timestamp[:19], "%Y-%m-%dT%H:%M:%S")
+
+        formatted_entry = {
+            'date': dt.strftime('%Y-%m-%d'),                   
+            'time': dt.strftime('%H:%M:%S'),       
+            'level': severity_mapping.get(severity_level, 'UNKNOWN'),  
+            'message': message.strip()                          
+        }
+
+        formatted_logs.append(formatted_entry)
+
+    return formatted_logs[::-1]
+
