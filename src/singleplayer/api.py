@@ -302,7 +302,7 @@ def admin_page(action):
         url = "https://api.applicationinsights.io/v1/apps/06576007-5f29-4426-b5bb-eccd87fd9804/query?query=traces%20%7C%20where%20severityLevel%20%3E%202%0A%7C%20project%20timestamp%2C%20message%2C%20severityLevel%0A%7C%20order%20by%20timestamp%20desc%0A%7C%20take%2020"
 
         headers = {
-            "x-api-key": Keys.get("API_KEY"),  
+            "x-api-key": Keys.get("API_KEY"),
             "Content-Type": "application/json"
         }
 
