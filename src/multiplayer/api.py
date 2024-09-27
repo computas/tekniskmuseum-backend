@@ -189,7 +189,7 @@ def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
     lang = data["lang"]
 
     if label == "":
-        return 
+        return
 
     if lang == "NO":
         label = shared_models.to_english(label)
