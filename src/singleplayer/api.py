@@ -11,10 +11,12 @@
 import uuid
 import os
 import re
+from io import BytesIO
 import json
 from datetime import datetime, timezone, timedelta
 import pytz
 from PIL import Image, ImageChops
+import numpy as np
 from threading import Thread
 from io import BytesIO
 from src import storage
@@ -100,6 +102,7 @@ def classify():
     Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
+    white_image_check = False
     # Check if image submitted correctly
     if "image" not in request.files:
         raise excp.BadRequest("No image submitted")
@@ -123,8 +126,23 @@ def classify():
         )
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+
+    # Check if the image hasn't been drawn on
+    try:
+        img = image.read()
+        img = Image.open(BytesIO(img))
+
+        if white_image(img):
+            white_image_check = True
+            
+        image.seek(0)
+
+    except Exception as e:
+        current_app.logger.error(e)
+
     certainty, best_guess = classifier.predict_image_by_post(image)
     best_certainty = certainty[best_guess]
+
     # The player has won if the game is completed within the time limit
     has_won = (
         time_left > 0
@@ -145,6 +163,13 @@ def classify():
         models.insert_into_label_success(
             label=label, is_success=has_won, date=datetime.now()
         )
+    if white_image_check:
+        data = white_image_data(
+            label, time_left, player.game_id, player_id, server_round
+            )
+        
+        return json.dumps(data), 200
+    
     # translate labels into norwegian
     if lang == "NO":
         translation = shared_models.get_translation_dict()
@@ -171,6 +196,7 @@ def classify():
             "gameState": game_state,
             "serverRound": server_round,
         }
+    
     return json.dumps(data), 200
 
 
@@ -231,6 +257,7 @@ def get_n_drawings_by_label():
     number_of_images = data["number_of_images"]
     label = data["label"]
     lang = data["lang"]
+    
     if lang == "NO":
         label = shared_models.to_english(label)
 
@@ -400,16 +427,13 @@ def is_authenticated():
 
 
 def white_image(image):
-    """
-    Check if the image provided is completely white.
-    """
-    if not ImageChops.invert(image).getbbox():
-        return True
-    else:
-        return False
+    image = image.convert("RGB")
+    img_array = np.array(image)
+    white_pixel = [255, 255, 255]
+    return np.all(img_array == white_pixel)
+    
 
-
-def white_image_data(label, time_left, game_id, player_id):
+def white_image_data(label, time_left, game_id, player_id, server_round):
     """
     Generate the json data to be returned to the client when a completely
     white image has been submitted for classification.
@@ -421,13 +445,15 @@ def white_image_data(label, time_left, game_id, player_id):
         game_state = "Done"
 
     data = {
-        "certainty": 1.0,
+        "certainty": {'blank': 1},
         "guess": setup.WHITE_IMAGE_GUESS,
         "correctLabel": label,
         "hasWon": False,
         "gameState": game_state,
+        "serverRound": server_round,
     }
-    return json.dumps(data), 200
+    
+    return data
 
 
 def get_image_resolution(image):
@@ -461,7 +487,6 @@ def set_config():
     current_app.config.update(
     SECRET_KEY = os.urandom(24),
     SESSION_COOKIE_SECURE=True)
-
 
  # Function to format the data
 def format_logs(data):
