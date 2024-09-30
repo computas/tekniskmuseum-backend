@@ -88,7 +88,7 @@ class Classifier:
                 models.update_iteration_name(self.iteration_name)
         except Exception as e:
             logging.info(e)
-            self.iteration_name = "Iteration5"
+            self.iteration_name = "Iteration4"
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
