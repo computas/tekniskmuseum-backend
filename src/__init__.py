@@ -17,8 +17,6 @@ from src.singleplayer import singleplayer
 
 
 def create_app():
-
-    
     app = Flask(__name__)
     app.register_blueprint(multiplayer, url_prefix="/")
     app.register_blueprint(singleplayer, url_prefix="/")
