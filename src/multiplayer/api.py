@@ -188,12 +188,17 @@ def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
 
     label = data["label"]
     lang = data["lang"]
+
+    if label == "":
+        return
+
     if lang == "NO":
         label = shared_models.to_english(label)
 
     example_drawing_urls = shared_models.get_n_random_example_images(
         label, number_of_images
     )
+
     example_drawings = storage.get_images_from_relative_url(
         example_drawing_urls
     )

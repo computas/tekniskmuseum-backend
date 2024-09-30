@@ -1,0 +1,15 @@
+**/config.json
+src/preprocessing/data/*
+src/preprocessing/images/*
+.idea
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+*.swp
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+.venv
+venv
+src/record.log
+record.log
