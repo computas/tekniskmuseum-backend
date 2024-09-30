@@ -6,6 +6,7 @@
     application is live.
 """
 from flask_socketio import emit, send, join_room
+from flask_socketio import disconnect as socket_disconnect
 from flask import Blueprint, request
 from flask import current_app as app
 from PIL import Image, ImageChops
@@ -172,7 +173,7 @@ def view_high_score(json_data):
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
-
+    models.update_players_id(game_id)
     emit("viewHighScore", json.dumps(data), room=game_id)
 
 
@@ -187,12 +188,17 @@ def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
 
     label = data["label"]
     lang = data["lang"]
+
+    if label == "":
+        return
+
     if lang == "NO":
         label = shared_models.to_english(label)
 
     example_drawing_urls = shared_models.get_n_random_example_images(
         label, number_of_images
     )
+
     example_drawings = storage.get_images_from_relative_url(
         example_drawing_urls
     )
