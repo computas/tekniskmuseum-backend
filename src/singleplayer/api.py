@@ -36,7 +36,7 @@ classifier = Classifier()
 
 log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
 
-norwegian_tz = pytz.timezone('Europe/Oslo')
+norwegian_tz = pytz.timezone("Europe/Oslo")
 
 
 @singleplayer.route("/")
@@ -303,7 +303,7 @@ def admin_page(action):
 
         headers = {
             "x-api-key": Keys.get("API_KEY"),
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         response = requests.get(url, headers=headers)
@@ -314,7 +314,9 @@ def admin_page(action):
             return json.dumps(formatted_output), 200
 
         else:
-            current_app.logger.error(f"Failed to get log from Azure: {response.text}")
+            current_app.logger.error(
+                f"Failed to get log from Azure: {response.text}"
+            )
             return "Failed to fetch log from Azure", 500
 
     elif action == "logout":
@@ -460,29 +462,29 @@ def readlines_reverse(filename):
 def set_config():
     session.clear()
     current_app.config.update(
-        SECRET_KEY=os.urandom(24),
-        SESSION_COOKIE_SECURE=True)
+        SECRET_KEY=os.urandom(24), SESSION_COOKIE_SECURE=True
+    )
 
 
 # Function to format the data
 def format_logs(data):
     severity_mapping = {
-        1: 'INFO',
-        2: 'WARNING',
-        3: 'ERROR',
+        1: "INFO",
+        2: "WARNING",
+        3: "ERROR",
     }
 
     formatted_logs = []
-    for row in data['tables'][0]['rows']:
+    for row in data["tables"][0]["rows"]:
         timestamp, message, severity_level = row
 
         dt = datetime.strptime(timestamp[:19], "%Y-%m-%dT%H:%M:%S")
 
         formatted_entry = {
-            'date': dt.strftime('%Y-%m-%d'),
-            'time': dt.strftime('%H:%M:%S'),
-            'level': severity_mapping.get(severity_level, 'UNKNOWN'),
-            'message': message.strip()
+            "date": dt.strftime("%Y-%m-%d"),
+            "time": dt.strftime("%H:%M:%S"),
+            "level": severity_mapping.get(severity_level, "UNKNOWN"),
+            "message": message.strip(),
         }
 
         formatted_logs.append(formatted_entry)
