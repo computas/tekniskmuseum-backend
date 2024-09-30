@@ -2,7 +2,7 @@ from azure.monitor.opentelemetry import configure_azure_monitor
 from src.utilities.keys import Keys
 import os
 # Only configure Azure Monitor when not running FLASK migrations or running locally
-if not os.getenv("FLASK_RUN_FROM_CLI") and os.getenv("IS_PRODUCTION") == "true" and os.environ.get('PYTEST_CURRENT_TEST') is False:
+if not os.getenv("FLASK_RUN_FROM_CLI") and os.getenv("IS_PRODUCTION") == "true" and not os.environ.get('PYTEST_CURRENT_TEST'):
     configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
 from flask_cors import CORS
 import logging
