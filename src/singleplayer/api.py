@@ -88,7 +88,6 @@ def get_label():
     label = labels[game.session_num - 1]
     if lang == "NO":
         norwegian_label = shared_models.to_norwegian(label)
-        current_app.logger.info("enters here")
         data = {"label": norwegian_label}
         return json.dumps(data), 200
     else:
