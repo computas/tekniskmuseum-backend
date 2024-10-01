@@ -2,7 +2,7 @@ from azure.monitor.opentelemetry import configure_azure_monitor
 from src.utilities.keys import Keys
 import os
 # Only configure Azure Monitor when not running FLASK migrations or running locally
-if not os.getenv("FLASK_RUN_FROM_CLI") and os.getenv("IS_PRODUCTION"):
+if not os.getenv("FLASK_RUN_FROM_CLI") and os.getenv("IS_PRODUCTION") == "true" and not os.environ.get('PYTEST_CURRENT_TEST'):
     configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
 from flask_cors import CORS
 import logging
@@ -17,8 +17,6 @@ from src.singleplayer import singleplayer
 
 
 def create_app():
-
-    
     app = Flask(__name__)
     app.register_blueprint(multiplayer, url_prefix="/")
     app.register_blueprint(singleplayer, url_prefix="/")

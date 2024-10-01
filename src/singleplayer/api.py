@@ -36,7 +36,8 @@ singleplayer = Blueprint("singleplayer", __name__)
 classifier = Classifier()
 
 log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
-norwegian_tz = pytz.timezone('Europe/Oslo')
+
+norwegian_tz = pytz.timezone("Europe/Oslo")
 
 
 @singleplayer.route("/")
@@ -277,7 +278,7 @@ def authenticate():
 
     if user is None or not check_password_hash(user.password, password):
         raise excp.Unauthorized("Invalid username or password")
-    
+
     session["last_login"] = datetime.now(norwegian_tz)
     session["username"] = username
 
@@ -319,13 +320,13 @@ def admin_page(action):
             "BLOB_image_count": new_blob_image_count,
         }
         return json.dumps(data), 200
-    
+
     elif action == "logging":
         url = "https://api.applicationinsights.io/v1/apps/06576007-5f29-4426-b5bb-eccd87fd9804/query?query=traces%20%7C%20where%20severityLevel%20%3E%202%0A%7C%20project%20timestamp%2C%20message%2C%20severityLevel%0A%7C%20order%20by%20timestamp%20desc%0A%7C%20take%2020"
 
         headers = {
-            "x-api-key": Keys.get("API_KEY"),  
-            "Content-Type": "application/json"
+            "x-api-key": Keys.get("API_KEY"),
+            "Content-Type": "application/json",
         }
 
         response = requests.get(url, headers=headers)
@@ -334,9 +335,11 @@ def admin_page(action):
             data = response.json()
             formatted_output = format_logs(data)
             return json.dumps(formatted_output), 200
-            
+
         else:
-            current_app.logger.error(f"Failed to get log from Azure: {response.text}")
+            current_app.logger.error(
+                f"Failed to get log from Azure: {response.text}"
+            )
             return "Failed to fetch log from Azure", 500
 
     elif action == "logout":
@@ -477,34 +480,35 @@ def readlines_reverse(filename):
             position -= 1
         yield line[::-1]
 
+
 def set_config():
     session.clear()
     current_app.config.update(
-    SECRET_KEY = os.urandom(24),
-    SESSION_COOKIE_SECURE=True)
+        SECRET_KEY=os.urandom(24), SESSION_COOKIE_SECURE=True
+    )
+
 
  # Function to format the data
 def format_logs(data):
     severity_mapping = {
-        1: 'INFO',
-        2: 'WARNING',
-        3: 'ERROR',
+        1: "INFO",
+        2: "WARNING",
+        3: "ERROR",
     }
-    
+
     formatted_logs = []
-    for row in data['tables'][0]['rows']:
+    for row in data["tables"][0]["rows"]:
         timestamp, message, severity_level = row
 
         dt = datetime.strptime(timestamp[:19], "%Y-%m-%dT%H:%M:%S")
 
         formatted_entry = {
-            'date': dt.strftime('%Y-%m-%d'),                   
-            'time': dt.strftime('%H:%M:%S'),       
-            'level': severity_mapping.get(severity_level, 'UNKNOWN'),  
-            'message': message.strip()                          
+            "date": dt.strftime("%Y-%m-%d"),
+            "time": dt.strftime("%H:%M:%S"),
+            "level": severity_mapping.get(severity_level, "UNKNOWN"),
+            "message": message.strip(),
         }
 
         formatted_logs.append(formatted_entry)
 
     return formatted_logs[::-1]
-
