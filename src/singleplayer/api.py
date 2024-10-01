@@ -10,7 +10,6 @@
 """
 import uuid
 import os
-import re
 from io import BytesIO
 import json
 from datetime import datetime, timezone, timedelta
@@ -37,7 +36,6 @@ singleplayer = Blueprint("singleplayer", __name__)
 classifier = Classifier()
 
 log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
-
 norwegian_tz = pytz.timezone('Europe/Oslo')
 
 
@@ -89,6 +87,7 @@ def get_label():
     label = labels[game.session_num - 1]
     if lang == "NO":
         norwegian_label = shared_models.to_norwegian(label)
+        current_app.logger.info("enters here")
         data = {"label": norwegian_label}
         return json.dumps(data), 200
     else:
@@ -102,7 +101,6 @@ def classify():
     Classify endpoint for continuous guesses.
     """
     game_state = "Playing"
-    white_image_check = False
     # Check if image submitted correctly
     if "image" not in request.files:
         raise excp.BadRequest("No image submitted")
@@ -133,8 +131,11 @@ def classify():
         img = Image.open(BytesIO(img))
 
         if white_image(img):
-            white_image_check = True
-            
+            data = white_image_data(
+            label, time_left, player.game_id, player_id, server_round
+            )
+            image.seek(0)
+            return json.dumps(data), 200
         image.seek(0)
 
     except Exception as e:
@@ -163,12 +164,6 @@ def classify():
         models.insert_into_label_success(
             label=label, is_success=has_won, date=datetime.now()
         )
-    if white_image_check:
-        data = white_image_data(
-            label, time_left, player.game_id, player_id, server_round
-            )
-        
-        return json.dumps(data), 200
     
     # translate labels into norwegian
     if lang == "NO":
