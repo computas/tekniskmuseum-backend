@@ -539,7 +539,7 @@ def get_n_labels(n, difficulty_id):
                 difficulty_id - Games.difficulty_id < 2,
             )
             .order_by(Games.date.desc())
-            .limit(3)
+            .limit(5)
             .all()
         )
         labels_to_filter = [
