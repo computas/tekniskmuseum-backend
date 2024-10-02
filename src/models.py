@@ -455,7 +455,7 @@ def get_top_n_high_score_list(top_n, difficulty_id):
             .limit(top_n)
             .all()
         )
-        # strucutre data
+        # structure data
         new = [
             {"id": score.score_id, "score": score.score}
             for score in top_n_list
@@ -467,6 +467,55 @@ def get_top_n_high_score_list(top_n, difficulty_id):
             "Could not read top high score from database: " + str(e)
         )
 
+def get_games_played():
+    """
+    Function to get the total count of daily scores.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        today = datetime.date.today()
+        # Filter by today's date
+        score_count = (
+            Scores.query.filter_by(date=today)
+            .count()
+        )
+
+        return score_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve daily score count from the database: " + str(e)
+        )
+    
+def get_games_played_per_month(month, year):
+    """
+    Function to get the total count of monthly scores.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        start_date = datetime.date(year, month, 1)
+
+        if month == 12:
+            end_date = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        monthly_count = (
+            Scores.query.filter(
+                Scores.date >= start_date,
+                Scores.date <= end_date
+            )
+            .count()
+        )
+
+        return monthly_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve score count from the database: " + str(e)
+        )
 
 def clear_highscores():
     """
