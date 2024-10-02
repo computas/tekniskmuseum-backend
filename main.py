@@ -2,8 +2,8 @@ import os
 
 if (
     not os.getenv("FLASK_RUN_FROM_CLI")
-    and os.getenv("IS_PRODUCTION")
-    and not os.environ.get("PYTEST_CURRENT_TEST")
+    and os.getenv("IS_PRODUCTION") == "true"
+    and os.getenv("TESTING") != "true"
 ):
     from gevent import monkey
 
