@@ -42,7 +42,7 @@ def vector_to_raster(
     keys=[],
 ):
     """
-        padding and line_diameter are relative to the original 256x256 image.
+    padding and line_diameter are relative to the original 256x256 image.
     """
 
     original_side = 256.0
@@ -92,7 +92,7 @@ def vector_to_raster(
 
 def upload_to_blob(path, key, class_name, blob_service_client):
     """
-        Upload files to Blob Storage.
+    Upload files to Blob Storage.
     """
     blob_name = f"{class_name}/{key}.png"
     print(blob_name)
@@ -109,7 +109,7 @@ def upload_to_blob(path, key, class_name, blob_service_client):
 
 def get_images_from_class(className, N=100):
     """
-        Retrieve images from the class provided.
+    Retrieve images from the class provided.
     """
     path = f"./preprocessing/images/{className}.ndjson"
     lines = []
@@ -126,7 +126,7 @@ def get_images_from_class(className, N=100):
 
 def get_classnames():
     """
-        Retrieve class names.
+    Retrieve class names.
     """
     classname = []
     for file in os.listdir("./preprocessing/images"):
@@ -138,7 +138,7 @@ def get_classnames():
 
 def main():
     """
-        Main function of the script.
+    Main function of the script.
     """
     args = parser.parse_args()
     cnames = args.classNames
