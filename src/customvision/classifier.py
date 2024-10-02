@@ -83,11 +83,8 @@ class Classifier:
             # get the latest published iteration
             puplished_iterations.sort(key=lambda i: i.created)
             self.iteration_name = puplished_iterations[-1].publish_name
-
-            with app.app_context():
-                models.update_iteration_name(self.iteration_name)
         except Exception as e:
-            logging.info(e)
+            logging.info("An error occurred while trying to get latest published iteration from Custom Vision", e)
             self.iteration_name = "Iteration4"
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
@@ -101,8 +98,6 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
-        with app.app_context():
-            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_url(
             project_id=self.project_id,
             published_name=self.iteration_name,
