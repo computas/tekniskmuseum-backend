@@ -31,9 +31,6 @@ jobs:
     - name: Install dependencies
       run: pip install flake8
 
-    - name: Run linter
-      run: flake8
-
     - name: Create and start virtual environment
       run: |
         python -m venv venv
@@ -47,3 +44,5 @@ jobs:
       shell: bash
       run: python3 src/runTests.py --keys='${{ secrets.NEW_TEST_SETTINGS }}'
       
+    - name: Run linter
+      run: flake8

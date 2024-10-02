@@ -173,7 +173,6 @@ def view_high_score(json_data):
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
-    models.update_players_id(game_id)
     emit("viewHighScore", json.dumps(data), room=game_id)
 
 
