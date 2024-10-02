@@ -213,19 +213,3 @@ def get_n_labels(n, difficulty_id):
 
     except Exception as e:
         raise Exception("Could not read Labels table: " + str(e))
-
-
-def update_players_id(game_id):
-    """
-    Update mulitplayer with player 2's id.
-    """
-    try:
-        mp = MulitPlayer.query.get(game_id)
-        player_1 = shared_models.get_player(mp.player_1)
-        player_2 = shared_models.get_player(mp.player_2)
-        player_1.player_id = uuid.uuid4().hex
-        player_2.player_id = uuid.uuid4().hex
-        db.session.commit()
-        return True
-    except Exception as e:
-        raise Exception("Could not update Ids: " + str(e))
