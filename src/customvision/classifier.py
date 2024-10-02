@@ -124,8 +124,6 @@ class Classifier:
             (prediction (dict[str,float]): labels and assosiated probabilities,
             best_guess: (str): name of the label with highest probability)
         """
-        with app.app_context():
-            self.iteration_name = models.get_iteration_name()
         res = self.predictor.classify_image_with_no_store(
             self.project_id, self.iteration_name, img
         )
@@ -343,8 +341,6 @@ class Classifier:
             iteration_name,
             self.prediction_resource_id,
         )
-        with app.app_context():
-            self.iteration_name = models.update_iteration_name(iteration_name)
 
     def delete_all_images(self) -> None:
         """
