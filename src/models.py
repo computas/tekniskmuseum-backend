@@ -62,8 +62,9 @@ class Players(db.Model):
     """
 
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey(
-        "games.game_id"), nullable=False)
+    game_id = db.Column(
+        db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False
+    )
     state = db.Column(db.String(32), nullable=False)
 
     game = db.relationship("Games", back_populates="players")
