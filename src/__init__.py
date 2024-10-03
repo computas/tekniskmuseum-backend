@@ -46,20 +46,17 @@ def create_app():
 
     app.config.from_object("src.utilities.setup.Flask_config")
 
-    # Config logging
-    logging.basicConfig(
-        filename="record.log",
-        level=logging.INFO,
-        filemode="w",
-        format="%(asctime)s %(levelname)s %(message)s",
-    )
     # max file size 1 MB
     handler = RotatingFileHandler(
         filename="record.log", maxBytes=1024 * 1024, backupCount=5
     )
     app.logger.addHandler(handler)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
-
     try:
         # Set up DB and models
         db.init_app(app)
