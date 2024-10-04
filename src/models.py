@@ -1,12 +1,12 @@
 import datetime
-from sqlalchemy import extract
+from sqlalchemy import extract, func
 from .extensions import db
 from werkzeug import exceptions as excp
 import csv
 import os
 import random
 import json
-
+import sys
 
 class Iteration(db.Model):
     """
@@ -787,3 +787,43 @@ def get_available_years():
         raise Exception(
             "Could not get years: " + str(e)
         )
+    
+def get_not_finished_games():
+    """
+    Function to get the count of unfinished games.
+    
+    Returns:
+        int: Number of games that are not finished.
+    """
+
+    # Filter by games where the state is not 'finished'
+    unfinished_games_count = (
+            db.session.query(Players.state)
+            .filter(Players.state == 'Playing') 
+            .count()
+        )
+    
+    return unfinished_games_count
+
+
+def get_scores_count_per_month(year):
+    try:
+        # Create the query to group by month and count scores
+        month_values = {}
+        result = (
+            db.session.query(
+            extract('month', Scores.date).label('month'),
+            func.count(Scores.score).label('score_count')
+            )
+            .filter(extract('year', Scores.date) == 2024)
+            .group_by(extract('month', Scores.date))
+            .all()
+        )
+
+        for month, score_count in result:
+            month_values[month] = score_count
+
+        return month_values
+
+    except Exception as e:
+        raise Exception("Could not retrieve scores per month: " + str(e))

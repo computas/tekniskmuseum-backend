@@ -14,12 +14,14 @@ from flask_migrate import Migrate
 from datetime import timedelta
 from src.multiplayer import multiplayer
 from src.singleplayer import singleplayer
+from src.admin import admin
 
 
 def create_app():
     app = Flask(__name__)
     app.register_blueprint(multiplayer, url_prefix="/")
     app.register_blueprint(singleplayer, url_prefix="/")
+    app.register_blueprint(admin, url_prefix="/")
 
     CORS(
         app,
