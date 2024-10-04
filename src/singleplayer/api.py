@@ -261,6 +261,32 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
+@singleplayer.route("/admin/getStatisticsPerMonth", methods=["GET"])
+def monthly_statistics():
+    is_authenticated()
+    month = request.args.get('month')
+    year = request.args.get('year')
+    amount = shared_models.get_games_played_per_month(month, year)
+
+    return json.dumps(amount), 200
+
+@singleplayer.route("/admin/getStatisticsPerYear", methods=["GET"])
+def yearly_statistics():
+    is_authenticated()
+
+    year = request.args.get('year')
+    amount = shared_models.get_games_played_per_year(year)
+
+    return json.dumps(amount), 200
+
+@singleplayer.route("/getAvailableYears", methods=["GET"])
+def get_available_years():
+    try:
+        available_years = shared_models.get_available_years()
+
+        return json.dumps(available_years), 200
+    except Exception as e:
+        return json.dumps({"error": "Action unspecified"}, e), 400
 
 @singleplayer.route("/admin/<action>", methods=["GET", "POST"])
 def admin_page(action):
@@ -291,6 +317,7 @@ def admin_page(action):
     elif action == "status":
         new_blob_image_count = storage.image_count()
         iteration = classifier.get_iteration()
+        current_app.logger.info(shared_models.get_games_played())
         data = {
             "CV_iteration_name": iteration.name,
             "CV_time_created": str(iteration.created),

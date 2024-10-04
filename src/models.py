@@ -1,4 +1,5 @@
 import datetime
+from sqlalchemy import extract
 from .extensions import db
 from werkzeug import exceptions as excp
 import csv
@@ -490,13 +491,15 @@ def get_games_played():
     
 def get_games_played_per_month(month, year):
     """
-    Function to get the total count of monthly scores.
+    Function to get the total count of monthly played games.
 
     Returns the count of scores as an integer.
     """
     try:
+        year = int(year)
+        month = int(month)
         start_date = datetime.date(year, month, 1)
-
+    
         if month == 12:
             end_date = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
         else:
@@ -515,6 +518,25 @@ def get_games_played_per_month(month, year):
     except Exception as e:
         raise Exception(
             "Could not retrieve score count from the database: " + str(e)
+        )
+    
+def get_games_played_per_year(year):
+    """
+    Function to get the total count of yearly played games.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        year = int(year)
+        yearly_count = (
+            Scores.query.filter(extract('year', Scores.date) == year).count()
+        )
+
+        return yearly_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve count from the database: " + str(e)
         )
 
 def clear_highscores():
@@ -754,3 +776,14 @@ def populate_example_images(app):
                 raise Exception(
                     "Could not insert into ExampleImages table: " + str(e)
                 )
+
+def get_available_years():
+    try:
+        available_years = Scores.query.with_entities(db.extract('year', Scores.date).distinct()).all()
+        years = [int(year[0]) for year in available_years]
+        
+        return years
+    except Exception as e:
+        raise Exception(
+            "Could not get years: " + str(e)
+        )
