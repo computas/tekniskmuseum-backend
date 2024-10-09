@@ -81,12 +81,10 @@ def get_not_finished():
 @admin.route("/admin/getScoresPerMonth", methods=["GET"])
 def get_count_per_month():
     try:
-        #is_authenticated()
-        current_app.logger.info("hei")
+        is_authenticated()
         year = request.args.get('year')
         year = int(year)
         count_list = shared_models.get_scores_count_per_month(year)
-        current_app.logger.info(type(count_list))
 
         return jsonify(count_list), 200
     except Exception as e:
