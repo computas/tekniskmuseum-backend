@@ -80,6 +80,9 @@ def get_not_finished():
 
 @admin.route("/admin/getScoresPerMonth", methods=["GET"])
 def get_count_per_month():
+    """
+    Endpoint to retrieve the amount of scores per month for a given year.
+    """
     try:
         is_authenticated()
         year = request.args.get('year')
