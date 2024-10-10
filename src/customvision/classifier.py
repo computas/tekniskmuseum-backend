@@ -84,7 +84,10 @@ class Classifier:
             puplished_iterations.sort(key=lambda i: i.created)
             self.iteration_name = puplished_iterations[-1].publish_name
         except Exception as e:
-            logging.info("An error occurred while trying to get latest published iteration from Custom Vision", e)
+            logging.info(
+                "An error occurred while trying to get latest published iteration from Custom Vision",
+                e,
+            )
             self.iteration_name = "Iteration4"
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
