@@ -2,7 +2,7 @@ import csv
 
 # Take all words from first column of csv and print them as a list with " " around each word.
 # Open the CSV file
-with open('./dict_eng_to_nor_difficulties_v2.csv', 'r') as file:
+with open("./dict_eng_to_nor_difficulties_v2.csv", "r") as file:
     # Create a CSV reader object
     reader = csv.reader(file)
 

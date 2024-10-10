@@ -35,6 +35,20 @@ The script accepts the following flags `bash startapp.sh <flag>`:
 All python requirements should be included in `requirements.txt`, and can be installed by running
 * `pip install -r requirements.txt`
 
+### **Build a Docker image and run a container**
+To build a Docker image, run the following command in the root folder
+* `docker build -t tekniskmuseum-backend:latest .`
+
+To keep track of different images, the tag `latest` (which is the default) can be replaced by a version name for the image.
+
+To run a Docker container from the image that was just built, run the command
+* `docker run -d -p 8000:8000 -v ./src/config.json:/app/src/config.json tekniskmuseum-backend:latest`
+
+The `-p` option creates a port forwarding from the container to the host machine. The `-v` option is used to mount a volume, which is used to share data between the container and the host machine. We have to mount the config file as a volume since we do not want the secrets to be a part of the Docker image.
+
+To push an image to Azure follow this guide: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli
+
+
 ## Debugging
 
 There is a launch configuration in .vscode/launch.json that launches the app backend with debugpy. This is super helpful with debugging as you can set breakpoints and inspect variables etc. during runtime. 

@@ -1,9 +1,16 @@
 from azure.monitor.opentelemetry import configure_azure_monitor
 from src.utilities.keys import Keys
 import os
+
 # Only configure Azure Monitor when not running FLASK migrations or running locally
-if not os.getenv("FLASK_RUN_FROM_CLI") and os.getenv("IS_PRODUCTION") == "true" and not os.environ.get('PYTEST_CURRENT_TEST'):
-    configure_azure_monitor(connection_string=Keys.get("INSIGHTS_CONNECTION_STRING"))
+if (
+    not os.getenv("FLASK_RUN_FROM_CLI")
+    and os.getenv("IS_PRODUCTION") == "true"
+    and not os.environ.get("PYTEST_CURRENT_TEST")
+):
+    configure_azure_monitor(
+        connection_string=Keys.get("INSIGHTS_CONNECTION_STRING")
+    )
 from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
@@ -41,20 +48,17 @@ def create_app():
 
     app.config.from_object("src.utilities.setup.Flask_config")
 
-    # Config logging
-    logging.basicConfig(
-        filename="record.log",
-        level=logging.INFO,
-        filemode="w",
-        format="%(asctime)s %(levelname)s %(message)s",
-    )
     # max file size 1 MB
     handler = RotatingFileHandler(
         filename="record.log", maxBytes=1024 * 1024, backupCount=5
     )
     app.logger.addHandler(handler)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
-
     try:
         # Set up DB and models
         db.init_app(app)

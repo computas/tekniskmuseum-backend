@@ -1,4 +1,3 @@
-
 # Classifier complaining about circular imports when not importing storage here
 from src import storage
 from src import models
@@ -25,14 +24,14 @@ def main():
     app = Flask(__name__)
     app.config.from_object("utilities.setup.Flask_config")
 
-# Set up DB and models
+    # Set up DB and models
     models.db.init_app(app)
 
     classifier = Classifier()
 
     # Take all words from first column of csv and print them as a list with " " around each word.
     # Open the CSV file
-    with open('./dict_eng_to_nor_difficulties_v2.csv', 'r') as file:
+    with open("./dict_eng_to_nor_difficulties_v2.csv", "r") as file:
 
         # Create a CSV reader object
         reader = csv.reader(file)

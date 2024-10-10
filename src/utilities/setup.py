@@ -35,7 +35,7 @@ CREATE_CONTAINER_WAITER = 30
 # Object used to initialize Flask instance
 class Flask_config:
     """
-        Config settings for flask and sqlalchemy should be set here.
+    Config settings for flask and sqlalchemy should be set here.
     """
 
     if "pytest" in sys.modules or "DEBUG" in os.environ:
@@ -50,10 +50,10 @@ class Flask_config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = "mssql+pyodbc://%s" % con_str
 
-    #Use sqlite to run tests instead
-    workflow_name = os.getenv('GITHUB_WORKFLOW')
+    # Use sqlite to run tests instead
+    workflow_name = os.getenv("GITHUB_WORKFLOW")
     if workflow_name == "Lint and test pull-request - tekniskback":
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///mydatabase.db'
+        SQLALCHEMY_DATABASE_URI = "sqlite:///mydatabase.db"
 
     # secret key for cookie encryption
     SECRET_KEY = Keys.get("SECRET_KEY")
@@ -65,4 +65,4 @@ class Flask_config:
         SESSION_COOKIE_SECURE = False
 
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SAMESITE = "None"

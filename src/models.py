@@ -63,8 +63,9 @@ class Players(db.Model):
     """
 
     player_id = db.Column(db.NVARCHAR(32), primary_key=True)
-    game_id = db.Column(db.NVARCHAR(32), db.ForeignKey(
-        "games.game_id"), nullable=False)
+    game_id = db.Column(
+        db.NVARCHAR(32), db.ForeignKey("games.game_id"), nullable=False
+    )
     state = db.Column(db.String(32), nullable=False)
 
     game = db.relationship("Games", back_populates="players")
@@ -610,7 +611,7 @@ def get_n_labels(n, difficulty_id):
                 difficulty_id - Games.difficulty_id < 2,
             )
             .order_by(Games.date.desc())
-            .limit(3)
+            .limit(5)
             .all()
         )
         labels_to_filter = [

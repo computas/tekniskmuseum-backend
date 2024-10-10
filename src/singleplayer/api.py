@@ -59,6 +59,18 @@ def start_game():
     data = {
         "player_id": player_id,
     }
+    current_app.logger.info(
+        "singleplayer /startGame! difficulty_id: "
+        + str(difficulty_id)
+        + " player_id: "
+        + str(player_id)
+        + " game_id: "
+        + str(game_id)
+        + " date: "
+        + str(today)
+        + " labels: "
+        + str(labels)
+    )
     return json.dumps(data), 200
 
 
@@ -78,6 +90,13 @@ def get_label():
 
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    current_app.logger.info(
+        "singleplayer /getLabel "
+        + " player_id: "
+        + str(player_id)
+        + " label: "
+        + str(label)
+    )
     if lang == "NO":
         norwegian_label = shared_models.to_norwegian(label)
         data = {"label": norwegian_label}
@@ -164,6 +183,9 @@ def classify():
             "gameState": game_state,
             "serverRound": server_round,
         }
+    current_app.logger.info(
+        "singleplayer /classify " + " player_id: " + str(player_id)
+    )
     return json.dumps(data), 200
 
 
@@ -186,10 +208,9 @@ def post_score():
     today = datetime.today()
     shared_models.insert_into_scores(player_id, score, today, difficulty_id)
 
-    # ! Need to decide if this is needed
-    # Clean database for unnecessary data
-    # models.delete_session_from_game(player.game_id)
-    # models.delete_old_games()
+    current_app.logger.info(
+        "singleplayer /classify " + " player_id: " + str(player_id)
+    )
     return json.dumps({"success": "OK"}), 200
 
 
@@ -212,6 +233,11 @@ def view_high_score():
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
+    current_app.logger.info(
+        "singleplayer /viewHighScore "
+        + " difficulty_id: "
+        + str(difficulty_id)
+    )
     return json.dumps(data), 200
 
 
@@ -231,6 +257,9 @@ def get_n_drawings_by_label():
         label, number_of_images
     )
     images = storage.get_images_from_relative_url(image_urls)
+    current_app.logger.info(
+        "singleplayer /getExampleDrawings " + " label: " + str(label)
+    )
     return json.dumps(images), 200
 
 
