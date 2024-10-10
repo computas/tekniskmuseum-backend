@@ -46,3 +46,17 @@ def test_probabilities_format(classifier):
         for k, v in probabilities.items():
             assert type(k) is str
             assert type(v) is float
+
+
+def test_get_iteration_name_length(classifier):
+    """
+    Test if the result returned has specified length
+    """
+    assert classifier.iteration_name == TestValues.CV_ITERATION_NAME
+
+
+def test_get_iteration_name_is_string(classifier):
+    """
+    Tests if it's possible to get an iteration name from the database and the type is str
+    """
+    assert isinstance(classifier.iteration_name, str)

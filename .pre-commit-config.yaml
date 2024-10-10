@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0  # Check for the latest version of Black
+    hooks:
+      - id: black
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0  # Check for the latest version of flake8
+    hooks:
+      - id: flake8

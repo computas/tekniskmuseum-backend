@@ -189,16 +189,6 @@ def test_get_top_n_high_score_list_structure(app_instance):
         assert "id" in player
 
 
-def test_get_iteration_name_is_string(app_instance):
-    """
-    Tests if it's possible to get an iteration name from the database and the type is str
-    """
-    with app_instance.app_context():
-        iteration_name = models.get_iteration_name()
-
-    assert isinstance(iteration_name, str)
-
-
 def test_get_n_labels_correct_size(app_instance):
     """
     Test that get_n_labels return lists of correct sizes
@@ -236,15 +226,6 @@ def test_to_norwegian_illegal_parameter():
     """
     with raises(Exception):
         models.to_norwegian("this word is not in the database")
-
-
-def test_get_iteration_name_length(app_instance):
-    """
-    Test if the result returned has specified length
-    """
-    with app_instance.app_context():
-        iteration_name = models.get_iteration_name()
-    assert iteration_name == TestValues.CV_ITERATION_NAME
 
 
 def test_high_score_cleared(app_instance):

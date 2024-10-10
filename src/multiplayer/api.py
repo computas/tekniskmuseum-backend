@@ -8,7 +8,7 @@
 from flask_socketio import emit, send, join_room
 from flask_socketio import disconnect as socket_disconnect
 from flask import Blueprint, request
-from flask import current_app as app
+from flask import current_app
 from PIL import Image, ImageChops
 from io import BytesIO
 from datetime import datetime
@@ -33,7 +33,7 @@ classifier = Classifier()
 
 @socketio.on("connect")
 def connect():
-    app.logger.info("===== client " + request.sid + " connected =====")
+    current_app.logger.info("===== client " + request.sid + " connected =====")
 
 
 @socketio.on("disconnect")
@@ -54,17 +54,17 @@ def disconnect():
         shared_models.delete_session_from_game(game.game_id)
     else:
         emit("playerDisconnected", json.dumps(data), room=game.game_id)
-    app.logger.info("=== client " + request.sid + " disconnected ===")
+    current_app.logger.info("=== client " + request.sid + " disconnected ===")
 
 
 @socketio.on("message")
 def handle_message(message):
-    app.logger.info("client: " + str(message))
+    current_app.logger.info("client: " + str(message))
 
 
 @socketio.on("filetest")
 def handle_filetest(json_data, image):
-    app.logger.info(json_data)
+    current_app.logger.info(json_data)
     with open("harambe.png", "wb") as f:
         f.write(image)
 
@@ -83,8 +83,10 @@ def handle_joinGame(json_data):
         pair_id = data["pair_id"]
     except (KeyError, TypeError):
         pair_id = ""
-        app.logger.error("No pair id for " + request.sid)
-    app.logger.info("pair id: " + pair_id + " player id: " + request.sid)
+        current_app.logger.error("No pair id for " + request.sid)
+    current_app.logger.info(
+        "pair id: " + pair_id + " player id: " + request.sid
+    )
     player_id = request.sid
     #  Players join their own room as well
     join_room(player_id)
@@ -135,14 +137,14 @@ def handle_getLabel(json_data):
     models.update_game_for_player(game_id, opponent.player_id, 0, "Ready")
 
     label = get_label(game_id)
-    app.logger.info("returned label: " + json.dumps(label))
+    current_app.logger.info("returned label: " + json.dumps(label))
     emit("getLabel", json.dumps(label), room=game_id)
 
 
 @socketio.on("postScore")
 def handle_postScore(json_data):
     data = json.loads(json_data)
-    app.logger.info(data)
+    current_app.logger.info(data)
     player_id = data.get("player_id")
     score = float(data.get("score"))
     difficulty_id = int(data.get("difficulty_id"))
@@ -173,7 +175,6 @@ def view_high_score(json_data):
         "daily": daily_high_scores,
         "total": top_n_high_scores,
     }
-    models.update_players_id(game_id)
     emit("viewHighScore", json.dumps(data), room=game_id)
 
 
@@ -335,7 +336,7 @@ def error_handler(error):
     error message is returned to the client. Else the error is
     logged.
     """
-    app.logger.error(error)
+    current_app.logger.error(error)
 
     if isinstance(error, UserError):
         emit("error", str(error))
