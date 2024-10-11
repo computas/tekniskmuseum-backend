@@ -11,7 +11,6 @@ import src.models as shared_models
 from src.utilities import setup
 from src.utilities.keys import Keys
 from src.customvision.classifier import Classifier
-from flask import Blueprint, current_app, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
 import requests
@@ -20,6 +19,7 @@ admin = Blueprint("admin", __name__)
 classifier = Classifier()
 norwegian_tz = pytz.timezone("Europe/Oslo")
 log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
+
 
 @admin.route("/auth", methods=["POST"])
 def authenticate():
@@ -41,6 +41,7 @@ def authenticate():
 
     return json.dumps({"success": "OK"}), 200
 
+
 @admin.route("/admin/getStatisticsPerMonth", methods=["GET"])
 def monthly_statistics():
     is_authenticated()
@@ -49,6 +50,7 @@ def monthly_statistics():
     amount = shared_models.get_games_played_per_month(month, year)
 
     return json.dumps(amount), 200
+
 
 @admin.route("/admin/getStatisticsPerYear", methods=["GET"])
 def yearly_statistics():
@@ -59,6 +61,7 @@ def yearly_statistics():
 
     return json.dumps(amount), 200
 
+
 @admin.route("/getAvailableYears", methods=["GET"])
 def get_available_years():
     try:
@@ -67,7 +70,8 @@ def get_available_years():
         return jsonify(available_years), 200
     except Exception as e:
         return json.dumps({e}), 400
-    
+
+
 @admin.route("/admin/getPlayers", methods=["GET"])
 def get_not_finished():
     try:
@@ -77,6 +81,7 @@ def get_not_finished():
         return json.dumps(data), 200
     except Exception as e:
         return json.dumps({e}), 400
+
 
 @admin.route("/admin/getScoresPerMonth", methods=["GET"])
 def get_count_per_month():
@@ -92,6 +97,7 @@ def get_count_per_month():
         return jsonify(count_list), 200
     except Exception as e:
         return json.dumps({e}), 400
+
 
 @admin.route("/admin/<action>", methods=["GET", "POST"])
 def admin_page(action):
@@ -154,9 +160,10 @@ def admin_page(action):
     elif action == "logout":
         session.clear()
         return json.dumps({"success": "Session cleared"}), 200
-    
+
     else:
         return json.dumps({"error": "Admin action unspecified"}), 400
+
 
 def is_authenticated():
     """
@@ -199,6 +206,7 @@ def set_config():
     current_app.config.update(
         SECRET_KEY=os.urandom(24), SESSION_COOKIE_SECURE=True
     )
+
 
 # Function to format the data
 def format_logs(data):

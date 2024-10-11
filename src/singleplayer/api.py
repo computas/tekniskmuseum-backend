@@ -353,6 +353,3 @@ def get_image_resolution(image):
     height, width = Image.open(BytesIO(image.stream.read())).size
     image.seek(0)
     return height, width
-
-
-
