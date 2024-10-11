@@ -1,10 +1,12 @@
 import datetime
+from sqlalchemy import extract, func
 from .extensions import db
 from werkzeug import exceptions as excp
 import csv
 import os
 import random
 import json
+import sys
 
 
 class Iteration(db.Model):
@@ -456,7 +458,7 @@ def get_top_n_high_score_list(top_n, difficulty_id):
             .limit(top_n)
             .all()
         )
-        # strucutre data
+        # structure data
         new = [
             {"id": score.score_id, "score": score.score}
             for score in top_n_list
@@ -466,6 +468,77 @@ def get_top_n_high_score_list(top_n, difficulty_id):
     except AttributeError as e:
         raise AttributeError(
             "Could not read top high score from database: " + str(e)
+        )
+
+
+def get_games_played():
+    """
+    Function to get the total count of daily scores.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        today = datetime.date.today()
+        # Filter by today's date
+        score_count = Scores.query.filter_by(date=today).count()
+
+        return score_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve daily score count from the database: " + str(e)
+        )
+
+
+def get_games_played_per_month(month, year):
+    """
+    Function to get the total count of monthly played games.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        year = int(year)
+        month = int(month)
+        start_date = datetime.date(year, month, 1)
+
+        if month == 12:
+            end_date = datetime.date(year + 1, 1, 1) - datetime.timedelta(
+                days=1
+            )
+        else:
+            end_date = datetime.date(year, month + 1, 1) - datetime.timedelta(
+                days=1
+            )
+
+        monthly_count = Scores.query.filter(
+            Scores.date >= start_date, Scores.date <= end_date
+        ).count()
+
+        return monthly_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve score count from the database: " + str(e)
+        )
+
+
+def get_games_played_per_year(year):
+    """
+    Function to get the total count of yearly played games.
+
+    Returns the count of scores as an integer.
+    """
+    try:
+        year = int(year)
+        yearly_count = Scores.query.filter(
+            extract("year", Scores.date) == year
+        ).count()
+
+        return yearly_count
+
+    except Exception as e:
+        raise Exception(
+            "Could not retrieve count from the database: " + str(e)
         )
 
 
@@ -706,3 +779,55 @@ def populate_example_images(app):
                 raise Exception(
                     "Could not insert into ExampleImages table: " + str(e)
                 )
+
+
+def get_available_years():
+    try:
+        available_years = Scores.query.with_entities(
+            db.extract("year", Scores.date).distinct()
+        ).all()
+        years = [int(year[0]) for year in available_years]
+
+        return years
+    except Exception as e:
+        raise Exception("Could not get years: " + str(e))
+
+
+def get_not_finished_games():
+    """
+    Function to get the count of unfinished games.
+    Returns:
+        int: Number of games that are not finished.
+    """
+
+    # Filter by games where the state is not 'finished'
+    unfinished_games_count = (
+        db.session.query(Players.state)
+        .filter(Players.state == "Playing")
+        .count()
+    )
+
+    return unfinished_games_count
+
+
+def get_scores_count_per_month(year):
+    try:
+        # Create the query to group by month and count scores
+        month_values = {}
+        result = (
+            db.session.query(
+                extract("month", Scores.date).label("month"),
+                func.count(Scores.score).label("score_count"),
+            )
+            .filter(extract("year", Scores.date) == 2024)
+            .group_by(extract("month", Scores.date))
+            .all()
+        )
+
+        for month, score_count in result:
+            month_values[month] = score_count
+
+        return month_values
+
+    except Exception as e:
+        raise Exception("Could not retrieve scores per month: " + str(e))
