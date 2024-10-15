@@ -135,7 +135,7 @@ def admin_page(action):
                 "BLOB_image_count": new_blob_image_count,
             }
         except Exception as e:
-            current_app.logger.error("Something in admin/status failed: " + e)
+            current_app.logger.error("Something in admin/status failed: " + str(e))
         return json.dumps(data), 200
 
     elif action == "logging":
