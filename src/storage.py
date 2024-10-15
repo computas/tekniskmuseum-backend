@@ -4,8 +4,6 @@
 
 import uuid
 import time
-import logging
-from src.singleplayer import api
 from threading import Thread
 from azure.storage.blob import BlobClient
 from azure.storage.blob import BlobServiceClient
@@ -36,7 +34,7 @@ def save_image(image, label, certainty):
             blob_name=file_name,
         )
         blob.upload_blob(image)
-        container_client = blob_connection()
+        container_client = blob_connection(setup.CONTAINER_NAME_NEW)
         # update metadata in blob
         try:
             image_count = int(
@@ -49,9 +47,8 @@ def save_image(image, label, certainty):
         metadata = {"image_count": str(image_count + 1)}
         container_client.set_container_metadata(metadata=metadata)
     except Exception as e:
-        api.app.logger.error(e)
+        raise Exception("Could not save image from storage.py" + str(e))
     url = base_url + "/" + container_name + "/" + file_name
-    logging.info(url)
     return url
 
 
@@ -62,7 +59,7 @@ def clear_dataset():
     NOTE: container is deleted by garbage collection, which does not
     happen instantly. A new blob cannot be initalized before old is collected.
     """
-    container_client = blob_connection()
+    container_client = blob_connection(setup.CONTAINER_NAME_NEW)
     try:
         container_client.delete_container()
     except Exception as e:
@@ -77,7 +74,7 @@ def create_container():
     """
     tries = setup.CREATE_CONTAINER_TRIES
     waiting_time = setup.CREATE_CONTAINER_WAITER
-    container_client = blob_connection()
+    container_client = blob_connection(setup.CONTAINER_NAME_NEW)
     success = False
     metadata = {"image_count": "0"}
     for i in range(tries):
@@ -91,8 +88,7 @@ def create_container():
             )
             success = True
         except Exception as e:
-            api.app.logger.error(e)
-
+            raise Exception("Could not create container")
 
 def image_count():
     """
@@ -128,7 +124,7 @@ def get_n_random_images_from_label(n, label):
     """
     Returns n random images from the blob storage container with the given label.
     """
-    container_client = blob_connection(setup.CONTAINER_NAME_ORIGINAL)
+    container_client = blob_connection(Keys.get("CONTAINER_NAME"))
     blob_prefix = f"{label}/"
     blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
     selected_blobs = random.sample(blobs, min(n, len(blobs)))
