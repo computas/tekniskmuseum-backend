@@ -126,14 +126,16 @@ def admin_page(action):
         return json.dumps(response), 200
 
     elif action == "status":
-        new_blob_image_count = storage.image_count()
-        iteration = classifier.get_iteration()
-        current_app.logger.info(shared_models.get_games_played())
-        data = {
-            "CV_iteration_name": iteration.name,
-            "CV_time_created": str(iteration.created),
-            "BLOB_image_count": new_blob_image_count,
-        }
+        try:
+            new_blob_image_count = storage.image_count()
+            iteration = classifier.get_iteration()
+            data = {
+                "CV_iteration_name": iteration.name,
+                "CV_time_created": str(iteration.created),
+                "BLOB_image_count": new_blob_image_count,
+            }
+        except Exception as e:
+            current_app.logger.error("Something in admin/status failed: " + e)
         return json.dumps(data), 200
 
     elif action == "logging":

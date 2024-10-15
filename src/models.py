@@ -819,7 +819,7 @@ def get_scores_count_per_month(year):
                 extract("month", Scores.date).label("month"),
                 func.count(Scores.score).label("score_count"),
             )
-            .filter(extract("year", Scores.date) == 2024)
+            .filter(extract("year", Scores.date) == year)
             .group_by(extract("month", Scores.date))
             .all()
         )
