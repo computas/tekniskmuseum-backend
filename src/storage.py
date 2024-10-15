@@ -87,8 +87,9 @@ def create_container():
                 metadata=metadata, public_access="container"
             )
             success = True
-        except Exception as e:
+        except Exception:
             raise Exception("Could not create container")
+
 
 def image_count():
     """
