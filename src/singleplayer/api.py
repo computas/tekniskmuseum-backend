@@ -150,7 +150,10 @@ def classify():
             player.game_id, player_id, 1, "Done"
         )
         # save image
-        storage.save_image(image, label, best_certainty)
+        try:
+            storage.save_image(image, label, best_certainty)
+        except Exception as e:
+            current_app.logger.error(e)
         # Update game state to be done
         game_state = "Done"
         # Insert statistic for label
@@ -256,7 +259,10 @@ def get_n_drawings_by_label():
     image_urls = shared_models.get_n_random_example_images(
         label, number_of_images
     )
-    images = storage.get_images_from_relative_url(image_urls)
+    try:
+        images = storage.get_images_from_relative_url(image_urls)
+    except Exception as e:
+        current_app.logger.error(e)
     current_app.logger.info(
         "singleplayer /getExampleDrawings " + " label: " + str(label)
     )

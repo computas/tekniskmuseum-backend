@@ -120,7 +120,10 @@ def admin_page(action):
     elif action == "hardReset":
         # Delete all images in CV, upload all orignal images and retrain
         classifier.delete_all_images()
-        storage.clear_dataset()
+        try:
+            storage.clear_dataset()
+        except Exception as e:
+            current_app.logger.error(e)
         Thread(target=classifier.hard_reset_retrain).start()
         response = {"success": "All images deleted, model now training"}
         return json.dumps(response), 200
