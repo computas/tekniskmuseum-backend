@@ -67,6 +67,9 @@ def get_available_years():
     try:
         available_years = shared_models.get_available_years()
 
+        if available_years == "":
+            raise Exception("No years recorded")
+
         return jsonify(available_years), 200
     except Exception as e:
         return json.dumps({e}), 400
