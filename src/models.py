@@ -6,7 +6,6 @@ import csv
 import os
 import random
 import json
-import sys
 
 
 class Iteration(db.Model):

@@ -200,9 +200,12 @@ def get_example_drawings(json_data, emitEndpoint="getExampleDrawings"):
         label, number_of_images
     )
 
-    example_drawings = storage.get_images_from_relative_url(
-        example_drawing_urls
-    )
+    try:
+        example_drawings = storage.get_images_from_relative_url(
+            example_drawing_urls
+        )
+    except Exception as e:
+        current_app.logger.error(e)
     emit(emitEndpoint, json.dumps(example_drawings), room=game_id)
 
 
@@ -257,7 +260,10 @@ def handle_classify(data, image, correct_label=None):
     if time_out:
         # to break race condition if both players timeout
         time.sleep(0.5 * random.random())
-        storage.save_image(image, correct_label, best_certainty)
+        try:
+            storage.save_image(image, correct_label, best_certainty)
+        except Exception as e:
+            current_app.logger.error(e)
         player = shared_models.get_player(player_id)
         opponent = models.get_opponent(game_id, player_id)
         if opponent.state == "Done":
@@ -292,7 +298,10 @@ def handle_classify(data, image, correct_label=None):
     emit("prediction", response)
 
     if has_won:
-        storage.save_image(image, correct_label, best_certainty)
+        try:
+            storage.save_image(image, correct_label, best_certainty)
+        except Exception as e:
+            current_app.logger.error(e)
         player = shared_models.get_player(player_id)
         opponent = models.get_opponent(game_id, player_id)
         if opponent.state == "Done":

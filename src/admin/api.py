@@ -67,6 +67,9 @@ def get_available_years():
     try:
         available_years = shared_models.get_available_years()
 
+        if available_years == "":
+            raise Exception("No years recorded")
+
         return jsonify(available_years), 200
     except Exception as e:
         return json.dumps({e}), 400
@@ -120,7 +123,10 @@ def admin_page(action):
     elif action == "hardReset":
         # Delete all images in CV, upload all orignal images and retrain
         classifier.delete_all_images()
-        storage.clear_dataset()
+        try:
+            storage.clear_dataset()
+        except Exception as e:
+            current_app.logger.error(e)
         Thread(target=classifier.hard_reset_retrain).start()
         response = {"success": "All images deleted, model now training"}
         return json.dumps(response), 200
@@ -135,7 +141,7 @@ def admin_page(action):
                 "BLOB_image_count": new_blob_image_count,
             }
         except Exception as e:
-            current_app.logger.error("Something in admin/status failed: " + e)
+            current_app.logger.error("Something in admin/status failed: " + str(e))
         return json.dumps(data), 200
 
     elif action == "logging":
