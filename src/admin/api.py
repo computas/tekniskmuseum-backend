@@ -45,8 +45,8 @@ def authenticate():
 @admin.route("/admin/getStatisticsPerMonth", methods=["GET"])
 def monthly_statistics():
     is_authenticated()
-    month = request.args.get('month')
-    year = request.args.get('year')
+    month = request.args.get("month")
+    year = request.args.get("year")
     amount = shared_models.get_games_played_per_month(month, year)
 
     return json.dumps(amount), 200
@@ -56,7 +56,7 @@ def monthly_statistics():
 def yearly_statistics():
     is_authenticated()
 
-    year = request.args.get('year')
+    year = request.args.get("year")
     amount = shared_models.get_games_played_per_year(year)
 
     return json.dumps(amount), 200
@@ -93,7 +93,7 @@ def get_count_per_month():
     """
     try:
         is_authenticated()
-        year = request.args.get('year')
+        year = request.args.get("year")
         year = int(year)
         count_list = shared_models.get_scores_count_per_month(year)
 
@@ -141,7 +141,9 @@ def admin_page(action):
                 "BLOB_image_count": new_blob_image_count,
             }
         except Exception as e:
-            current_app.logger.error("Something in admin/status failed: " + str(e))
+            current_app.logger.error(
+                "Something in admin/status failed: " + str(e)
+            )
             return json.dumps(e), 500
         return json.dumps(data), 200
 
