@@ -91,13 +91,29 @@ def create_container():
             raise Exception("Could not create container")
 
 
-def image_count():
+def image_count_old():
     """
     Returns number of images in relevant container.
     """
     container_client = blob_connection(Keys.get("CONTAINER_NAME"))
 
     return container_client.get_container_properties().metadata["image_count"]
+
+
+def image_count():
+    blob_service_client = BlobServiceClient.from_connection_string(
+        Keys.get("BLOB_CONNECTION_STRING")
+    )
+    container_client = blob_service_client.get_container_client(
+        Keys.get("CONTAINER_NAME")
+    )
+
+    # Initialize the counter for all files
+    file_count = 0
+
+    # Iterate over all the blobs in the container
+    file_count = sum(1 for _ in container_client.list_blobs())
+    return file_count
 
 
 def blob_connection(container_name):
