@@ -142,6 +142,7 @@ def admin_page(action):
             }
         except Exception as e:
             current_app.logger.error("Something in admin/status failed: " + str(e))
+            return json.dumps(e), 500
         return json.dumps(data), 200
 
     elif action == "logging":
