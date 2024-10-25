@@ -8,7 +8,7 @@ import time
 from typing import Dict
 from typing import List
 from src import models
-from flask import current_app as app
+from flask import current_app
 from werkzeug import exceptions as excp
 from msrest.authentication import ApiKeyCredentials
 from azure.storage.blob import BlobServiceClient
@@ -83,12 +83,15 @@ class Classifier:
             # get the latest published iteration
             puplished_iterations.sort(key=lambda i: i.created)
             self.iteration_name = puplished_iterations[-1].publish_name
+            self.iteration_created = puplished_iterations[-1].created
         except Exception as e:
             logging.info(
                 "An error occurred while trying to get latest published iteration from Custom Vision",
                 e,
             )
             self.iteration_name = "Iteration4"
+            self.iteration_created = "-"
+            raise
 
     def predict_image_url(self, img_url: str) -> Dict[str, float]:
         """
@@ -374,7 +377,7 @@ class Classifier:
         """
         Train model on all labels and update iteration.
         """
-        with app.app_context():
+        with current_app.app_context():
             labels = models.get_all_labels()
 
         self.upload_images(labels, setup.CONTAINER_NAME_NEW)
@@ -392,7 +395,7 @@ class Classifier:
         old images are deleted from custom vision before
         uploading original dataset.
         """
-        with app.app_context():
+        with current_app.app_context():
             labels = models.get_all_labels()
 
         # Wait 60 seconds to make sure all images are deleted in custom vision
