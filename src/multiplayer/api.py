@@ -6,7 +6,6 @@
     application is live.
 """
 from flask_socketio import emit, send, join_room
-from flask_socketio import disconnect as socket_disconnect
 from flask import Blueprint, request
 from flask import current_app
 from PIL import Image, ImageChops

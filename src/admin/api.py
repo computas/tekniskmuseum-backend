@@ -2,21 +2,19 @@ from flask import Blueprint, current_app, request, session, jsonify
 import json
 import os
 from datetime import datetime, timezone, timedelta
-from PIL import Image, ImageChops
 from threading import Thread
-from io import BytesIO
 from src import storage
 import pytz
 import src.models as shared_models
 from src.utilities import setup
 from src.utilities.keys import Keys
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from werkzeug import exceptions as excp
 import requests
 
 admin = Blueprint("admin", __name__)
 norwegian_tz = pytz.timezone("Europe/Oslo")
-# log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
+log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
 
 
 @admin.route("/auth", methods=["POST"])

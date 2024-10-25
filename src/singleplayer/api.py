@@ -9,25 +9,20 @@
         /viewHighScore : Provide clien with the highscore from the game
 """
 import uuid
-import os
 import json
 from datetime import datetime
-import pytz
 from PIL import Image, ImageChops
 from io import BytesIO
 from src import storage
 from . import models
 import src.models as shared_models
 from src.utilities import setup
-from src.utilities.keys import Keys
-from flask import Blueprint, current_app, request, session
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, current_app, request
+from werkzeug.security import generate_password_hash
 from werkzeug import exceptions as excp
 
 
 singleplayer = Blueprint("singleplayer", __name__)
-
-# Initialize CV classifier
 
 
 @singleplayer.route("/")
