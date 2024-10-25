@@ -10,15 +10,13 @@ import pytz
 import src.models as shared_models
 from src.utilities import setup
 from src.utilities.keys import Keys
-from src.customvision.classifier import Classifier
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug import exceptions as excp
 import requests
 
 admin = Blueprint("admin", __name__)
-classifier = Classifier()
 norwegian_tz = pytz.timezone("Europe/Oslo")
-log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
+# log_pattern = r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<time>\d{2}:\d{2}:\d{2},\d{3}) (?P<level>[A-Z]+) (?P<message>.*)"
 
 
 @admin.route("/auth", methods=["POST"])
@@ -110,6 +108,7 @@ def admin_page(action):
     """
     # Check if user has valid cookie
     is_authenticated()
+    classifier = current_app.config["classifier"]
 
     if action == "clearHighScore":
         shared_models.clear_highscores()
@@ -134,17 +133,16 @@ def admin_page(action):
     elif action == "status":
         try:
             new_blob_image_count = storage.image_count()
-            iteration = classifier.get_iteration()
             data = {
-                "CV_iteration_name": iteration.name,
-                "CV_time_created": str(iteration.created),
+                "CV_iteration_name": classifier.iteration_name,
+                "CV_time_created": str(classifier.iteration_created),
                 "BLOB_image_count": new_blob_image_count,
             }
         except Exception as e:
             current_app.logger.error(
                 "Something in admin/status failed: " + str(e)
             )
-            return json.dumps(e), 500
+            return json.dumps({"error": str(e)}), 500
         return json.dumps(data), 200
 
     elif action == "logging":

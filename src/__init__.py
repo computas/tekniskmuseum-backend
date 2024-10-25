@@ -1,5 +1,6 @@
 from azure.monitor.opentelemetry import configure_azure_monitor
 from src.utilities.keys import Keys
+from src.customvision.classifier import Classifier
 import os
 
 # Only configure Azure Monitor when not running FLASK migrations or running locally
@@ -18,7 +19,6 @@ from . import models
 from src.extensions import db, socketio
 from flask import Flask
 from flask_migrate import Migrate
-from datetime import timedelta
 from src.multiplayer import multiplayer
 from src.singleplayer import singleplayer
 from src.admin import admin
@@ -47,6 +47,11 @@ def create_app():
     )
 
     app.config.from_object("src.utilities.setup.Flask_config")
+
+    try:
+        app.config["classifier"] = Classifier()
+    except Exception as e:
+        app.logger.error(e)
 
     # max file size 1 MB
     handler = RotatingFileHandler(

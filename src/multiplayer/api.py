@@ -23,12 +23,10 @@ import src.models as shared_models
 from src import storage
 from src.utilities.exceptions import UserError
 from src.utilities import setup
-from src.customvision.classifier import Classifier
 from src.extensions import socketio
 
 
 multiplayer = Blueprint("multiplayer", __name__)
-classifier = Classifier()
 
 
 @socketio.on("connect")
@@ -252,6 +250,8 @@ def handle_classify(data, image, correct_label=None):
             return
 
     image_stream.seek(0)
+
+    classifier = current_app.config["classifier"]
     certainty, best_guess = classifier.predict_image_by_post(image_stream)
     best_certainty = certainty[best_guess]
 
