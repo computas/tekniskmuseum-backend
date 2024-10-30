@@ -42,5 +42,6 @@ WORKDIR /app
 EXPOSE 8000
 
 # Command to run Gunicorn with Gevent worker class for async handling
-CMD ["gunicorn", "--bind=0.0.0.0", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w=1", "--chdir", "src/", "main:app"]
+#CMD ["gunicorn", "--bind=0.0.0.0", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w=1", "--chdir", "src/", "main:app"]
 
+CMD ["python3","main.py"]
