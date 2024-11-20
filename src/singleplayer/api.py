@@ -9,27 +9,20 @@
         /viewHighScore : Provide clien with the highscore from the game
 """
 import uuid
-import os
 import json
 from datetime import datetime
-import pytz
 from PIL import Image, ImageChops
 from io import BytesIO
 from src import storage
 from . import models
 import src.models as shared_models
 from src.utilities import setup
-from src.utilities.keys import Keys
-from src.customvision.classifier import Classifier
-from flask import Blueprint, current_app, request, session
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, current_app, request
+from werkzeug.security import generate_password_hash
 from werkzeug import exceptions as excp
 
 
 singleplayer = Blueprint("singleplayer", __name__)
-
-# Initialize CV classifier
-classifier = Classifier()
 
 
 @singleplayer.route("/")
@@ -135,6 +128,7 @@ def classify():
         )
     labels = json.loads(game.labels)
     label = labels[game.session_num - 1]
+    classifier = current_app.config["classifier"]
     certainty, best_guess = classifier.predict_image_by_post(image)
     best_certainty = certainty[best_guess]
     # The player has won if the game is completed within the time limit

@@ -123,7 +123,7 @@ def test_join_game_different_difficulty(test_clients):
     assert not r2[1]["args"][0]["ready"]
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_classification_only_client1_correct(test_clients):
     time_left = 1
     correct_label = "angel"
@@ -160,7 +160,7 @@ def test_classification_only_client1_correct(test_clients):
     assert len(r2) == 1
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_game_in_different_languages(test_clients):
     correct_label = "angel"
     wrong_label = "bicycle"
@@ -199,7 +199,7 @@ def test_game_in_different_languages(test_clients):
     assert len(r2) == 1
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_classification_both_correct(test_clients):
     time_left = 1
     correct_label = "angel"
@@ -244,7 +244,7 @@ def test_classification_both_correct(test_clients):
     assert len(r2) == 2
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_classification_client1_timeout_and_client2_correct(test_clients):
     time_out = 0
     time_left = 1
@@ -285,7 +285,7 @@ def test_classification_client1_timeout_and_client2_correct(test_clients):
     assert len(r2) == 2
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_classification_client1_correct_and_client2_timeout(test_clients):
     time_out = 0
     time_left = 1
@@ -327,7 +327,7 @@ def test_classification_client1_correct_and_client2_timeout(test_clients):
     assert len(r2) == 1
 
 
-@patch("singleplayer.api.classifier", mock_classifier)
+@patch("singleplayer.api.classify", mock_classifier)
 def test_classification_both_timeout(test_clients):
     time_out = 0
     correct_label = "angel"
